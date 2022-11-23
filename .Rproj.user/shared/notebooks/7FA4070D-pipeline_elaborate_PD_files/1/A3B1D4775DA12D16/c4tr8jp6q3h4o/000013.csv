@@ -1,0 +1,5 @@
+"0","#Read the design
+input_settings<-read_excel_allsheets(params$contr_design)[[1]]
+"
+"2","Error: `path` does not exist: ‘NA’
+"
