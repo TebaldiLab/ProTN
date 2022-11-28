@@ -11,59 +11,98 @@ library(shiny)
 library(tidyverse)
 library(markdown)
 library(knitr)
-# library(shinyalert)
+library(shinymaterial)
+library(shinyjs)
+
 
 # Define UI for application that draws a histogram
-ui <- fluidPage(
-    tags$head(
-      includeCSS("lib/custom_theme.css")
-    ),
-    # useShinyalert(),
-    # Application title
-    titlePanel("ProTN: integrative pipeline for the analysis of proteomics data from MS", windowTitle = "ProTN"),
-
+ui <- material_page(
+  useShinyjs(),
+  
+  tags$head(
+    includeCSS("lib/custom_theme.css")
+  ),
+  # Application title
+  title = "ProTN: integrative pipeline for the analysis of proteomics data from MS", 
+  
+  navbarPage(
+    windowTitle = "ProTN",
     # Sidebar with a slider input for number of bins 
-    splitLayout(cellWidths = c("60%", "20%", "20%"), cellArgs = list(style='white-space: normal;'),
+    # splitLayout(cellArgs = list(style='white-space: normal;'),
+    # splitLayout(cellWidths = c("60%", "20%", "20%"), cellArgs = list(style='white-space: normal;'),
         # Show a plot of the generated distribution
-        mainPanel(
+        # mainPanel(
           # uiOutput("mark")
-            includeMarkdown("README.md")
+    tagList(
+      div(style="display: flex; flex-direction: row; align-items: flex-end;",
+      material_modal(
+        modal_id = "execution",
+        button_text = "Run the analysis",
+              
+        title = "ProTN",
+        tagList(
+          material_text_box('title_exp','Title of Analysis'),
+          material_text_box('description_exp','Brief description'),
+          material_radio_button('sw_analyzer', 'Software Analyzer', c('PD', 'MQ')),
+          material_file_input('input_file', 'Select the INPUT file...'),
+          material_file_input('pep_file', 'Select the PEP file...'),
+          material_file_input('prot_file', 'Select the PROT file...'),
+          material_text_box('signal_DEPs','Signal log2 expr thr', value = "inf"),
+          material_text_box('FC_DEPs','Log2 FC thr',value = "0.75"),
+          material_text_box('pvalue_DEPs','P.Value thr',value = "0.05"),
+          material_radio_button('batch_corr', 'Batch effect correction', c('TRUE', 'FALSE'), selected = FALSE),
+          material_text_box('prot_boxplot','Control Boxplot proteins'),
+          material_file_input('design', 'Select a file with the design for the comparisons...'),
+          material_radio_button('STRING', 'Execute PPI network STRINGdb', c('TRUE', 'FALSE'), selected = FALSE),
+          material_radio_button('enrichR', 'Execute enrichment', c('TRUE', 'FALSE'), selected = FALSE),
+          uiOutput("input_enrichment"),
+          downloadButton("report", "Generate report"),
+          plotOutput("n_plot")
+        )
+      ),
+      material_button('contact', 'Contacts')
+    ))
+  ),
+  
+  includeMarkdown("README.md")
+          
           # HTML(markdownToHTML(knit("README.md"), fragment.only=TRUE))
             # plotOutput("distPlot")
-        ),
-        mainPanel(
-          textInput('title_exp','Title of Analysis'),
-          textAreaInput('description_exp','Brief description', rows = 6),
-          radioButtons('sw_analyzer', 'Software Analyzer', c('PD', 'MQ'), inline = TRUE),
-          fileInput('input_file', 'Select the INPUT file...'),
-          fileInput('pep_file', 'Select the PEP file...'),
-          fileInput('prot_file', 'Select the PROT file...'),
-          textInput('signal_DEPs','Signal log2 expr thr', value = "inf"),
-          textInput('FC_DEPs','Log2 FC thr',value = "0.75"),
-          textInput('pvalue_DEPs','P.Value thr',value = "0.05")
-        ),
-        mainPanel(
-          radioButtons('batch_corr', 'Batch effect correction', c('TRUE', 'FALSE'), inline = TRUE, selected = FALSE),
-          textInput('prot_boxplot','Control Boxplot proteins'),
-          fileInput('design', 'Select a file with the design for the comparisons...'),
-          radioButtons('STRING', 'Execute PPI network STRINGdb', c('TRUE', 'FALSE'), inline = TRUE, selected = FALSE),
-          radioButtons('enrichR', 'Execute enrichment', c('TRUE', 'FALSE'), inline = TRUE, selected = FALSE),
-          uiOutput("input_enrichment"),
-          downloadButton("report", "Generate report")
-        )
-    )
+        # )
+        # mainPanel(
+        #   textInput('title_exp','Title of Analysis'),
+        #   textAreaInput('description_exp','Brief description', rows = 6),
+        #   radioButtons('sw_analyzer', 'Software Analyzer', c('PD', 'MQ'), inline = TRUE),
+        #   fileInput('input_file', 'Select the INPUT file...'),
+        #   fileInput('pep_file', 'Select the PEP file...'),
+        #   fileInput('prot_file', 'Select the PROT file...'),
+        #   textInput('signal_DEPs','Signal log2 expr thr', value = "inf"),
+        #   textInput('FC_DEPs','Log2 FC thr',value = "0.75"),
+        #   textInput('pvalue_DEPs','P.Value thr',value = "0.05")
+        # ),
+        # mainPanel(
+        #   radioButtons('batch_corr', 'Batch effect correction', c('TRUE', 'FALSE'), inline = TRUE, selected = FALSE),
+        #   textInput('prot_boxplot','Control Boxplot proteins'),
+        #   fileInput('design', 'Select a file with the design for the comparisons...'),
+        #   radioButtons('STRING', 'Execute PPI network STRINGdb', c('TRUE', 'FALSE'), inline = TRUE, selected = FALSE),
+        #   radioButtons('enrichR', 'Execute enrichment', c('TRUE', 'FALSE'), inline = TRUE, selected = FALSE),
+        #   uiOutput("input_enrichment"),
+        #   downloadButton("report", "Generate report")
+        # )
+    # )
 )
 
 # Define server logic required to draw a histogram
-server <- function(input, output) {
+server <- function(input, output, session) {
   options(shiny.maxRequestSize=10*1024^3)
+  
   #Visibility of the enrichment parameters based on the value of the Enrichment radiobutton
   output$input_enrichment<-renderUI({
     if (input$enrichR){
       tagList(
-        textInput('pvalue_enrich','P.Value thr for enrichment',value = "0.05"),
-        sliderInput("os_enrich",label = "Overlap size thr for enrichment", min = 1, max = 30,value = 5),
-        textInput('terms_enrich','Terms to search'),
+        material_text_box('pvalue_enrich','P.Value thr for enrichment',value = "0.05"),
+        material_slider("os_enrich", "Overlap size thr for enrichment", 1, 30, step_size = 1, initial_value = 5),
+        material_text_box('terms_enrich','Terms to search'),
         selectizeInput('DB_enrich', 'DB to analyse', choices = read_delim("lib/dbs_enrichR.txt", delim = "\n", col_names = FALSE)[[1]], 
                        selected = NULL, multiple = TRUE)
       )
@@ -75,7 +114,7 @@ server <- function(input, output) {
     filename = "results.zip",
     content = function(file) {
       tryCatch({
-
+        material_spinner_show(session, "n_plot")
         dirOutput_2=tempdir()
         currentTime = gsub(".*?([0-9]+).*?", "\\1", Sys.time())
         dirOutput_1=paste("/",currentTime,"/",sep = "")
@@ -121,6 +160,7 @@ server <- function(input, output) {
         #TODO
         zip(zipfile = file, files = files2zip, extra="-r")
         setwd(oldwd)
+        material_spinner_hide(session, "n_plot")
         
       }, error = function(e) {
         showNotification(paste0("ERROR: ",e), type = "error")

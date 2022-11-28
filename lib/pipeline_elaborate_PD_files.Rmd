@@ -50,7 +50,6 @@ params:
 # dir.create(file.path(dirOutput_2, dirOutput_1), showWarnings = FALSE)
 # dirOutput=paste(dirOutput_2,dirOutput_1,sep = "")
 dirOutput = params$dirOutput
-
 #Auto-install needed library
 list.of.packages <- c("ggrepel","tidyr","ggraph","graphlayouts","RColorBrewer",
                       "scales","igraph","data.table","qpdf","devtools",
@@ -933,11 +932,15 @@ colnames(expr_se_df)[-1]<-paste0(colnames(expr_se_df)[-1],"_se")
 expr_avgse_df<- suppressMessages(left_join(expr_avg_df,expr_se_df))
 rownames(expr_avgse_df) <- expr_avgse_df$id
 toPrint<-expr_avgse_df
-colnames(toPrint)[1]<-"GeneSymbol"
+colnames(toPrint)[1]<-"symbol"
+
+n_pep_prot <- psm_anno_df %>% dplyr::group_by(symbol, .drop=FALSE) %>% dplyr::summarise("Num. Peptides"=n_distinct(row)) %>% ungroup()
+toPrint_datGene<-dat_gene
+toPrint_datGene$symbol<-rownames(dat_gene)
 
 #Export table with SE e MEAN
-df_to_save<-list("Normalized proteins matrix intensity"=cbind("GeneSymbol"=rownames(dat_gene),dat_gene[,order(names(dat_gene), decreasing = TRUE)]),
-                 "Normalized proteins intensity group by condition"=toPrint)
+df_to_save<-list("Normalized proteins matrix intensity"=left_join(n_pep_prot,toPrint_datGene),
+                 "Normalized proteins intensity group by condition"=left_join(n_pep_prot,toPrint))
 # writexl::write_xlsx(df_to_save,paste0(dirOutput,"normalised_intensity_table.xlsx"))
 # remove(expr_mat,expr_l_df,expr_cond_df,expr_se_df,expr_avg_df,toPrint)
 
@@ -1945,4 +1948,19 @@ cat("\n")
 cat("The network are not reported in this report since for each comparison are generated 2 figures since we use 2 layouts for the nodes. For each comparison a 2-page pdf file is created. \n")
 
 message("Cleaning...")
+```
+
+
+```{r save_df, echo=F, message=F, warning=F}
+save(c_anno, 
+     dat_gene, 
+     dat_pep, 
+     psm_peptide_table, 
+     deps_l_df, 
+     deps_pep_l_df, 
+     expr_avgse_df, 
+     expr_avgse_pep_df, 
+     formule_contrast, 
+     colour_vec,
+     file = paste0(dirOutput,"database_env_R.RData"))
 ```
