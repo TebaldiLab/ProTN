@@ -17,6 +17,8 @@ library(shinyjs)
 library(magrittr)
 library(dplyr)
 library(stringr)
+library(future)
+plan(multisession)
 
 
 
@@ -311,24 +313,25 @@ server <- function(input, output, session) {
               enrich_filter_DBs = input$DB_enrich,
               dirOutput = dirOutput_Server
             )
-
-            # Knit the document, passing in the `params` list, and eval it in a
-            # child of the global environment (this isolates the code in the document
-            # from the code in this app).
-            rmarkdown::render("lib/pipeline_elaborate_PD_files.Rmd",
-              output_file = "report.html",
-              output_dir = dirOutput_Server,
-              params = params,
-              envir = new.env(parent = globalenv())
-            )
-
-            oldwd <- getwd()
-            setwd(dirOutput_Server)
-            files2zip <- list.files("./", recursive = TRUE)
-            # TODO
-            zip(zipfile = file, files = files2zip, extra = "-r")
-            setwd(oldwd)
-
+            
+            future({
+              # Knit the document, passing in the `params` list, and eval it in a
+              # child of the global environment (this isolates the code in the document
+              # from the code in this app).
+              rmarkdown::render("lib/pipeline_elaborate_PD_files.Rmd",
+                output_file = "report.html",
+                output_dir = dirOutput_Server,
+                params = params,
+                envir = new.env(parent = globalenv())
+              )
+  
+              oldwd <- getwd()
+              setwd(dirOutput_Server)
+              files2zip <- list.files("./", recursive = TRUE)
+              # TODO
+              zip(zipfile = file, files = files2zip, extra = "-r")
+              setwd(oldwd)
+            })
             shinyjs::enable("report")
             shinyjs::enable("case_study")
           })
@@ -395,23 +398,24 @@ server <- function(input, output, session) {
               dirOutput = dirOutput_Server
             )
 
-            # Knit the document, passing in the `params` list, and eval it in a
-            # child of the global environment (this isolates the code in the document
-            # from the code in this app).
-            rmarkdown::render("lib/pipeline_elaborate_PD_files.Rmd",
-              output_file = "report.html",
-              output_dir = dirOutput_Server,
-              params = params,
-              envir = new.env(parent = globalenv())
-            )
-
-            oldwd <- getwd()
-            setwd(dirOutput_Server)
-            files2zip <- list.files("./", recursive = TRUE)
-            # TODO
-            zip(zipfile = file, files = files2zip, extra = "-r")
-            setwd(oldwd)
-
+            future({
+              # Knit the document, passing in the `params` list, and eval it in a
+              # child of the global environment (this isolates the code in the document
+              # from the code in this app).
+              rmarkdown::render("lib/pipeline_elaborate_PD_files.Rmd",
+                output_file = "report.html",
+                output_dir = dirOutput_Server,
+                params = params,
+                envir = new.env(parent = globalenv())
+              )
+  
+              oldwd <- getwd()
+              setwd(dirOutput_Server)
+              files2zip <- list.files("./", recursive = TRUE)
+              # TODO
+              zip(zipfile = file, files = files2zip, extra = "-r")
+              setwd(oldwd)
+            })
             shinyjs::enable("report")
             shinyjs::enable("case_study")
           })

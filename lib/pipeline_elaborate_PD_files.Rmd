@@ -143,8 +143,8 @@ shiny::setProgress(0.01, detail = "Initialize...")  # set progress to 50%
 
 ```{r load_settings, warning=FALSE, echo=F, message=FALSE, results='hide'}
 message("Reading options")
-tpm<-getwd()
-save(params, tpm, file = "/home/gabriele/Desktop/UNITN/Proteomics_internship/ProTN/lib/tmp.RData")
+# tpm<-getwd()
+# save(params, tpm, file = "/home/gabriele/Desktop/UNITN/Proteomics_internship/ProTN/lib/tmp.RData")
 #Load the excel file with  the basic settings
 # input_settings <- tryCatch({suppressMessages({readxl::read_excel("options.xlsx", col_names = F)})},
 #                            error=function(cond){stop("Error: \'options.xlsx\' not present in the current folder. Follow the instruction in the README.")})
