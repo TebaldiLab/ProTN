@@ -1,0 +1,139 @@
+
+.col-sm-8 {
+  width: 100%;
+}
+
+img.image-thumb {
+  width: 600px;
+}
+
+.shiny-material-button {
+  margin-top: 0px;
+}
+
+.waves-effect {
+  margin-right: 20px;
+}
+
+.navbar-static-top {
+  line-height: normal;
+  height: auto;
+}
+
+.shiny-input-container > .shiny-input-container-inline {
+  width: 100%;
+}
+
+.shiny-input-container {
+  width: 100%;
+}
+
+.shiny-input-container:not(.shiny-input-container-inline){
+    width: 100%;
+
+}
+
+ul {
+  list-style-type: disc;
+}
+
+.row {
+  display: flex;
+}
+
+#help_btn1, #help_btn2,
+#help_btn3, #help_btn4,
+#help_btn5, #help_btn6,
+#help_btn7, #help_btn8,
+#help_btn9, #help_btn10,
+#help_btn11, #help_btn12,
+#help_btn13, #help_btn14,
+#help_btn15, #help_btn16,
+#help_btn17, #help_btn18 {
+  border-radius: 17px;
+  padding: revert;
+  margin: 14px;
+  max-width: max-content;
+
+}
+
+#shiny-notification-panel {
+ position:fixed;
+ width: 350px;
+ padding: 10px;
+}
+
+li {
+  display: list-item;
+  list-style-type: disc;
+  padding-left: 10px;
+}
+
+li.browser-default {
+  display: list-item;
+  list-style-type: disc;
+  padding-left: 10px;
+}
+
+h2 {
+  font-size: 30px;
+}
+
+h3 {
+  font-size: 24px;
+}
+
+p {
+  font-size: 16px;
+}
+
+#logo_UNITN {
+  width: 30%;
+  max-width: 400px;
+}
+
+.card {
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+  max-width: 300px;
+  margin: auto;
+  text-align: center;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.title {
+  color: grey;
+  font-size: 18px;
+}
+
+button {
+  border: none;
+  outline: 0;
+  display: inline-block;
+  padding: 8px;
+  color: white;
+  background-color: #000;
+  text-align: center;
+  cursor: pointer;
+  width: 100%;
+  font-size: 18px;
+}
+
+a {
+  text-decoration: none;
+  font-size: 16px;
+  color: black;
+}
+
+.fa {
+  text-decoration: none;
+  font-size: 22px;
+  display: inline-block;
+  font: normal normal normal 22px/1 FontAwesome;
+  text-rendering: auto;
+  -webkit-font-smoothing: antialiased;
+}
+
+button:hover, a:hover {
+  opacity: 0.7;
+}
