@@ -1,5 +1,5 @@
 background.R
-outputResults/
+outputResults/*
 images/
 images\
 tmp/
@@ -21,3 +21,5 @@ lib/readme.html
 .Rhistory
 .Rhistory
 www/README.md
+lib/tmp.RData
+README.html
