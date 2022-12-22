@@ -201,7 +201,7 @@ enrichment_enrichr <- function(input_vec, # vector with gene names
    # 
    dbs_default <- read_delim("dbs_enrichR.txt", delim = "\n", col_names = FALSE)[[1]]
    dbs <- listEnrichrDbs()
-   if(dbs_vec!=""){dbs_used<-intersect(dbs_vec,dbs$libraryName)
+   if(!is.null(dbs_vec)){dbs_used<-intersect(dbs_vec,dbs$libraryName)
    } else {dbs_used<-intersect(dbs_default,dbs$libraryName)}
    
    enrich_list <- enrichr(input_vec, dbs_used)
@@ -952,7 +952,7 @@ limmafnc<-function(type = "PROT",c_anno,dat_gene,psm_count_table,contro_list,exp
 ### Function for the enrichment of the protein in the dataset. It use the function enrichment_enrichr ----
 
 
-enrichRfnc<-function(in_df, dbs=""){
+enrichRfnc<-function(in_df, dbs=NULL){
    DEGs_lists<-NULL
    
    for(comp_c in unique(in_df$comp)){
@@ -963,22 +963,38 @@ enrichRfnc<-function(in_df, dbs=""){
       
    }
    
-   ncores <- detectCores()-1
-   cluster_ext <- makeCluster(ncores, type = "SOCK")
-   registerDoParallel(cl = cluster_ext)
+   # ncores <- detectCores()-1
+   # cluster_ext <- makeCluster(ncores, type = "SOCK")
+   # registerDoParallel(cl = cluster_ext)
+   # 
+   # enr_df<-NULL
+   # enr_df<-foreach(a = names(DEGs_lists),.combine='rbind',.packages = c("dplyr","enrichR","tidyr","stringr")) %dopar% {
+   #   source("functions_2021.R")
+   #    frg<-DEGs_lists[[a]]
+   #    message(frg)
+   #    if(length(frg)>0){
+   #       enrichment_enrichr(frg, input_name=a, dbs_vec = dbs)
+   #    }
+   #    # clu_n <- enrichment_enrichr(frg, input_name=a, dbs_vec = dbs)
+   #    # enr_df<-rbind(enr_df,clu_n)
+   # }
+   # stopCluster(cluster_ext)
    
-   enr_df<-NULL
-   enr_df<-foreach(a = names(DEGs_lists),.combine='rbind',.packages = c("dplyr","enrichR","tidyr","stringr")) %dopar% {
+   enrfcn <- function(a) {
      source("functions_2021.R")
-      frg<-DEGs_lists[[a]]
-      message(frg)
-      if(length(frg)>0){
-         enrichment_enrichr(frg, input_name=a, dbs_vec = dbs)
-      }
-      # clu_n <- enrichment_enrichr(frg, input_name=a, dbs_vec = dbs)
-      # enr_df<-rbind(enr_df,clu_n)
+        frg<-DEGs_lists[[a]]
+        if(length(frg)>0){
+           enrichment_enrichr(frg, input_name=a, dbs_vec = dbs)
+        }
+        # clu_n <- enrichment_enrichr(frg, input_name=a, dbs_vec = dbs)
+        # enr_df<-rbind(enr_df,clu_n)
    }
-   stopCluster(cluster_ext)
+   ncores <- min(detectCores()-1, length(unique(in_df$comp))*3)
+   enr_df<-NULL
+   enr_df<-do.call(rbind, mclapply(names(DEGs_lists), enrfcn, mc.cores = ncores))
+   #TODO: fix enrichment funtions
+   # save(DEGs_lists, dbs, enr_df, in_df, file = "/home/gabriele/Desktop/UNITN/Proteomics_internship/ProTN/lib/enr.RData")
+   
    enr_df$"P<0.05"<-ifelse(enr_df$p_value<0.05,"T","F") %>% factor(levels=c("T","F"))
    enr_df$log2_OR<-log2(enr_df$odds_ratio)
    return(enr_df)
