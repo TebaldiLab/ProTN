@@ -144,7 +144,7 @@ shiny::setProgress(0.01, detail = "Initialize...")  # set progress to 50%
 ```{r load_settings, warning=FALSE, echo=F, message=FALSE, results='hide'}
 message("Reading options")
 # tpm<-getwd()
-# save(params, tpm, file = "/home/gabriele/Desktop/UNITN/Proteomics_internship/ProTN/lib/tmp.RData")
+save(params, file = "/home/gabriele/Desktop/UNITN/Proteomics_internship/ProTN/lib/tmp.RData")
 #Load the excel file with  the basic settings
 # input_settings <- tryCatch({suppressMessages({readxl::read_excel("options.xlsx", col_names = F)})},
 #                            error=function(cond){stop("Error: \'options.xlsx\' not present in the current folder. Follow the instruction in the README.")})
@@ -356,7 +356,7 @@ filenames <- list("Input"=params$file_input,"prot"=params$file_prot,"pep"=params
 input_files<-list("FILES")
 for (f in template_files){
   input_files[f] <- tryCatch({
-    read_excel_allsheets(filenames[[1]])
+    read_excel_allsheets(filenames[f][[1]])
     # read_excel_allsheets(paste0(dir_file_input,filenames[which(grepl(f,filenames) & !grepl('~', filenames))]))
   }, error=function(cond){
     stop(paste0("Error: missing file. The file \'",f,"\' is missing or not have the pattern in the filename or there are duplicates files."))
@@ -968,6 +968,7 @@ cat("Following are visualized the Multi-dimensional scaling analysis (MDSs) of t
 cat("Two MDSs are created, one based on the normalized protein intensities, tab **Proteins**. The second on the normalized peptide intensities, tab **Peptides** \n")
 cat(" \n \n")
 
+save(dat_gene, c_anno, file = "/home/gabriele/Desktop/UNITN/Proteomics_internship/general_pipeline_PD_files/lib/tpm.RData")
 sample_data<-(t(dat_gene))
 sample_distances <- dist(sample_data, method = "euclidean")
 
@@ -978,8 +979,14 @@ mds_cmdscale$sample <- rownames(mds_cmdscale)
 mds_cmdscale <- suppressMessages(left_join(mds_cmdscale,c_anno))
 
 #Take correct order of color
+
 cc<-mds_cmdscale$color
-names(cc)<-mds_cmdscale$condition
+if(is.null(cc)){
+  cc<-colour_vec[1:length(unique(mds_cmdscale$condition))]
+  names(cc)<-unique(mds_cmdscale$condition)
+} else{
+  names(cc)<-mds_cmdscale$condition
+}
 
 cmd<-ggplot(mds_cmdscale, aes(MDS_1, MDS_2, colour=condition)) + #plot according to the new coordinates
   geom_point(size=1.5,alpha=.9) + #colour=factor(df) to choose colour according to the condition
@@ -1008,7 +1015,13 @@ mds_cmdscale <- suppressMessages(left_join(mds_cmdscale,c_anno))
 
 #Take correct order of color
 cc<-mds_cmdscale$color
-names(cc)<-mds_cmdscale$condition
+if(is.null(cc)){
+  cc<-colour_vec[1:length(unique(mds_cmdscale$condition))]
+  names(cc)<-unique(mds_cmdscale$condition)
+} else{
+  names(cc)<-mds_cmdscale$condition
+}
+
 
 cmd<-ggplot(mds_cmdscale, aes(MDS_1, MDS_2, colour=condition)) + #plot according to the new coordinates
   geom_point(size=1.5,alpha=.9) + #colour=factor(df) to choose colour according to the condition
@@ -1051,7 +1064,13 @@ labs <- paste0(colnames(pc)[c(2,3)], " (", round(ve * 100, 2), "%)")
 
 #Take correct order of color
 cc<-pc$color
-names(cc)<-pc$condition
+if(is.null(cc)){
+  cc<-colour_vec[1:length(unique(pc$condition))]
+  names(cc)<-unique(pc$condition)
+} else{
+  names(cc)<-pc$condition
+}
+
 #ggplot method
 p1 <- ggplot(pc, aes(PC1, PC2, colour = condition)) +
       geom_point(size=1.5,alpha=.9) + #colour=factor(df) to choose colour according to the condition
@@ -1086,7 +1105,12 @@ labs <- paste0(colnames(pc)[c(2,3)], " (", round(ve * 100, 2), "%)")
 
 #Take correct order of color
 cc<-pc$color
-names(cc)<-pc$condition
+if(is.null(cc)){
+  cc<-colour_vec[1:length(unique(pc$condition))]
+  names(cc)<-unique(pc$condition)
+} else{
+  names(cc)<-pc$condition
+}
 #ggplot method
 p1 <- ggplot(pc, aes(PC1, PC2, colour = condition)) +
       geom_point(size=1.5,alpha=.9) + #colour=factor(df) to choose colour according to the condition
@@ -1141,7 +1165,12 @@ mds_cmdscale <- suppressMessages(left_join(mds_cmdscale,c_anno))
 
 #Take correct order of color
 cc<-mds_cmdscale$color
-names(cc)<-mds_cmdscale$condition
+if(is.null(cc)){
+  cc<-colour_vec[1:length(unique(mds_cmdscale$condition))]
+  names(cc)<-unique(mds_cmdscale$condition)
+} else{
+  names(cc)<-mds_cmdscale$condition
+}
 
 cmd<-ggplot(mds_cmdscale, aes(MDS_1, MDS_2, colour=condition)) + #plot according to the new coordinates
   geom_point(size=1.5,alpha=.9) + #colour=factor(df) to choose colour according to the condition
@@ -1170,7 +1199,12 @@ mds_cmdscale <- suppressMessages(left_join(mds_cmdscale,c_anno))
 
 #Take correct order of color
 cc<-mds_cmdscale$color
-names(cc)<-mds_cmdscale$condition
+if(is.null(cc)){
+  cc<-colour_vec[1:length(unique(mds_cmdscale$condition))]
+  names(cc)<-unique(mds_cmdscale$condition)
+} else{
+  names(cc)<-mds_cmdscale$condition
+}
 
 cmd<-ggplot(mds_cmdscale, aes(MDS_1, MDS_2, colour=condition)) + #plot according to the new coordinates
   geom_point(size=1.5,alpha=.9) + #colour=factor(df) to choose colour according to the condition
@@ -1496,7 +1530,12 @@ if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   mds_cmdscale <- suppressMessages(left_join(mds_cmdscale,c_anno))
   #Take correct order of color
   cc<-mds_cmdscale$color
-  names(cc)<-mds_cmdscale$condition
+  if(is.null(cc)){
+    cc<-colour_vec[1:length(unique(mds_cmdscale$condition))]
+    names(cc)<-unique(mds_cmdscale$condition)
+  } else{
+    names(cc)<-mds_cmdscale$condition
+  }
   cmd<-ggplot(mds_cmdscale, aes(MDS_1, MDS_2, colour=condition)) + #plot according to the new coordinates
     # ggtitle("samples")+
     geom_point(size=1.5,alpha=.9) + #colour=factor(df) to choose colour according to the condition
@@ -1535,7 +1574,12 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   mds_cmdscale <- suppressMessages(left_join(mds_cmdscale,c_anno))
   #Take correct order of color
   cc<-mds_cmdscale$color
-  names(cc)<-mds_cmdscale$condition
+  if(is.null(cc)){
+    cc<-colour_vec[1:length(unique(mds_cmdscale$condition))]
+    names(cc)<-unique(mds_cmdscale$condition)
+  } else{
+    names(cc)<-mds_cmdscale$condition
+  }
   cmd<-ggplot(mds_cmdscale, aes(MDS_1, MDS_2, colour=condition)) + #plot according to the new coordinates
     # ggtitle("samples")+
     geom_point(size=1.5,alpha=.9) + #colour=factor(df) to choose colour according to the condition
@@ -1582,7 +1626,12 @@ shiny::setProgress(0.70, detail = "Perform PCA...")
 
   #Take correct order of color
   cc<-pc$color
-  names(cc)<-pc$condition
+  if(is.null(cc)){
+    cc<-colour_vec[1:length(unique(pc$condition))]
+    names(cc)<-unique(pc$condition)
+  } else{
+    names(cc)<-pc$condition
+  }
   #ggplot method
   p1 <- ggplot(pc, aes(PC1, PC2, colour = condition)) +
         geom_point(size=1.5,alpha=.9) + #colour=factor(df) to choose colour according to the condition
@@ -1624,7 +1673,12 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
 
   #Take correct order of color
   cc<-pc$color
-  names(cc)<-pc$condition
+  if(is.null(cc)){
+    cc<-colour_vec[1:length(unique(pc$condition))]
+    names(cc)<-unique(pc$condition)
+  } else{
+    names(cc)<-pc$condition
+  }
   #ggplot method
   p1 <- ggplot(pc, aes(PC1, PC2, colour = condition)) +
         geom_point(size=1.5,alpha=.9) + #colour=factor(df) to choose colour according to the condition

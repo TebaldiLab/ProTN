@@ -20,7 +20,9 @@ library(stringr)
 library(future)
 plan(multisession)
 
-
+jsCode <- "shinyjs.pageDisable = function(params){
+              $('body').css('pointer-events', params);
+            };"
 
 # Define UI for application that draws a histogram
 ui <- dashboardPage(
@@ -49,7 +51,15 @@ ui <- dashboardPage(
     # tags$link(rel="stylesheet", href="styles.css"),
     includeCSS("www/css/materialize.css"),
     includeScript("www/js/materialize.js"),
-    # tags$link(rel="stylesheet", href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"),
+    extendShinyjs(text = jsCode, functions = c("pageDisable")),
+    # tags$link(rel="stylesheet", href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"),,
+    conditionalPanel(
+      condition = "$(\'html\').hasClass(\'shiny-busy\')",
+      tags$div(class = "loader"),
+      tags$div(class = "prevent_click")
+    ),    
+    # shiny::tags$div(id="cover", class = "cover_hide"),
+
     tabItems(
       tabItem(
         tabName = "info",
@@ -58,77 +68,122 @@ ui <- dashboardPage(
       ),
       tabItem(
         tabName = "analysis",
-        fluidRow(
-          column(
-            width = 4,
-            fluidRow(
-              textInput("title_exp", "Title of the analysis"),
-              uiOutput("help1")
+        tagList(
+          fluidRow(
+            column(
+              width = 4,
+              fluidRow(
+                textInput("title_exp", "Title of the analysis"),
+                uiOutput("help1")
+              ),
+              fluidRow(
+                textAreaInput("description_exp", "Brief description", rows = 6),
+                uiOutput("help2")
+              ),
+              fluidRow(
+                radioButtons("sw_analyzer", "Software Analyzer", c("PD", "MQ"), inline = TRUE),
+                uiOutput("help3")
+              )
             ),
-            fluidRow(
-              textAreaInput("description_exp", "Brief description", rows = 6),
-              uiOutput("help2")
+            column(
+              width = 4,
+              fluidRow(
+                fileInput("input_file", "Select the INPUT file..."),
+                uiOutput("help4")
+              ),
+              fluidRow(
+                fileInput("pep_file", "Select the PEP file..."),
+                uiOutput("help5")
+              ),
+              fluidRow(
+                fileInput("prot_file", "Select the PROT file..."),
+                uiOutput("help6")
+              )
+
+              # fluidRow(
+              #   textInput("signal_DEPs", "Signal log2 expr thr", value = "inf"),
+              #   uiOutput("help7")
+              # ),
+              # fluidRow(
+              #   textInput("FC_DEPs", "Log2 FC thr", value = "0.75"),
+              #   uiOutput("help8")
+              # ),
+              # fluidRow(
+              #   textInput("pvalue_DEPs", "P.Value thr", value = "0.05"),
+              #   uiOutput("help9")
+              # ),
+              # fluidRow(
+              #   radioButtons("batch_corr", "Batch effect correction", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
+              #   uiOutput("help10")
+              # ),
+              # fluidRow(
+              #   textInput("prot_boxplot", "Control Boxplot proteins"),
+              #   uiOutput("help11")
+              # )
             ),
-            fluidRow(
-              radioButtons("sw_analyzer", "Software Analyzer", c("PD", "MQ"), inline = TRUE),
-              uiOutput("help3")
-            ),
-            fluidRow(
-              fileInput("input_file", "Select the INPUT file..."),
-              uiOutput("help4")
-            ),
-            fluidRow(
-              fileInput("pep_file", "Select the PEP file..."),
-              uiOutput("help5")
-            ),
-            fluidRow(
-              fileInput("prot_file", "Select the PROT file..."),
-              uiOutput("help6")
+            column(
+              width = 4,
+              fluidRow(
+                fileInput("design", "Select a file with the design for the comparisons..."),
+                uiOutput("help12")
+              ),
+              radioButtons("custom_param", "Use custom parameter", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
+              # fluidRow(
+              #   radioButtons("STRING", "Execute PPI network STRINGdb", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
+              #   uiOutput("help13")
+              # ),
+              # fluidRow(
+              #   radioButtons("enrichR", "Execute enrichment", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
+              #   uiOutput("help14")
+              # ),
+              # uiOutput("input_enrichment"),
+              fillRow(
+                downloadButton("report", "Generate report"),
+                downloadButton("case_study", "Case Study Example")
+              )
             )
           ),
-          column(
-            width = 4,
-            fluidRow(
-              textInput("signal_DEPs", "Signal log2 expr thr", value = "inf"),
-              uiOutput("help7")
-            ),
-            fluidRow(
-              textInput("FC_DEPs", "Log2 FC thr", value = "0.75"),
-              uiOutput("help8")
-            ),
-            fluidRow(
-              textInput("pvalue_DEPs", "P.Value thr", value = "0.05"),
-              uiOutput("help9")
-            ),
-            fluidRow(
-              radioButtons("batch_corr", "Batch effect correction", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
-              uiOutput("help10")
-            ),
-            fluidRow(
-              textInput("prot_boxplot", "Control Boxplot proteins"),
-              uiOutput("help11")
-            )
-          ),
-          column(
-            width = 4,
-            fluidRow(
-              fileInput("design", "Select a file with the design for the comparisons..."),
-              uiOutput("help12")
-            ),
-            fluidRow(
-              radioButtons("STRING", "Execute PPI network STRINGdb", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
-              uiOutput("help13")
-            ),
-            fluidRow(
-              radioButtons("enrichR", "Execute enrichment", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
-              uiOutput("help14")
-            ),
-            uiOutput("input_enrichment"),
-            fillRow(
-              downloadButton("report", "Generate report"),
-              downloadButton("case_study", "Case Study Example")
-            )
-          )
+          # fluidRow(
+          #   column(
+          #     width = 4,
+          #     fluidRow(
+          #       textInput("signal_DEPs", "Signal log2 expr thr", value = "inf"),
+          #       uiOutput("help7")
+          #     ),
+          #     fluidRow(
+          #       textInput("FC_DEPs", "Log2 FC thr", value = "0.75"),
+          #       uiOutput("help8")
+          #     ),
+          #     fluidRow(
+          #       textInput("pvalue_DEPs", "P.Value thr", value = "0.05"),
+          #       uiOutput("help9")
+          #     )
+          #   ),
+          #   column(
+          #     width = 4,
+          #     fluidRow(
+          #       radioButtons("batch_corr", "Batch effect correction", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
+          #       uiOutput("help10")
+          #     ),
+          #     fluidRow(
+          #       textInput("prot_boxplot", "Control Boxplot proteins"),
+          #       uiOutput("help11")
+          #     ),
+          #     fluidRow(
+          #       radioButtons("STRING", "Execute PPI network STRINGdb", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
+          #       uiOutput("help13")
+          #     ),
+          #     fluidRow(
+          #       radioButtons("enrichR", "Execute enrichment", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
+          #       uiOutput("help14")
+          #     )
+          #   ),
+          #   column(
+          #     width = 4,
+          #     uiOutput("input_enrichment")
+          #   )
+          # )
+          uiOutput("input_params")
         )
       ),
       tabItem(
@@ -175,6 +230,51 @@ server <- function(input, output, session) {
     }
   })
 
+  output$input_params <- renderUI({
+    if (input$custom_param){
+      fluidRow(
+          column(
+            width = 4,
+              fluidRow(
+                textInput("signal_DEPs", "Signal log2 expr thr", value = "inf"),
+                uiOutput("help7")
+              ),
+              fluidRow(
+                textInput("FC_DEPs", "Log2 FC thr", value = "0.75"),
+                uiOutput("help8")
+              ),
+              fluidRow(
+                textInput("pvalue_DEPs", "P.Value thr", value = "0.05"),
+                uiOutput("help9")
+              )
+          ),
+          column(
+            width = 4,
+            fluidRow(
+              radioButtons("batch_corr", "Batch effect correction", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
+              uiOutput("help10")
+            ),
+            fluidRow(
+              textInput("prot_boxplot", "Control Boxplot proteins"),
+              uiOutput("help11")
+            ),
+            fluidRow(
+              radioButtons("STRING", "Execute PPI network STRINGdb", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
+              uiOutput("help13")
+            ),
+            fluidRow(
+              radioButtons("enrichR", "Execute enrichment", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
+              uiOutput("help14")
+            )
+          ),
+          column(
+            width = 4,
+            uiOutput("input_enrichment")
+          )
+        )
+    }
+  })
+  
   # SHOW HELP NOTIFICATION
   setHelp <- function(x) {
     showNotification(
@@ -272,7 +372,8 @@ server <- function(input, output, session) {
           withProgress(message = "Rendering, please wait!", {
             shinyjs::disable("report")
             shinyjs::disable("case_study")
-
+            js$pageDisable("none")
+            
             dirOutput_2 <- tempdir()
             currentTime <- gsub(".*?([0-9]+).*?", "\\1", Sys.time())
             dirOutput_1 <- paste("/", currentTime, "/", sep = "")
@@ -314,7 +415,7 @@ server <- function(input, output, session) {
               dirOutput = dirOutput_Server
             )
             
-            future({
+            # future({
               # Knit the document, passing in the `params` list, and eval it in a
               # child of the global environment (this isolates the code in the document
               # from the code in this app).
@@ -331,15 +432,17 @@ server <- function(input, output, session) {
               # TODO
               zip(zipfile = file, files = files2zip, extra = "-r")
               setwd(oldwd)
-            })
+            # })
             shinyjs::enable("report")
             shinyjs::enable("case_study")
+            js$pageDisable("all")
           })
         },
         error = function(e) {
           showNotification(paste0("ERROR: ", e), type = "error")
           shinyjs::enable("report")
           shinyjs::enable("case_study")
+          js$pageDisable("all")
         }
       )
     }
@@ -352,8 +455,13 @@ server <- function(input, output, session) {
       tryCatch(
         {
           withProgress(message = "Rendering, please wait!", {
+            start.time <- Sys.time()
+            message(start.time)
+            # shinyjs::removeClass(id = "cover",class = "cover_hide")
+            # shinyjs::addClass(id = "cover",class = "cover_run")
             shinyjs::disable("report")
             shinyjs::disable("case_study")
+            js$pageDisable("none")
 
             dirOutput_2 <- tempdir()
             currentTime <- gsub(".*?([0-9]+).*?", "\\1", Sys.time())
@@ -379,7 +487,7 @@ server <- function(input, output, session) {
               batch_corr_exe = FALSE,
               contr_design = "../case_study_example/design.xlsx",
               prot_boxplot = "ABCF2, ACIN1",
-              run_enrich = TRUE,
+              run_enrich = FALSE,
               run_STRING = TRUE,
               pval_enrich_thr = "0.05",
               overlap_size_enrich_thr = as.integer(5),
@@ -398,7 +506,7 @@ server <- function(input, output, session) {
               dirOutput = dirOutput_Server
             )
 
-            future({
+            # future({
               # Knit the document, passing in the `params` list, and eval it in a
               # child of the global environment (this isolates the code in the document
               # from the code in this app).
@@ -412,18 +520,26 @@ server <- function(input, output, session) {
               oldwd <- getwd()
               setwd(dirOutput_Server)
               files2zip <- list.files("./", recursive = TRUE)
-              # TODO
               zip(zipfile = file, files = files2zip, extra = "-r")
               setwd(oldwd)
-            })
+            # })
             shinyjs::enable("report")
             shinyjs::enable("case_study")
+            # shinyjs::removeClass(id = "cover",class = "cover_run")
+            # shinyjs::addClass(id = "cover",class = "cover_hide")
+            js$pageDisable("all")
+            end.time <- Sys.time()
+            time.taken <- end.time - start.time
+            message(time.taken)
           })
         },
         error = function(e) {
           showNotification(paste0("ERROR: ", e), type = "error")
           shinyjs::enable("report")
           shinyjs::enable("case_study")
+          js$pageDisable("all")
+          # shinyjs::removeClass(id = "cover",class = "cover_run")
+          # shinyjs::addClass(id = "cover",class = "cover_hide")
         }
       )
     }
