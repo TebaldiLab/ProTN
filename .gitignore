@@ -25,3 +25,13 @@ lib/tmp.RData
 README.html
 lib/tmp.RData
 outputResults/results.zip
+data/MCF7.zip
+lib/tmp.RData
+lib/enr.RData
+outputResults/results.zip
+data/summary.txt
+R/enr.RData
+R/pipeline_elaborate_PD_files.nb.html
+R/network_cluster_profiler.R
+R/ggraph_network.R
+R/tmp.RData
