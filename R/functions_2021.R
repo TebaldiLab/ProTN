@@ -853,6 +853,7 @@ limmafnc<-function(type = "PROT",c_anno,dat_gene,psm_count_table,contro_list,exp
    colnames(design) = levels(as.factor(c_anno$condition))
    rownames(design)<-c_anno$sample
    gene_matrix = as.matrix(dat_gene)
+   gene_matrix <- gene_matrix[,rownames(design)]
    #DEqMS part analysis
    colnames(psm_count_table)<-c("gene","count")
    rownames(psm_count_table) = psm_count_table$gene
