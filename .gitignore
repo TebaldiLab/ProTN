@@ -1,7 +1,6 @@
 background.R
 outputResults/*
-images/
-images\
+
 tmp/
 .Rproj.user/
 .Rproj.user\

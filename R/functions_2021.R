@@ -993,7 +993,6 @@ enrichRfnc<-function(in_df, dbs=NULL){
    ncores <- min(detectCores()-1, length(unique(in_df$comp))*3)
    enr_df<-NULL
    enr_df<-do.call(rbind, mclapply(names(DEGs_lists), enrfcn, mc.cores = ncores))
-   #TODO: fix enrichment funtions
    # save(DEGs_lists, dbs, enr_df, in_df, file = "/home/gabriele/Desktop/UNITN/Proteomics_internship/ProTN/lib/enr.RData")
    
    enr_df$"P<0.05"<-ifelse(enr_df$p_value<0.05,"T","F") %>% factor(levels=c("T","F"))
