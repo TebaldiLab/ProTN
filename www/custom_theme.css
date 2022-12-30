@@ -1,4 +1,22 @@
 
+.skin-black .main-header>.logo {
+  background-color: #222d32;
+  border-right: 0px;
+  
+}
+
+.skin-black .main-header .navbar {
+  background-color: #008752;
+}
+
+.skin-black .main-header .navbar>.sidebar-toggle {
+  border-right: 1px solid #005835;
+}
+
+.main-sidebar {
+  padding-top: 70px;
+}
+
 .col-sm-8 {
   width: 100%;
 }
@@ -104,6 +122,14 @@ p {
   height: 90%;
 }
 
+.btn_example{
+    background-color: transparent;
+    color: #039be5;
+    font-style: italic;
+    text-decoration: underline;
+    font-family: math;
+}
+
 .card {
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
   max-width: 300px;
@@ -127,7 +153,7 @@ button {
   background-color: #000;
   text-align: center;
   cursor: pointer;
-  width: 100%;
+/*  width: 100%; */
   font-size: 18px;
 }
 
