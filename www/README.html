@@ -1,165 +1,298 @@
-<div role="tabpanel" class="tab-pane active" id="shiny-tab-info">
-	<p>ProTN is an integrative pipeline that analyze proteomics data obtained from MS. This pipeline take in input the raw files from <a href="https://www.thermofisher.com/it/en/home/industrial/mass-spectrometry/liquid-chromatography-mass-spectrometry-lc-ms/lc-ms-software/multi-omics-data-analysis/proteome-discoverer-software.html">Proteome Discoverer</a> (PD) or <a href="https://maxquant.org/">MaxQuant</a> (MQ).
-		In the first phases it imputes and normalizes the data obtaining the matrix that is used in the enrichment analysis of the proteins.
-		The enrichment perform a complete analysis in <a href="https://maayanlab.cloud/Enrichr/">EnrichR</a> obtaining the results from all the DBs in it, and a PPI network analysis via <a href="https://string-db.org/">STRING</a>, During the enrichment steps, the only protein analyzed are the up- or down-regulated, discriminated by the following parameters.
-	</p>
+<p>ProTN is an integrative pipeline that analyze proteomics data
+	obtained from MS. This pipeline take in input the raw files from <a href="https://www.thermofisher.com/it/en/home/industrial/mass-spectrometry/liquid-chromatography-mass-spectrometry-lc-ms/lc-ms-software/multi-omics-data-analysis/proteome-discoverer-software.html">Proteome
+	Discoverer</a> (PD) or <a href="https://maxquant.org/">MaxQuant</a>
+	(MQ). In the first phases it imputes and normalizes the data obtaining
+	the matrix that is used in the enrichment analysis of the proteins. The
+	enrichment perform a complete analysis in <a href="https://maayanlab.cloud/Enrichr/">EnrichR</a> obtaining the
+	results from all the DBs in it, and a PPI network analysis via <a href="https://string-db.org/">STRING</a>, During the enrichment steps,
+	the only protein analyzed are the up- or down-regulated, discriminated
+	by the following parameters.
+</p>
+<div id="workflow-of-protn" class="section level2">
 	<h2>Workflow of ProTN</h2>
 	<p>Lorem Ipsum</p>
-	<h3>Parameters required before the execution</h3>
-	<!--TODO: ADD DIA analysis-->
-	<ul>
-		<li>
-			<p><code>Title of Analysis</code>: title of the experiment.
-				It will be the title of the web page report.
-			</p>
-		</li>
-		<li>
-			<p><code>Brief Description</code>: description of the current experiment.
-				It is the first paragraph of the report.
-			</p>
-		</li>
-		<li>
-			<p><code>Software Analyzer</code>: determine with software was use to identify peptides and proteins.
-				<strong>PD</strong> for Protein Discoverer, <strong>MQ</strong> for MaxQuant.
-			</p>
-		</li>
-		<li>
-			<p><code>Input file</code>: file with the information about the samples and the correlation between replicate ID and condition.
-				The <strong>Input</strong> file is an Excel file with the following column (<em>click HERE to see an example</em>):
-			</p>
-			<ul>
-				<li><strong>Condition</strong> column (<code>REQUIRED</code>): define the condition of each sample that divide the samples in groups. The conditions need to be the same of the the Contrast Design. In the example the two condition are DMSO and TRT.</li>
-				<li><strong>Color</strong> columns (<code>OPTIONAL</code>): define a color for the samples in the graphs. If not present use a default palette.</li>
-				<li><strong>MS_batch</strong> columns: define the groups of batch in the samples. <code>REQUIRED FOR BATCH EFFECT CORRECTION</code>.</li>
-				<li>
-					<strong>Sample</strong> column: define the names for the samples.
-					<ul>
-						<li>In case of <strong>PD</strong> files use the <em>Input</em> file obtained from PD, an example of PD Input file is present in <em>file_input_raw/Input_filter.xlsx</em>, the <strong>Sample</strong> column in optional, if is not present the software extract the names for the <strong>“File Name”</strong> column.</li>
-						<li>In case of <strong>MQ</strong> analysis the this column is <code>REQUIRED</code></li>
-					</ul>
-				</li>
-			</ul>
-		</li>
-		<li>
-			<p><code>Peptides file</code>: raw file of peptides obtained from PD or MQ (file <strong>peptides.txt</strong>).</p>
-		</li>
-		<li>
-			<p><code>Proteins file</code>: raw file of protein groups obtained from PD or MQ (file <strong>proteinGroups.txt</strong>).</p>
-		</li>
-		<li>
-			<p><code>Signal log2 expr thr</code>: signal log2 expression threshold for the differential analysis.
-				<em>DEFAULT:</em> DEPs if <code>Signal log2 expression threshold &gt; -∞</code> (No Limit, represent by value “inf” in the cell)
-			</p>
-		</li>
-		<li>
-			<p><code>Log2 FC thr</code>: Fold Change threshold for the differential analysis.
-				<em>DEFAULT:</em> DEPs if <code>log2 Fold Change threshold = 0.75</code> (Up-regulated &gt; 0.75, Down-regulated &lt; -0.75)
-			</p>
-		</li>
-		<li>
-			<p><code>P.Value thr</code>: p.value threshold for the differential analysis.
-				<em>DEFAULT:</em> DEPs if <code>P value threshold &lt; 0.05</code>
-			</p>
-		</li>
-		<li>
-			<p><code>Batch Correction</code>: execution of the batch effect correction performed by <a href="https://www.bioconductor.org/packages/release/bioc/html/proBatch.html">proBatch</a>.
-				(<strong>TRUE</strong> or <strong>FALSE</strong>).
-				If <strong>TRUE</strong>, column <strong>MS_batch</strong> required in <strong>Input</strong> file.
-			</p>
-		</li>
-		<li>
-			<p><code>Control Boxplot proteins</code>: list of proteins used as control of the intensities.
-				For each protein a boxplot is generated comparing the mean of the intensities group by condition.
-			</p>
-		</li>
-		<li>
-			<p><code>Design for the comparison file</code>: Excel file containing the formulas of the contrast comparison you want to analyse.
-				The table can have 3 columns (<em>click HERE to see an example</em>):
-			</p>
-			<ul>
-				<li><strong>Formule</strong> column (<code>REQUIRED</code>): The formulas need to follow the syntax of <a href="https://bioinf.wehi.edu.au/limma/">Limma</a>. <code>AT LEAST 1 FORMULA IS REQUIRED</code>.</li>
-				<li><strong>Name</strong> column (<code>OPTIONAL</code>): personalized name assign to the comparison.</li>
-				<li><strong>Color</strong> columns (<code>OPTIONAL</code>): define a color for the condition in the graphs. If not present use a default palette.</li>
-			</ul>
-		</li>
-		<li>
-			<p><code>Execute Enrichment</code>: boolean value for the execution of the enrichment step.
-				(<strong>TRUE</strong> or <strong>FALSE</strong>)
-			</p>
-		</li>
-		<li>
-			<p><code>Execute PPI network STRINGdb</code>: boolean value for the execution of the network analysis.
-				(<strong>TRUE</strong> or <strong>FALSE</strong>)
-			</p>
-		</li>
-		<li>
-			<p><code>P.Value thr for enrichment</code>: p.value threshold of the enriched terms.
-				<strong>DEFAULT:</strong> Term is significant if <code>P Value threshold for Enrichment &lt; 0.05</code>
-			</p>
-		</li>
-		<li>
-			<p><code>Overlap size thr for enrichment</code>: Overlap size threshold.
-				The overlap size is the number of DEPs discovered in the enriched terms.
-				<strong>DEFAULT:</strong> Term is significant if <code>Minimum number of overlap genes with enriched terms &gt; 5</code>
-			</p>
-		</li>
-		<li>
-			<p><code>Enrichment</code>: determine of filter the plot of the enrichment results.
-				The enrichment can be filter by terms or by DBs.
-				In the column <em>“Terms to search”</em> you can write the word that you want to search in the results of EnrichR (EX: MYC, C-MYC, Senescence,…).
-				Instead, in the column <em>“DB to analyse”</em> you can write the DBs that you want to see in your plots (EX: ChEA_2016, KEGG_2021_Human, BioPlanet_2019, GO_Biological_Process_2021,…), using the same name that you can find in EnrichR.
-				If the two columns are empty, no plots of enrichment are returned.
-			</p>
-		</li>
-	</ul>
+	<div id="parameters-required-before-the-execution" class="section level3">
+		<h3>Parameters required before the execution</h3>
+		<!--TODO: ADD DIA analysis-->
+		<ul>
+			<li>
+				<p><code>Title of Analysis</code>: title of the experiment. It will
+					be the title of the web page report.
+				</p>
+			</li>
+			<li>
+				<p><code>Brief Description</code>: description of the current
+					experiment. It is the first paragraph of the report.
+				</p>
+			</li>
+			<li>
+				<p><code>Software Analyzer</code>: determine with software was use
+					to identify peptides and proteins. <strong>PD</strong> for Protein
+					Discoverer, <strong>MQ</strong> for MaxQuant.
+				</p>
+			</li>
+			<li>
+				<p><code>Input file</code>: file with the information about the
+					samples and the correlation between replicate ID and condition. The
+					<strong>Input</strong> file is an Excel file with the following column
+					<button id="preview_input" type="button" class="btn_example" data-toggle="modal" data-target="#modal_Input_Example">[Example of an Input file HERE...]</button>:
+				</p>
+				<ul>
+					<li><strong>Condition</strong> column (<code>REQUIRED</code>): define
+						the condition of each sample that divide the samples in groups. The
+						conditions need to be the same of the the Contrast Design. In the
+						example the two condition are DMSO and TRT.
+					</li>
+					<li><strong>Color</strong> columns (<code>OPTIONAL</code>): define a
+						color for the samples in the graphs. If not present use a default
+						palette.
+					</li>
+					<li><strong>MS_batch</strong> columns: define the groups of batch in the
+						samples. <code>REQUIRED FOR BATCH EFFECT CORRECTION</code>.
+					</li>
+					<li>
+						<strong>Sample</strong> column: define the names for the samples.
+						<ul>
+							<li>In case of <strong>PD</strong> files use the <em>Input</em> file
+								obtained from PD, an example of PD Input file is present in
+								<em>file_input_raw/Input_filter.xlsx</em>, the <strong>Sample</strong>
+								column in optional, if is not present the software extract the names for
+								the <strong>“File Name”</strong> column.
+							</li>
+							<li>In case of <strong>MQ</strong> analysis the this column is
+								<code>REQUIRED</code>
+							</li>
+						</ul>
+					</li>
+				</ul>
+			</li>
+			<li>
+				<p><code>Peptides file</code>: raw file of peptides obtained from PD
+					or MQ (file <strong>peptides.txt</strong>).
+				</p>
+			</li>
+			<li>
+				<p><code>Proteins file</code>: raw file of protein groups obtained
+					from PD or MQ (file <strong>proteinGroups.txt</strong>).
+				</p>
+			</li>
+			<li>
+				<p><code>Signal log2 expr thr</code>: signal log2 expression
+					threshold for the differential analysis. <em>DEFAULT:</em> DEPs if
+					<code>Signal log2 expression threshold &gt; -∞</code> (No Limit,
+					represent by value “inf” in the cell)
+				</p>
+			</li>
+			<li>
+				<p><code>Log2 FC thr</code>: Fold Change threshold for the
+					differential analysis. <em>DEFAULT:</em> DEPs if
+					<code>log2 Fold Change threshold = 0.75</code> (Up-regulated &gt; 0.75,
+					Down-regulated &lt; -0.75)
+				</p>
+			</li>
+			<li>
+				<p><code>P.Value thr</code>: p.value threshold for the differential
+					analysis. <em>DEFAULT:</em> DEPs if
+					<code>P value threshold &lt; 0.05</code>
+				</p>
+			</li>
+			<li>
+				<p><code>Batch Correction</code>: execution of the batch effect
+					correction performed by <a href="https://www.bioconductor.org/packages/release/bioc/html/proBatch.html">proBatch</a>.
+					(<strong>TRUE</strong> or <strong>FALSE</strong>). If
+					<strong>TRUE</strong>, column <strong>MS_batch</strong> required in
+					<strong>Input</strong> file.
+				</p>
+			</li>
+			<li>
+				<p><code>Control Boxplot proteins</code>: list of proteins used as
+					control of the intensities. For each protein a boxplot is generated
+					comparing the mean of the intensities group by condition.
+				</p>
+			</li>
+			<li>
+				<p><code>Design for the comparison file</code>: Excel file
+					containing the formulas of the contrast comparison you want to analyse.
+					The table can have 3 columns <button id="preview_design" type="button" class="btn_example" data-toggle="modal" data-target="#modal_Design_Example">[Example of Design file HERE...]</button>:
+				</p>
+				<ul>
+					<li><strong>Formule</strong> column (<code>REQUIRED</code>): The
+						formulas need to follow the syntax of <a href="https://bioinf.wehi.edu.au/limma/">Limma</a>.
+						<code>AT LEAST 1 FORMULA IS REQUIRED</code>.
+					</li>
+					<li><strong>Name</strong> column (<code>OPTIONAL</code>): personalized
+						name assign to the comparison.
+					</li>
+					<li><strong>Color</strong> columns (<code>OPTIONAL</code>): define a
+						color for the condition in the graphs. If not present use a default
+						palette.
+					</li>
+				</ul>
+			</li>
+			<li>
+				<p><code>Execute Enrichment</code>: boolean value for the execution
+					of the enrichment step. (<strong>TRUE</strong> or
+					<strong>FALSE</strong>)
+				</p>
+			</li>
+			<li>
+				<p><code>Execute PPI network STRINGdb</code>: boolean value for the
+					execution of the network analysis. (<strong>TRUE</strong> or
+					<strong>FALSE</strong>)
+				</p>
+			</li>
+			<li>
+				<p><code>P.Value thr for enrichment</code>: p.value threshold of the
+					enriched terms. <strong>DEFAULT:</strong> Term is significant if
+					<code>P Value threshold for Enrichment &lt; 0.05</code>
+				</p>
+			</li>
+			<li>
+				<p><code>Overlap size thr for enrichment</code>: Overlap size
+					threshold. The overlap size is the number of DEPs discovered in the
+					enriched terms. <strong>DEFAULT:</strong> Term is significant if
+					<code>Minimum number of overlap genes with enriched terms &gt; 5</code>
+				</p>
+			</li>
+			<li>
+				<p><code>Enrichment</code>: determine of filter the plot of the
+					enrichment results. The enrichment can be filter by terms or by DBs. In
+					the column <em>“Terms to search”</em> you can write the word that you
+					want to search in the results of EnrichR (EX: MYC, C-MYC, Senescence,…).
+					Instead, in the column <em>“DB to analyse”</em> you can write the DBs
+					that you want to see in your plots (EX: ChEA_2016, KEGG_2021_Human,
+					BioPlanet_2019, GO_Biological_Process_2021,…), using the same name that
+					you can find in EnrichR. If the two columns are empty, no plots of
+					enrichment are returned.
+				</p>
+			</li>
+		</ul>
+	</div>
+</div>
+<div id="example-case-study---proteomics-of-mcf7-cells" class="section level2">
 	<h2>Example case study - Proteomics of MCF7 cells</h2>
-	<p>Proteomics of MCF7 cells (LC-MS/MS Orbitrap Fusion Tribrid).
-		PRIDE: <a href="http://proteomecentral.proteomexchange.org/cgi/GetDataset?ID=PXD009417">PXD009417</a>.
-		Its execution is performed clicking the button <strong>Case Study Example</strong>.
-		Clamer M, Tebaldi T, Lauria F, et al.
-		Active Ribosome Profiling with RiboLace.
-		Cell Rep. 2018;25(4):1097-1108.e5.
+	<p>Proteomics of MCF7 cells (LC-MS/MS Orbitrap Fusion Tribrid). PRIDE:
+		<a href="http://proteomecentral.proteomexchange.org/cgi/GetDataset?ID=PXD009417">PXD009417</a>.
+		Its execution is performed clicking the button <strong>Case Study
+		Example</strong>. Clamer M, Tebaldi T, Lauria F, et al. Active Ribosome
+		Profiling with RiboLace. Cell Rep. 2018;25(4):1097-1108.e5.
 	</p>
+</div>
+<div id="details-on-the-output-files" class="section level2">
 	<h2>Details on the output files</h2>
 	<ul>
-		<li><strong>report.html</strong>: complete report of the analysis with all pics and results of the enrichment.</li>
-		<li><strong>database_env_R.RData</strong>: RData containing the essential variables for further analysis.</li>
-		<li><strong>normalised_intensity_table.xlsx</strong>: excel file with the matrix used in the analysis. In sheet <em>Normalized proteins matrix intensity</em> is written the normalized and imputed version of the original intensities of each protein in each sample. In sheet <em>Normalized peptides matrix intensity</em> is written the normalized and imputed version of the original intensities of each peptide in each sample. In sheet <em>Normalized proteins intensity group by</em> is written the average and the standard deviation of each condition described in the Input file for each protein. In sheet <em>Normalized peptides intensity group by</em> is written the average and the standard deviation of each condition described in the Input file for each peptide.</li>
+		<li><strong>report.html</strong>: complete report of the analysis with
+			all pics and results of the enrichment.
+		</li>
+		<li><strong>database_env_R.RData</strong>: RData containing the
+			essential variables for further analysis.
+		</li>
+		<li><strong>normalised_intensity_table.xlsx</strong>: excel file with
+			the matrix used in the analysis. In sheet <em>Normalized proteins matrix
+			intensity</em> is written the normalized and imputed version of the
+			original intensities of each protein in each sample. In sheet
+			<em>Normalized peptides matrix intensity</em> is written the normalized
+			and imputed version of the original intensities of each peptide in each
+			sample. In sheet <em>Normalized proteins intensity group by</em> is
+			written the average and the standard deviation of each condition
+			described in the Input file for each protein. In sheet <em>Normalized
+			peptides intensity group by</em> is written the average and the standard
+			deviation of each condition described in the Input file for each
+			peptide.
+		</li>
 		<li>
-			<strong>DEPs_table.xlsx</strong>: summary of the result of Limma. In sheet <em>DEPs_proteins</em>, Column <em>id</em> is the name of the protein. In sheet <em>DEPs_peptides</em>, column <em>Accession</em> is the UniprotID of protein, column <em>Description</em> is the description of protein, <em>GeneName</em> is Gene Symbol, <em>Annotated Sequence</em> is the sequence of peptides, <em>Modifications</em> is the modification that affect the peptides, <em>Position in Master Proteins</em> is the UniprotID with the position on the sequence. For each contrast rule are present 5 columns:
+			<strong>DEPs_table.xlsx</strong>: summary of the result of Limma. In
+			sheet <em>DEPs_proteins</em>, Column <em>id</em> is the name of the
+			protein. In sheet <em>DEPs_peptides</em>, column <em>Accession</em> is
+			the UniprotID of protein, column <em>Description</em> is the description
+			of protein, <em>GeneName</em> is Gene Symbol, <em>Annotated
+			Sequence</em> is the sequence of peptides, <em>Modifications</em> is the
+			modification that affect the peptides, <em>Position in Master
+			Proteins</em> is the UniprotID with the position on the sequence. For
+			each contrast rule are present 5 columns:
 			<ul>
-				<li><em>class</em>: is “+” if the protein is up-regulated following the parameters set in <strong>options.xlsx</strong>, “-” if the protein is down-regulated, “=” otherwise</li>
+				<li><em>class</em>: is “+” if the protein is up-regulated following the
+					parameters set in <strong>options.xlsx</strong>, “-” if the protein is
+					down-regulated, “=” otherwise
+				</li>
 				<li><em>log2_FC</em>: is the log2 Fold Change of the contrast</li>
 				<li><em>p_val</em>: is the p. value</li>
 				<li><em>p_adj</em>: is the adjusted p. value</li>
 				<li><em>log2_expr</em>: is the signal log2 expression</li>
 			</ul>
 		</li>
-		<li><strong>general_mds_proteins.pdf</strong>: MDS of the samples by proteins.</li>
-		<li><strong>general_mds_peptides.pdf</strong>: MDS of the samples by peptides.</li>
-		<li><strong>corrected_mds_proteins.pdf</strong>: MDS of the samples by proteins after the bacth effect correction.</li>
-		<li><strong>corrected_mds_peptides.pdf</strong>: MDS of the samples by peptides after the bacth effect correction.</li>
-		<li><strong>boxplot_control_intensity.pdf</strong>: boxplot for the control of the intensities of selected proteins.</li>
-		<li><strong>DEPs_proteins_count_barplot.pdf</strong>: number of DEPs find for each contrast design based on proteins. Light grey are the down-regulated, dark grey are the up-regulated genes.</li>
-		<li><strong>DEPs_peptides_count_barplot.pdf</strong>: number of DEPs find for each contrast design based on peptides. Light grey are the down-regulated, dark grey are the up-regulated genes.</li>
-		<li><strong>DEPs_proteins_mds.pdf</strong>: MDS of the DEPs discovered based on proteins.</li>
-		<li><strong>DEPs_peptides_mds.pdf</strong>: MDS of the DEPs discovered based on peptides.</li>
-		<li><strong>DEPs_enrichment_data.RData</strong>: result of the enrichment made with EnrichR.</li>
-		<li><strong>DEPs_enrichment_table.xlsx</strong>: excel with only the enriched terms with an high significance (P.Value &lt; 0.05, Overlap Size &gt;= 4).</li>
+		<li><strong>general_mds_proteins.pdf</strong>: MDS of the samples by
+			proteins.
+		</li>
+		<li><strong>general_mds_peptides.pdf</strong>: MDS of the samples by
+			peptides.
+		</li>
+		<li><strong>corrected_mds_proteins.pdf</strong>: MDS of the samples by
+			proteins after the bacth effect correction.
+		</li>
+		<li><strong>corrected_mds_peptides.pdf</strong>: MDS of the samples by
+			peptides after the bacth effect correction.
+		</li>
+		<li><strong>boxplot_control_intensity.pdf</strong>: boxplot for the
+			control of the intensities of selected proteins.
+		</li>
+		<li><strong>DEPs_proteins_count_barplot.pdf</strong>: number of DEPs
+			find for each contrast design based on proteins. Light grey are the
+			down-regulated, dark grey are the up-regulated genes.
+		</li>
+		<li><strong>DEPs_peptides_count_barplot.pdf</strong>: number of DEPs
+			find for each contrast design based on peptides. Light grey are the
+			down-regulated, dark grey are the up-regulated genes.
+		</li>
+		<li><strong>DEPs_proteins_mds.pdf</strong>: MDS of the DEPs discovered
+			based on proteins.
+		</li>
+		<li><strong>DEPs_peptides_mds.pdf</strong>: MDS of the DEPs discovered
+			based on peptides.
+		</li>
+		<li><strong>DEPs_enrichment_data.RData</strong>: result of the
+			enrichment made with EnrichR.
+		</li>
+		<li><strong>DEPs_enrichment_table.xlsx</strong>: excel with only the
+			enriched terms with an high significance (P.Value &lt; 0.05, Overlap
+			Size &gt;= 4).
+		</li>
 		<li>
-			<strong>enrich</strong> directory: plots of the enrichment data under the parameters described in the <strong>option.xlsx</strong> file
+			<strong>enrich</strong> directory: plots of the enrichment data
+			under the parameters described in the <strong>option.xlsx</strong> file
 			<ul>
-				<li><strong>DBs_enr.pdf</strong>: dot matrix of the enrichment result divided in up- and down-regulated genes. Filtered by the datasets choose in the <strong>options</strong> file.</li>
-				<li><strong>terms_enr.pdf</strong>: dot matrix of the enrichment result divided in up- and down-regulated genes. Filtered by the terms written in the <strong>options</strong> file.</li>
-				<li><strong>DBs_enr_all.pdf</strong>: dot matrix of the enrichment result combining the up- and down- regulated genes in a single list. Filtered by the datasets choose in the <strong>options</strong> file.</li>
-				<li><strong>terms_enr_all.pdf</strong>: dot matrix of the enrichment result combining the up- and down- regulated genes in a single list. Filtered by the terms written in the <strong>options</strong> file.</li>
+				<li><strong>DBs_enr.pdf</strong>: dot matrix of the enrichment result
+					divided in up- and down-regulated genes. Filtered by the datasets choose
+					in the <strong>options</strong> file.
+				</li>
+				<li><strong>terms_enr.pdf</strong>: dot matrix of the enrichment result
+					divided in up- and down-regulated genes. Filtered by the terms written
+					in the <strong>options</strong> file.
+				</li>
+				<li><strong>DBs_enr_all.pdf</strong>: dot matrix of the enrichment
+					result combining the up- and down- regulated genes in a single list.
+					Filtered by the datasets choose in the <strong>options</strong>
+					file.
+				</li>
+				<li><strong>terms_enr_all.pdf</strong>: dot matrix of the enrichment
+					result combining the up- and down- regulated genes in a single list.
+					Filtered by the terms written in the <strong>options</strong> file.
+				</li>
 			</ul>
 		</li>
 		<li>
-			<strong>network</strong> directory: plots of the up- and down- regulated genes based on STRINGdb. For each contrast design are create 2 files: <!-- - **Prefilter**: histogram representing the number of genes in each community discovered. -->
+			<strong>network</strong> directory: plots of the up- and down-
+			regulated genes based on STRINGdb. For each contrast design are create 2
+			files:
+			<!-- - **Prefilter**: histogram representing the number of genes in each community discovered. -->
 			<ul>
-				<li><strong>Postfilter</strong>: histogram representing the number of genes in each community discovered after a filter on the genes and on the links.</li>
-				<li><strong>Graph</strong>: visual representation of the network discovered in two layouts: <em>fr</em> and <em>kk</em>.</li>
+				<li><strong>Postfilter</strong>: histogram representing the number of
+					genes in each community discovered after a filter on the genes and on
+					the links.
+				</li>
+				<li><strong>Graph</strong>: visual representation of the network
+					discovered in two layouts: <em>fr</em> and <em>kk</em>.
+				</li>
 			</ul>
 		</li>
 	</ul>

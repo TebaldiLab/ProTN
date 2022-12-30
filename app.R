@@ -17,6 +17,8 @@ library(shinyjs)
 library(magrittr)
 library(dplyr)
 library(stringr)
+library(shinyBS)
+
 # library(future)
 # plan(multisession)
 
@@ -27,11 +29,11 @@ jsCode <- "shinyjs.pageDisable = function(params){
 # Define UI for application that draws a histogram
 ui <- dashboardPage(
   skin = "black",
+  title = "ProTN",
   # Application title
-  
   dashboardHeader(
     # title = "ProTN"
-    title=tags$a(href="https://127.0.0.1:8100",
+    title=tags$a(href="#shiny-tab-info",
                  tags$img(id="logo_protn", src="images/logo_scritta.png"))
   ),
   dashboardSidebar(
@@ -42,6 +44,9 @@ ui <- dashboardPage(
     )
   ),
   dashboardBody(
+    
+    tags$head(tags$link(rel="shortcut icon", href="images/favicon.ico")),
+    # tags$head(tags$title("ProTN")),
     useShinyjs(),
     includeCSS("www/custom_theme.css"),
     includeCSS("www/styles.css"),
@@ -56,7 +61,6 @@ ui <- dashboardPage(
     includeScript("www/js/materialize.js"),
     extendShinyjs(text = jsCode, functions = c("pageDisable")),
     
-    tags$head(tags$link(rel="shortcut icon", href="images/favicon.ico")),
     # tags$link(rel="stylesheet", href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"),,
     conditionalPanel(
       condition = "$(\'html\').hasClass(\'shiny-busy\')",
@@ -69,7 +73,17 @@ ui <- dashboardPage(
       tabItem(
         tabName = "info",
         # includeMarkdown("www/README.md")),
-        includeHTML("www/README.html")
+        includeHTML("www/README.html"),
+        bsModal("modal_Design_Example", 
+                "Design file Example", 
+                "preview_design", # <----set the observer to the right button
+                size = "large",
+                DT::dataTableOutput("design_df")),
+        bsModal("modal_Input_Example", 
+                "Input file Example", 
+                "preview_input", # <----set the observer to the right button
+                size = "large",
+                DT::dataTableOutput("input_df"))
       ),
       tabItem(
         tabName = "analysis",
@@ -217,6 +231,19 @@ server <- function(input, output, session) {
         )
       )
     }
+  })
+  
+  
+  #Show modals with example files
+  output$input_df <- DT::renderDataTable({
+    input_file <- readxl::read_xlsx("Data/Input.xlsx")
+    DT::datatable(input_file, escape = FALSE)
+    
+  })
+  
+  output$design_df <- DT::renderDataTable({
+    design_file <- readxl::read_xlsx("Data/design.xlsx")
+    DT::datatable(design_file, escape = FALSE)
   })
   
   # SHOW HELP NOTIFICATION
@@ -432,7 +459,7 @@ server <- function(input, output, session) {
               contr_design = "../Data/design.xlsx",
               prot_boxplot = "ABCF2, ACIN1",
               run_enrich = FALSE,
-              run_STRING = TRUE,
+              run_STRING = FALSE,
               pval_enrich_thr = "0.05",
               overlap_size_enrich_thr = as.integer(5),
               enrich_filter_term = NULL,

@@ -218,7 +218,7 @@ if(length(prot_boxplot)>0){ boxplot_prot_exe<-TRUE }
 doNextChunk_STRING <- doNextChunk <- run_enrich <- run_STRING <- FALSE
 run_enrich <- as.logical(params$run_enrich)
 run_STRING <- as.logical(params$run_STRING)
-save(params, file = "tmp.RData")
+# save(params, file = "tmp.RData")
 pval_enrich_thr <- if(is.null(params$pval_enrich_thr)){0.05
                    }else if(is.double(params$pval_enrich_thr)){params$pval_enrich_thr
                    }else{parse_double(params$pval_enrich_thr)}
@@ -478,6 +478,20 @@ colToKeep<-intersect(colnames(input_files$Input), c("Condition","Color","Sample"
 input_files$Input <- input_files$Input[,colToKeep]
 if(!("Condition" %in% colnames(input_files$Input))){ stop("Error: \'Condition\' column missin in \'Input\' file.") }
 if(!("Sample" %in% colnames(input_files$Input))){ stop("Error: \'Sample\' column missin in \'Input\' file.") }
+if(any(str_starts(input_files$Input$Condition, "[0-9]"))){
+  name<-names(formule_contrast)
+  formule_contrast <- lapply(unique(input_files$Input$Condition[(str_starts(input_files$Input$Condition, "[0-9]"))]), 
+                             function(x){
+                               str_replace_all(formule_contrast,
+                                               x,
+                                               str_c("X.", x))
+                             })[[1]]
+  names(formule_contrast) <- name
+  input_files$Input$Condition[(str_starts(input_files$Input$Condition, "[0-9]"))] <- str_c("X.",
+                                                                                         input_files$Input$Condition[(str_starts(input_files$Input$Condition,
+                                                                                                                                 "[0-9]"))])
+}
+save(list = ls(all.names = TRUE), file = "tmp_3.RData")
 #Prepare PROT table with only column Accession and Dscription, extract fro Description the GeneName and remove contaminants
 input_files$PROT <- input_files$PROT[-which(grepl("Keratin|keratin",input_files$PROT$`Fasta headers`) |
                                             grepl("CON_",input_files$PROT$`Majority protein IDs`))
@@ -1240,7 +1254,7 @@ if(length(prot_find)>0){
 
   prot_intensity_long <- proBatch::matrix_to_long(dat_gene[prot_find,]) %>%
                               data.table::setnames(new = c("Protein","Condition","Intensity"))
-  prot_intensity_long$Condition <- unique((left_join(prot_intensity_long,
+  prot_intensity_long <- unique((left_join(prot_intensity_long,
                                              c_anno[prot_intensity_long$Condition, c("sample","condition")],
                                              by=c("Condition"="sample")))[,-c(2)])  %>%
                               data.table::setnames(new = c("Protein","Intensity","Condition"))
@@ -1255,6 +1269,7 @@ if(length(prot_find)>0){
   prot_avg_se_long <- cbind(prot_avg_long,prot_se_long[3])
   prot_avg_se_long$Condition <- str_replace(prot_avg_se_long$Condition, "_avg", "")
 
+    save(prot_intensity_long, cc, bs, bf,cc, prot_avg_se_long, dat_gene, prot_find, c_anno, file = "tmp_2.RData")
   g<-ggplot(prot_avg_se_long,aes(Condition,avg,fill=Condition,colour=Condition))+
     geom_crossbar(aes(ymin=avg,ymax=avg),position = "dodge",width=.8,alpha=.9,fatten=1.5)+
     geom_errorbar(aes(ymin=(avg-se), ymax=(avg+se)), width=.4,position=position_dodge(),show.legend=F,alpha=.8)+

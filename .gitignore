@@ -1,6 +1,7 @@
 background.R
 outputResults/*
-
+images_style/
+fonts/
 tmp/
 .Rproj.user/
 .Rproj.user\
@@ -34,3 +35,10 @@ R/pipeline_elaborate_PD_files.nb.html
 R/network_cluster_profiler.R
 R/ggraph_network.R
 R/tmp.RData
+R/tmp_2.RData
+R/tmp_3.RData
+www/images/istockphoto-933582712-612x612.jpg
+www/images/laptop-icon-set-simple-design_147754-277.webp
+www/images/logo.psd
+www/images/logo_scritta.ai
+www/images/pc.png
