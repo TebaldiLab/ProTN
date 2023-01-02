@@ -61,7 +61,6 @@ ui <- dashboardPage(
     includeScript("www/js/materialize.js"),
     tags$link(rel="stylesheet", href="https://fonts.googleapis.com/css?family=El+messiri"),
     extendShinyjs(text = jsCode, functions = c("pageDisable")),
-    
     # tags$link(rel="stylesheet", href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"),,
     conditionalPanel(
       condition = "$(\'html\').hasClass(\'shiny-busy\')",

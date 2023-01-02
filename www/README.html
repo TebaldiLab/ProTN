@@ -1,23 +1,101 @@
-<p>ProTN is an integrative pipeline that analyze proteomics data
-	obtained from MS. This pipeline take in input the raw files from <a href="https://www.thermofisher.com/it/en/home/industrial/mass-spectrometry/liquid-chromatography-mass-spectrometry-lc-ms/lc-ms-software/multi-omics-data-analysis/proteome-discoverer-software.html">Proteome
+<p>ProTN is an integrative pipeline that analyze DDA proteomics data
+	obtained from MS. It perform a complete analysis of the raw files from
+	<a href="https://www.thermofisher.com/it/en/home/industrial/mass-spectrometry/liquid-chromatography-mass-spectrometry-lc-ms/lc-ms-software/multi-omics-data-analysis/proteome-discoverer-software.html">Proteome
 	Discoverer</a> (PD) or <a href="https://maxquant.org/">MaxQuant</a>
-	(MQ). In the first phases it imputes and normalizes the data obtaining
-	the matrix that is used in the enrichment analysis of the proteins. The
-	enrichment perform a complete analysis in <a href="https://maayanlab.cloud/Enrichr/">EnrichR</a> obtaining the
-	results from all the DBs in it, and a PPI network analysis via <a href="https://string-db.org/">STRING</a>, During the enrichment steps,
-	the only protein analyzed are the up- or down-regulated, discriminated
-	by the following parameters.
+	(MQ), with their biological interpretation with enrichement and network
+	analysis. ProTN executes a dual level analysis, at protein and peptide
+	level.
 </p>
 <div id="workflow-of-protn" class="section level2">
-	<h2>Workflow of ProTN</h2>
-	<hr id="linesubtitle">
-	
-	
-	<div id="parameters-required-before-the-execution" class="section level3">
-		<h3>Parameters required before the execution</h3>
-	  <hr id="linesubtitle">
-		<!--TODO: ADD DIA analysis-->
-		<ul>
+  <ul id="collapse_ul" class="collapsible">
+    <li id="collapse_li">
+    	<div class="collapsible-header">
+    	  <div style="width: 95%;">
+    	    <h2>1. Workflow of ProTN</h2>
+    	    <hr id="linesubtitle">
+    	  </div>
+    	  <i id="plus_elem" class="fa fa-plus"></i>
+    	</div>
+      <div class="collapsible-body">
+      	<p>Later in this section we describes in details the workflow of the
+      		pipeline. In the first phases it imputes and normalizes the data
+      		obtaining the matrix that is used in the enrichment analysis of the
+      		proteins. The enrichment perform a complete analysis and a PPI network
+      		analysis. During the enrichment steps, the only protein analyzed are the
+      		up- or down-regulated, discriminated by the following parameters.
+      	</p>
+      	<div id="set-settings-for-the-execution-and-read-the-raw-data-from-loaded-files" class="section level3">
+      		<h3>1.1. Set settings for the execution and read the raw data from
+      			loaded files
+      		</h3>
+      		<p>Lorem Ipsum</p>
+      	</div>
+      	<div id="normalization-of-the-intensities" class="section level3">
+      		<h3>1.2. Normalization of the intensities</h3>
+      		<p>Lorem Ipsum</p>
+      	</div>
+      	<div id="imputation-of-the-intensities" class="section level3">
+      		<h3>1.3. Imputation of the intensities</h3>
+      		<p>Lorem Ipsum</p>
+      	</div>
+      	<div id="statistical-differential-analysis" class="section level3">
+      		<h3>1.4. Statistical differential analysis</h3>
+      		<p>Lorem Ipsum</p>
+      	</div>
+      	<div id="enrichment-analysis-of-the-differentially-expressed-proteins" class="section level3">
+      		<h3>1.5. Enrichment analysis of the Differentially Expressed
+      			Proteins
+      		</h3>
+      		<p>Lorem Ipsum</p>
+      	</div>
+      	<div id="protein-protein-interaction-network-analysis-of-differentially-expressed-proteins" class="section level3">
+      		<h3>1.6. Protein-Protein Interaction network analysis of Differentially
+      			Expressed Proteins
+      		</h3>
+          p<div style="display: flex;">
+      		  <p>Last analitical step is the Protein-Protein Interaction (PPI) network
+      			analysis, since PPIs are essential in almost all processes of the cell,
+      			and it is crucial for understanding cell physiology in different states.
+      			For each comparison, ProTN analyses the interaction between the DEPs
+      			using <a href="https://string-db.org/">STRING</a> <span class="citation">(Szklarczyk et al. 2021)</span>.
+      		</p>
+      		  <p><a href="https://string-db.org/"><img src="data:image/png;base64,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" width="270"></a></p>
+      		</div>
+      		<p>The species-specific database is retrieved from STRING server, an
+      			accurate analysis discover all the interactions and an iGraph <span class="citation">(Csardi and Nepusz 2006)</span> network is generated.
+      			Later, the proteins are clustered via iGraph function which identify
+      			dense subgraph by optimizing modularity score.
+      		</p>
+      		<p>Since the network can vary a lot on composition, two ggplot layout
+      			are used: Fruchterman-Reingold algorithm and the Kamada-Kawai
+      			algorithm.
+      		</p>
+      	</div>
+      	<div id="report-creation-and-download-of-the-results" class="section level3">
+      		<h3>1.7. Report creation and download of the results</h3>
+      		<p>The results are summarized in a web-page HTML report. Other than
+      			this, the experiment is described by a large number of files, a
+      			description of each file generated can be found in section <a href="#details-on-the-output-files">4. Details on the output files</a>.
+      			All the files are group in a <em>zip</em> file and downloaded.
+      		</p>
+      	</div>
+      </div>
+    </li>
+  </ul>
+</div>
+<div id="parameters-required-before-the-execution" class="section level2">
+	 <ul id="collapse_ul"  class="collapsible">
+    <li id="collapse_li">
+    	<div class="collapsible-header">
+    	  <div style="width: 95%;">
+      	  <h2>2. Parameters required before the execution</h2>
+  	      <hr id="linesubtitle">
+    	  </div>
+    	  <i id="plus_elem" class="fa fa-plus"></i>
+    	</div>
+      <div class="collapsible-body">
+	    	<!--TODO: ADD DIA analysis-->
+		    <ul>
 			<li>
 				<p><code>Title of Analysis</code>: title of the experiment. It will
 					be the title of the web page report.
@@ -102,6 +180,7 @@
 			<li>
 				<p><code>Batch Correction</code>: execution of the batch effect
 					correction performed by <a href="https://www.bioconductor.org/packages/release/bioc/html/proBatch.html">proBatch</a>.
+					<span class="citation">(Cuklina et al. 2018)</span>.
 					(<strong>TRUE</strong> or <strong>FALSE</strong>). If
 					<strong>TRUE</strong>, column <strong>MS_batch</strong> required in
 					<strong>Input</strong> file.
@@ -170,22 +249,43 @@
 				</p>
 			</li>
 		</ul>
-	</div>
+		</div>
+    </li>
+  </ul>
 </div>
 <div id="example-case-study---proteomics-of-mcf7-cells" class="section level2">
-	<h2>Example case study - Proteomics of MCF7 cells</h2>
-	<hr id="linesubtitle">
-	<p>Proteomics of MCF7 cells (LC-MS/MS Orbitrap Fusion Tribrid). PRIDE:
+  <ul id="collapse_ul"  class="collapsible">
+    <li id="collapse_li">
+    	<div class="collapsible-header">
+    	  <div style="width: 95%;">
+        	<h2>3. Example case study - Proteomics of MCF7 cells</h2>
+        	<hr id="linesubtitle">
+    	  </div>
+    	  <i id="plus_elem" class="fa fa-plus"></i>
+    	</div>
+      <div class="collapsible-body">
+	      <p>Proteomics of MCF7 cells (LC-MS/MS Orbitrap Fusion Tribrid). PRIDE:
 		<a href="http://proteomecentral.proteomexchange.org/cgi/GetDataset?ID=PXD009417">PXD009417</a>.
 		Its execution is performed clicking the button <strong>Case Study
 		Example</strong>. Clamer M, Tebaldi T, Lauria F, et al. Active Ribosome
 		Profiling with RiboLace. Cell Rep. 2018;25(4):1097-1108.e5.
 	</p>
+      </div>
+    </li>
+  </ul>
 </div>
 <div id="details-on-the-output-files" class="section level2">
-	<h2>Details on the output files</h2>
-	<hr id="linesubtitle">
-	<ul>
+  <ul id="collapse_ul"  class="collapsible">
+    <li id="collapse_li">
+    	<div class="collapsible-header">
+    	  <div style="width: 95%;">
+        	<h2>4. Details on the output files</h2>
+  	      <hr id="linesubtitle">
+    	  </div>
+    	  <i id="plus_elem" class="fa fa-plus"></i>
+    	</div>
+      <div class="collapsible-body">
+	      <ul>
 		<li><strong>report.html</strong>: complete report of the analysis with
 			all pics and results of the enrichment.
 		</li>
@@ -301,4 +401,27 @@
 			</ul>
 		</li>
 	</ul>
+      </div>
+    </li>
+  </ul>
 </div>
+<hr id="linesubtitle">
+<div id="refs" class="references csl-bib-body hanging-indent">
+		<div id="ref-igraph" class="csl-entry">
+			Csardi, Gabor, and Tamas Nepusz. 2006. <span>“The Igraph Software
+			Package for Complex Network Research”</span> Complex Systems: 1695. <a href="https://igraph.org">https://igraph.org</a>.
+		</div>
+		<div id="ref-proBatch" class="csl-entry">
+			Cuklina, Jelena, Chloe H. Lee, Evan G. Willams, Ben Collins, Tatjana
+			Sajic, Patrick Pedrioli, Maria Rodriguez-Martinez, and Ruedi Aebersold.
+			2018. <span>“Computational Challenges in Biomarker Discovery from
+			High-Throughput Proteomic Data.”</span> <a href="https://doi.org/10.3929/ethz-b-000307772">https://doi.org/10.3929/ethz-b-000307772</a>.
+		</div>
+		<div id="ref-STRINGdb" class="csl-entry">
+			Szklarczyk, Damian, Annika L Gable, Katerina C Nastou, David Lyon,
+			Rebecca Kirsch, Sampo Pyysalo, Nadezhda T Doncheva, et al. 2021.
+			<span>“The STRING Database in 2021: Customizable Protein-Protein
+			Networks, and Functional Characterization of User-Uploaded
+			Gene/Measurement Sets.”</span> 49.
+		</div>
+	</div>

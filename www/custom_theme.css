@@ -107,18 +107,43 @@ h2 {
 
 h3 {
   font-size: 24px;
+  color: #008752 !important;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: el messiri;
-  color: #008752;
   font-weight: bold;
   margin: 2.3733333333rem 0 0 0;
+  color: rgb(0, 120, 174);
+}
+
+.collapsible-header{
+  flex-wrap: wrap;
+  padding-left: 1rem !important; 
+  padding-right: 1rem !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+#collapse_ul{
+    padding-left: unset;
+    list-style-type: none;
+}
+
+#collapse_li{
+  padding-left: unset;
+  display: block;
+}
+
+#plus_elem{
+  padding-top: 2.5rem;
+  padding-left: 2rem;
+  color: rgb(0, 120, 174);
 }
 
 #linesubtitle{
   border-top: 3px solid;
-  color: #008752;
+  color: rgb(0, 120, 174);
   margin-top: 0;
 }
 
