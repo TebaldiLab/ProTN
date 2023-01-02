@@ -109,6 +109,19 @@ h3 {
   font-size: 24px;
 }
 
+h1, h2, h3, h4, h5, h6 {
+  font-family: el messiri;
+  color: #008752;
+  font-weight: bold;
+  margin: 2.3733333333rem 0 0 0;
+}
+
+#linesubtitle{
+  border-top: 3px solid;
+  color: #008752;
+  margin-top: 0;
+}
+
 p {
   font-size: 16px;
 }
