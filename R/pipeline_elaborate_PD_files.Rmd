@@ -55,7 +55,7 @@ list.of.packages <- c("ggrepel","tidyr","ggraph","graphlayouts","RColorBrewer",
                       "scales","igraph","data.table","qpdf","devtools",
                       "corrplot", "data.table", "ggplot2", "ggfortify","lazyeval",
                       "lubridate", "pheatmap", "reshape2","readr", "rlang",
-                      "tibble", "dplyr", "tidyr", "wesanderson","WGCNA","ggbeeswarm")
+                      "tibble", "dplyr", "tidyr", "wesanderson","WGCNA","ggbeeswarm","ggthemes")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) suppressMessages(suppressWarnings({install.packages(new.packages, dependencies = T)}))
 list.of.packages.bio <- c("biomaRt","PhosR","DEqMS","STRINGdb",
@@ -375,6 +375,19 @@ input_files$Input$`File Name`<- lapply(input_files$Input$`File Name`,
                                                    function(x){tail(unlist(strsplit(x,"\\",fixed=T)),n=1)})
 
 input_files$Input$`File Name`<-mf(unlist(input_files$Input$`File Name`),"_")
+if(any(str_starts(input_files$Input$Condition, "[0-9]"))){
+  name<-names(formule_contrast)
+  formule_contrast <- lapply(unique(input_files$Input$Condition[(str_starts(input_files$Input$Condition, "[0-9]"))]), 
+                             function(x){
+                               str_replace_all(formule_contrast,
+                                               x,
+                                               str_c("X.", x))
+                             })[[1]]
+  names(formule_contrast) <- name
+  input_files$Input$Condition[(str_starts(input_files$Input$Condition, "[0-9]"))] <- str_c("X.",
+                                                                                         input_files$Input$Condition[(str_starts(input_files$Input$Condition,
+                                                                                                                                 "[0-9]"))])
+}
 #Prepare PROT table with only column Accession and Dscription, extract fro Description the GeneName and remove contaminants
 if(is_empty(which(grepl("Keratin|keratin",input_files$PROT$Description) |
                   grepl("CON_",input_files$PROT$Accession)))){
@@ -478,6 +491,8 @@ colToKeep<-intersect(colnames(input_files$Input), c("Condition","Color","Sample"
 input_files$Input <- input_files$Input[,colToKeep]
 if(!("Condition" %in% colnames(input_files$Input))){ stop("Error: \'Condition\' column missin in \'Input\' file.") }
 if(!("Sample" %in% colnames(input_files$Input))){ stop("Error: \'Sample\' column missin in \'Input\' file.") }
+if(batch_corr_exe & !("MS_batch" %in% colnames(input_files$Input))){ stop("Error: \'MS_batch\' column missin in \'Input\' file with batch correction activated") }
+
 if(any(str_starts(input_files$Input$Condition, "[0-9]"))){
   name<-names(formule_contrast)
   formule_contrast <- lapply(unique(input_files$Input$Condition[(str_starts(input_files$Input$Condition, "[0-9]"))]), 
@@ -491,7 +506,7 @@ if(any(str_starts(input_files$Input$Condition, "[0-9]"))){
                                                                                          input_files$Input$Condition[(str_starts(input_files$Input$Condition,
                                                                                                                                  "[0-9]"))])
 }
-save(list = ls(all.names = TRUE), file = "tmp_3.RData")
+# save(list = ls(all.names = TRUE), file = "tmp_3.RData")
 #Prepare PROT table with only column Accession and Dscription, extract fro Description the GeneName and remove contaminants
 input_files$PROT <- input_files$PROT[-which(grepl("Keratin|keratin",input_files$PROT$`Fasta headers`) |
                                             grepl("CON_",input_files$PROT$`Majority protein IDs`))
@@ -1269,7 +1284,7 @@ if(length(prot_find)>0){
   prot_avg_se_long <- cbind(prot_avg_long,prot_se_long[3])
   prot_avg_se_long$Condition <- str_replace(prot_avg_se_long$Condition, "_avg", "")
 
-    save(prot_intensity_long, cc, bs, bf,cc, prot_avg_se_long, dat_gene, prot_find, c_anno, file = "tmp_2.RData")
+    # save(prot_intensity_long, cc, bs, bf,cc, prot_avg_se_long, dat_gene, prot_find, c_anno, file = "tmp_2.RData")
   g<-ggplot(prot_avg_se_long,aes(Condition,avg,fill=Condition,colour=Condition))+
     geom_crossbar(aes(ymin=avg,ymax=avg),position = "dodge",width=.8,alpha=.9,fatten=1.5)+
     geom_errorbar(aes(ymin=(avg-se), ymax=(avg+se)), width=.4,position=position_dodge(),show.legend=F,alpha=.8)+
@@ -1440,29 +1455,7 @@ if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   cat("Class identify the state of the protein. \"+\" are the Up-regulated DEPs, \"-\" are the Down-regulated DEPs, \"=\" are the non-significative DEPs. The tool writes the labels of the proteins which can fit in the graph. \n")
   cat(" \n \n")
 
-  # ncores <- min(length(unique(comp)), detectCores()-1)
-  # plotVolcano <- function(comp){
-  #   input_df <- deps_l_df[which(deps_l_df$comp == comp),]
-  #   labels_up <- (input_df %>% filter(class == '+'))$id
-  #   labels_down <- (input_df %>% filter(class == '-'))$id
-  #   
-  #   cmd<-ggplot(data=input_df, aes(x=log2_FC, y=-log10(p_val), col=class, label=id)) +
-  #     geom_point(pch=20,cex=2) +
-  #     geom_hline(yintercept=-log10(pval_thr), col="black") +
-  #     geom_vline(xintercept=c(-fc_thr, fc_thr), col="black") +
-  #     # geom_text_repel(data = input_df %>% filter(id %in% labels),color="white") +
-  #     geom_label_repel(data = input_df %>% filter(id %in% labels_up), label.padding = unit(0.1, "lines"), color="black",xlim = c(1.5, NA)) +
-  #     geom_label_repel(data = input_df %>% filter(id %in% labels_down), label.padding = unit(0.1, "lines"), color="black",xlim = c(NA, -1.5)) +
-  #     ggtitle(paste0("Volcano Plot of ",comp)) +
-  #     scale_color_manual(values=c(color_constrast[comp,"color_constrast"], color_constrast[comp,"color_constrast_dark"], "grey70")) +
-  #     scale_x_continuous(limits = c(min(-max(abs(input_df$log2_FC)),-3), max(max(abs(input_df$log2_FC)),3))) +
-  #     scale_y_continuous(limits = c(0, max(max(abs(-log10(input_df$p_val))),4))) +
-  #     theme_bw(base_size = bs, base_family = bf)
-  #   res<-append(list(),cmd)
-  # }
-  # volcano <- MASS::mcapply(unique(deps_l_df$comp), plotVolcano, mc.cores = ncores)
-
-    for(comp in unique(deps_l_df$comp)){
+  for(comp in unique(deps_l_df$comp)){
     input_df <- deps_l_df[which(deps_l_df$comp == comp),]
     labels_up <- (input_df %>% filter(class == '+'))$id
     labels_down <- (input_df %>% filter(class == '-'))$id
