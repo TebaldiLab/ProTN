@@ -125,6 +125,10 @@ h1, h2, h3, h4, h5, h6 {
   padding-bottom: 0 !important;
 }
 
+.collapsible-body{
+  background-color: #fff;
+}
+
 #collapse_ul{
     padding-left: unset;
     list-style-type: none;
