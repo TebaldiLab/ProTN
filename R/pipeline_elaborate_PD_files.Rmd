@@ -54,7 +54,7 @@ dirOutput = params$dirOutput
 list.of.packages <- c("ggrepel","tidyr","ggraph","graphlayouts","RColorBrewer",
                       "scales","igraph","data.table","qpdf","devtools",
                       "corrplot", "data.table", "ggplot2", "ggfortify","lazyeval",
-                      "lubridate", "pheatmap", "reshape2","readr", "rlang",
+                      "lubridate", "pheatmap", "reshape2","readr", "rlang", "rmdformats",
                       "tibble", "dplyr", "tidyr", "wesanderson","WGCNA","ggbeeswarm","ggthemes")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) suppressMessages(suppressWarnings({install.packages(new.packages, dependencies = T)}))

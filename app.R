@@ -48,6 +48,7 @@ ui <- dashboardPage(
     tags$head(tags$link(rel="shortcut icon", href="images/favicon.ico")),
     # tags$head(tags$title("ProTN")),
     useShinyjs(),
+    tags$link(rel="stylesheet", href="https://fonts.googleapis.com/css?family=El+Messiri"),
     includeCSS("www/custom_theme.css"),
     includeCSS("www/styles.css"),
     tags$meta(charset = "UTF-8"),
@@ -59,7 +60,6 @@ ui <- dashboardPage(
     # tags$link(rel="stylesheet", href="styles.css"),
     includeCSS("www/css/materialize.css"),
     includeScript("www/js/materialize.js"),
-    tags$link(rel="stylesheet", href="https://fonts.googleapis.com/css?family=El+messiri"),
     extendShinyjs(text = jsCode, functions = c("pageDisable")),
     # tags$link(rel="stylesheet", href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"),,
     conditionalPanel(
