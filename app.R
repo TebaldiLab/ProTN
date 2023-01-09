@@ -19,9 +19,6 @@ library(dplyr)
 library(stringr)
 library(shinyBS)
 
-# library(future)
-# plan(multisession)
-
 jsCode <- "shinyjs.pageDisable = function(params){
               $('body').css('pointer-events', params);
             };"
@@ -38,9 +35,9 @@ ui <- dashboardPage(
   ),
   dashboardSidebar(
     sidebarMenu(
-      menuItem("Info", tabName = "info", icon = icon("dashboard")),
-      menuItem("Run the analysis", tabName = "analysis", icon = icon("th")),
-      menuItem("Contacts", tabName = "contacts")
+      menuItem("Info", tabName = "info", icon = icon("info-circle")),
+      menuItem("Run the analysis", tabName = "analysis", icon = icon("rocket")),
+      menuItem("Contacts", tabName = "contacts", icon = icon("comment"))
     )
   ),
   dashboardBody(
@@ -49,19 +46,13 @@ ui <- dashboardPage(
     # tags$head(tags$title("ProTN")),
     useShinyjs(),
     tags$link(rel="stylesheet", href="https://fonts.googleapis.com/css?family=El+Messiri"),
-    includeCSS("www/custom_theme.css"),
-    includeCSS("www/styles.css"),
+    includeCSS("www/css/custom_theme.css"),
+    includeCSS("www/css/styles.css"),
     tags$meta(charset = "UTF-8"),
-    # tags$meta(name="viewport", content="width=device-width, initial-scale=1.0, minimum-scale=1.0"),
-    # tags$link(rel="shortcut icon", href="images/favicon.png"),
-    # tags$link(rel="stylesheet", href="https://fonts.googleapis.com/css?family=Roboto:regular,bold,italic,thin,light,bolditalic,black,medium&amp;lang=en"),
-    # tags$link(rel="stylesheet", href="https://fonts.googleapis.com/icon?family=Material+Icons"),
-    # tags$link(rel="stylesheet", href="https://code.getmdl.io/1.3.0/material.cyan-light_blue.min.css"),
-    # tags$link(rel="stylesheet", href="styles.css"),
     includeCSS("www/css/materialize.css"),
     includeScript("www/js/materialize.js"),
     extendShinyjs(text = jsCode, functions = c("pageDisable")),
-    # tags$link(rel="stylesheet", href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"),,
+    
     conditionalPanel(
       condition = "$(\'html\').hasClass(\'shiny-busy\')",
       tags$div(class = "loader"),
@@ -458,8 +449,8 @@ server <- function(input, output, session) {
               batch_corr_exe = FALSE,
               contr_design = "../Data/design.xlsx",
               prot_boxplot = "ABCF2, ACIN1",
-              run_enrich = FALSE,
-              run_STRING = FALSE,
+              run_enrich = TRUE,
+              run_STRING = TRUE,
               pval_enrich_thr = "0.05",
               overlap_size_enrich_thr = as.integer(5),
               enrich_filter_term = NULL,
@@ -518,4 +509,4 @@ server <- function(input, output, session) {
 }
 
 # Run the application
-shinyApp(ui = ui, server = server, options = list(port = 8100, host = "127.0.0.1"))
+shinyApp(ui = ui, server = server, options = list(port = 8100))
