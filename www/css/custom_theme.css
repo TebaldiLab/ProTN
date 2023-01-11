@@ -127,20 +127,24 @@ code {
   padding-right: 1rem !important;
   padding-top: 0 !important;
   padding-bottom: 0 !important;
+  border-radius: 16px;
 }
 
 .collapsible-body{
   background-color: #fff;
+  border-radius: 16px;
 }
 
 #collapse_ul{
     padding-left: unset;
     list-style-type: none;
+    border-radius: 16px;
 }
 
 #collapse_li{
   padding-left: unset;
   display: block;
+  border-radius: 16px;
 }
 
 #plus_elem{
@@ -272,4 +276,8 @@ button:hover, a:hover {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+.form-control {
+  border-radius: 10px;
 }

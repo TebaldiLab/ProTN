@@ -2026,7 +2026,7 @@ if(nrow(string_gene_df) > 0){
 
     #Select genes that are up or down regulated
     g_sel <- g_sel_comp[[comp]]
-    if(unique(!grepl("[[:lower:]]",string_gene_df$gene1))){
+    if(all(unique(!grepl("[[:lower:]]",string_gene_df$gene1)))){
       g_sel<-toupper(g_sel)
     }else{
       g_sel<-str_to_title(g_sel)
@@ -2092,7 +2092,7 @@ for (comp in names(doComp)){
   # Filter genes and links ----
   # net_genes <- toupper(g_sel_comp[[comp]])
   net_genes <- g_sel_comp[[comp]]
-  if(unique(!grepl("[[:lower:]]",string_gene_df$gene1))){
+  if(all(unique(!grepl("[[:lower:]]",string_gene_df$gene1)))){
       net_genes<-toupper(net_genes)
     }else{
       net_genes<-str_to_title(net_genes)
