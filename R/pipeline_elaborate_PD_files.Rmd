@@ -33,6 +33,7 @@ params:
 ---
 
 ```{r settings, message=F, warning=F, echo=F,results='hide'}
+shiny::setProgress(0, detail = "Initialize...")  # set progress to 50%
 # require("knitr")
 # library("rstudioapi")
 # library(stringr)
@@ -417,7 +418,7 @@ input_files$PD_PEP_matrix<-merge(input_files$PROT[which(input_files$PROT$Accessi
 input_files$PD_PEP_matrix<-input_files$PD_PEP_matrix[,c(c("Accession","Description","GeneName","Annotated Sequence",
                                                           "Modifications","Positions in Master Proteins"),
                                                         lapply(input_files$Input$`File ID`, function(x){
-                                                          colnames(input_files$PD_PEP_matrix)[grepl(x, colnames(input_files$PD_PEP_matrix))]
+                                                          colnames(input_files$PD_PEP_matrix)[grepl(str_c(x,":"), colnames(input_files$PD_PEP_matrix))]
                                                           }) %>% unlist())]
 if("TRUE" %in% grepl("\\.", colnames(input_files$PD_PEP_matrix))){
   input_files$PD_PEP_matrix<-input_files$PD_PEP_matrix[,-which(colnames(input_files$PD_PEP_matrix) %in%
@@ -997,7 +998,6 @@ cat("Following are visualized the Multi-dimensional scaling analysis (MDSs) of t
 cat("Two MDSs are created, one based on the normalized protein intensities, tab **Proteins**. The second on the normalized peptide intensities, tab **Peptides** \n")
 cat(" \n \n")
 
-# save(dat_gene, c_anno, file = "/home/gabriele/Desktop/UNITN/Proteomics_internship/general_pipeline_PD_files/lib/tpm.RData")
 sample_data<-(t(dat_gene))
 sample_distances <- dist(sample_data, method = "euclidean")
 
@@ -1028,7 +1028,7 @@ cat("##### Proteins \n")
 print(cmd)
 cat(" \n \n")
 
-suppressMessages(ggsave(paste0(dirOutput,"general_mds_proteins.pdf"), cmd, device=cairo_pdf, width = 4, height = 3, units = c("in")))
+suppressMessages(ggsave(paste0(dirOutput,"general_mds_proteins.pdf"), cmd, device=cairo_pdf, width = (3+(0.13*nrow(mds_cmdscale))), height = (3+(0.07*nrow(mds_cmdscale))), units = c("in")))
 
 remove(sample_data,sample_distances,mds_cmdscale,cmd)
 
@@ -1063,7 +1063,7 @@ cat("##### Peptides \n")
 print(cmd)
 cat(" \n \n")
 
-suppressMessages(ggsave(paste0(dirOutput,"general_mds_peptides.pdf"), cmd, device=cairo_pdf, width = 4, height = 3, units = c("in")))
+suppressMessages(ggsave(paste0(dirOutput,"general_mds_peptides.pdf"), cmd, device=cairo_pdf, width = (3+(0.13*nrow(mds_cmdscale))), height = (3+(0.07*nrow(mds_cmdscale))), units = c("in")))
 
 remove(sample_data,sample_distances,mds_cmdscale,cmd)
 
@@ -1114,7 +1114,7 @@ cat("##### Proteins \n")
 print(p1)
 cat(" \n \n")
 
-suppressMessages(ggsave(paste0(dirOutput,"general_PCA_proteins.pdf"), p1, device=cairo_pdf, width = 4, height = 3, units = c("in")))
+suppressMessages(ggsave(paste0(dirOutput,"general_PCA_proteins.pdf"), p1, device=cairo_pdf, width = (3+(0.13*nrow(pc))), height = (3+(0.07*nrow(pc))), units = c("in")))
 
 remove(sample_data,sample_distances,mds_cmdscale,cmd)
 
@@ -1154,7 +1154,7 @@ cat("##### Peptides \n")
 print(p1)
 cat(" \n \n")
 
-suppressMessages(ggsave(paste0(dirOutput,"general_PCA_peptides.pdf"), p1, device=cairo_pdf, width = 4, height = 3, units = c("in")))
+suppressMessages(ggsave(paste0(dirOutput,"general_PCA_peptides.pdf"), p1, device=cairo_pdf, width = (3+(0.13*nrow(pc))), height = (3+(0.07*nrow(pc))), units = c("in")))
 
 remove(sample_data,sample_distances,mds_cmdscale,p1)
 
@@ -1212,7 +1212,7 @@ cat("##### Proteins \n")
 print(cmd)
 cat(" \n \n")
 
-suppressMessages(ggsave(paste0(dirOutput,"corrected_mds_proteins.pdf"), cmd, device=cairo_pdf, width = 4, height = 3, units = c("in")))
+suppressMessages(ggsave(paste0(dirOutput,"corrected_mds_proteins.pdf"), cmd, device=cairo_pdf, width = (3+(0.13*nrow(mds_cmdscale))), height = (3+(0.07*nrow(mds_cmdscale))), units = c("in")))
 
 remove(sample_data,sample_distances,mds_cmdscale,cmd)
 
@@ -1312,8 +1312,9 @@ if(length(prot_find)>0){
     labs(y="Abundance")
   print(g)
 
-
-  suppressMessages(ggsave(paste0(dirOutput,"boxplot_control_intensity.pdf"), g, device=cairo_pdf, width = 5, height = 5, units = c("in")))
+  suppressMessages(ggsave(paste0(dirOutput,"boxplot_control_intensity.pdf"), g, device=cairo_pdf, 
+                          width = ((if(length(prot_find)<4){((length(prot_find)-1/(length(prot_find)))^1.2)*0.9}else{(4*1.2)*0.9}))+(0.75*length(unique(prot_avg_se_long$Condition))), 
+                          height = 4*(if(length(prot_find)>=4){(length(prot_find) %/% 4)+1}else{1}), units = c("in")))
 
 }else{
   cat("##### Selected proteins in options file do not find in the normalised matrix. Check the spell of the proteins. \n")
@@ -1558,7 +1559,7 @@ if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
 
   print(cmd)
 
-  ggsave(paste0(dirOutput,"DEPs_proteins_mds.pdf"), cmd, device=cairo_pdf, width = 4, height = 3, units = c("in"))
+  ggsave(paste0(dirOutput,"DEPs_proteins_mds.pdf"), cmd, device=cairo_pdf, width = (3+(0.13*nrow(mds_cmdscale))), height = (3+(0.07*nrow(mds_cmdscale))), units = c("in"))
 
   shiny::setProgress(0.67, detail = "Perform MDS...")
 
@@ -1602,7 +1603,7 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
 
   print(cmd)
 
-  ggsave(paste0(dirOutput,"DEPs_peptides_mds.pdf"), cmd, device=cairo_pdf, width = 4, height = 3, units = c("in"))
+  ggsave(paste0(dirOutput,"DEPs_peptides_mds.pdf"), cmd, device=cairo_pdf, width = (3+(0.13*nrow(mds_cmdscale))), height = (3+(0.07*nrow(mds_cmdscale))), units = c("in"))
 
 shiny::setProgress(0.69, detail = "Perform MDS...")
 }
@@ -1658,7 +1659,7 @@ shiny::setProgress(0.70, detail = "Perform PCA...")
   print(p1)
   cat(" \n \n")
 
-  suppressMessages(ggsave(paste0(dirOutput,"DEPs_proteins_PCA.pdf"), p1, device=cairo_pdf, width = 4, height = 3, units = c("in")))
+  suppressMessages(ggsave(paste0(dirOutput,"DEPs_proteins_PCA.pdf"), p1, device=cairo_pdf, width = (3+(0.13*nrow(pc))), height = (3+(0.07*nrow(pc))), units = c("in")))
 
   remove(sample_data,sample_distances,mds_cmdscale,cmd)
 }
@@ -1706,7 +1707,7 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   print(p1)
   cat(" \n \n")
 
-  suppressMessages(ggsave(paste0(dirOutput,"DEPs_peptides_PCA.pdf"), p1, device=cairo_pdf, width = 4, height = 3, units = c("in")))
+  suppressMessages(ggsave(paste0(dirOutput,"DEPs_peptides_PCA.pdf"), p1, device=cairo_pdf, width = (3+(0.13*nrow(pc))), height = (3+(0.07*nrow(pc))), units = c("in")))
 
   remove(sample_data,sample_distances,mds_cmdscale,p1)
 }
@@ -2044,20 +2045,7 @@ if(nrow(string_gene_df) > 0){
     colour_vector[[comp]] <- c(c(brewer.pal(n = 8, name = "Dark2")), color_base)
     colour_vector[[comp]] <- colour_vector[[comp]][1:length(i_comms_list)]
 
-    # nc <- ggplot(i_comms_df, aes(x=comm_n, fill=comm_n)) +
-    #   geom_bar(alpha=0.9, colour="white", width=0.4)+
-    #   scale_x_discrete(drop=FALSE)+
-    #   scale_fill_manual(values=colour_vector[[comp]],drop=FALSE)+
-    #   theme_bw(base_size = bs) +
-    #   labs(x = "Community", y = "# genes") +
-    #   theme(legend.position = "none", panel.grid.major.x = element_blank(),
-    #         panel.grid.minor.x = element_blank(), panel.grid.minor.y = element_blank())+
-    #   ggtitle("Number of genes in each community", subtitle = paste0("Before Filtering of ",comp))
-
-    # print(nc)
     cat("\n")
-    # ggsave(paste0(dirOutput_net,comp,"_community_number_gene_prefilter.pdf"), nc, device=cairo_pdf, width = 4, height = 4, units = c("in"))
-
   }
 
   i_comms_df<-data_comms_df
