@@ -600,9 +600,10 @@ rownames(psm_anno_raw)<- psm_anno_raw$id
 
 #Divide the table info from the matrix of peptide intensity
 psm_peptide_table<-psm_sig_raw[,c(1:6)]
-rownames(psm_peptide_table)<-paste(psm_peptide_table$`Position in Master Proteins`,
-                                   psm_peptide_table$Modifications,
-                                   psm_peptide_table$`Annotated Sequence`,sep = "_")
+rownames(psm_peptide_table)<-make.names(paste(psm_peptide_table$`Position in Master Proteins`,
+						psm_peptide_table$Modifications,
+                                              psm_peptide_table$`Annotated Sequence`,sep = "_"), 
+                                        unique = T)
 psm_sig_prot_raw<-psm_sig_raw[,c(7:ncol(psm_sig_raw))]
 psm_sig_pet_raw<-psm_sig_raw[,c(7:ncol(psm_sig_raw))]
 rownames(psm_sig_pet_raw)<-rownames(psm_peptide_table)
