@@ -991,7 +991,7 @@ enrichRfnc<-function(in_df, dbs=NULL){
         # clu_n <- enrichment_enrichr(frg, input_name=a, dbs_vec = dbs)
         # enr_df<-rbind(enr_df,clu_n)
    }
-   ncores <- min(detectCores()-1, length(unique(in_df$comp))*3)
+   ncores <- min(detectCores()-2, length(unique(in_df$comp))*3)
    enr_df<-NULL
    enr_df<-do.call(rbind, mclapply(names(DEGs_lists), enrfcn, mc.cores = ncores))
    # save(DEGs_lists, dbs, enr_df, in_df, file = "/home/gabriele/Desktop/UNITN/Proteomics_internship/ProTN/lib/enr.RData")
@@ -1038,4 +1038,49 @@ find_communities <- function(genes, thr_score,string_gene_df){
       i_comms_list[[comm_x]] <- i_comms_df %>% dplyr::filter(comm_n==comm_x) %>% pull(gene)
    }
    return(list("i_comms_df"=i_comms_df, "i_comms_list"=i_comms_list, "dt_links"=dt_links))
+}
+
+
+### Function to plot the PPI networks in multithreading ----
+
+plot_networks<-function(g, scr_thr, bf, comp, colour_vector, bs, dirOutput_net, layouts){
+  library(parallel)
+  library(ggraph)
+  library(ggplot2)
+  library(doParallel)
+  library(foreach)
+  library(qpdf)
+  #Multicore parallelizatio of plot
+  ncores <- length(layouts)
+  cluster_ext <- makeCluster(ncores, type = "SOCK")
+  registerDoParallel(cl = cluster_ext)
+  name_list=vector()
+  name_list<-foreach (l = layouts, .packages = c("ggraph"), .combine = 'c') %dopar% {
+    tryCatch({
+      l_list<-ggraph(g,layout=l) +
+        geom_edge_link2(aes(edge_width=(0.05+abs(weight-scr_thr)/400)),edge_colour = "grey50",alpha=0.2) +
+        # ggtitle(paste0("Network of ",comp),subtitle = paste0("Layout: ",l))+
+        scale_edge_width(range = c(0.1,1)) +
+        geom_node_point(aes(fill = Community), shape = 21,size=1.5,pch='.') +
+        geom_node_text(aes(label = name,size=5,color=Community),family = bf, repel = TRUE) +
+        scale_fill_manual(values = colour_vector[[comp]]) +
+        # scale_edge_width_continuous(name=c("Weigth","Size","Community")) +
+        scale_color_brewer(palette ="Dark2") +
+        theme_bw(base_size = bs, base_family = bf) +
+        theme(legend.position = "bottom", panel.grid = element_blank(),
+              panel.border = element_blank(), panel.background = element_blank(),
+              axis.text = element_blank(), axis.ticks = element_blank(), axis.title = element_blank()) +
+        guides(text=F)
+      l_list$labels$edge_width<-"Weight"
+      ggsave(paste0(dirOutput_net,comp,"_",l,"_network.pdf"), l_list, device=cairo_pdf, width = 10, height = 6, units = c("in"))
+      #
+      print(paste0(dirOutput_net,comp,"_",l,"_network.pdf"))
+      # name_list<-append(name_list,paste0(dirOutput_net,comp,"_",l,"_network.pdf"))
+    }, error=function(cond){print("Error: Error occur during the plot of network.\n")})
+  }
+  tryCatch({
+    pdf_combine(input = name_list, output = paste0(dirOutput_net,comp,"_network.pdf"))
+    unlink(name_list)
+  }, error=function(cond){print("Error: Not possible combine PDFs network in single file.\n")})
+  stopCluster(cluster_ext)
 }

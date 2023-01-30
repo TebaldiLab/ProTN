@@ -713,11 +713,10 @@ The box plot represents the distribution of the intensity values for each sample
 
 ```{r raw_distributions, message=F, warning=F, echo=F}
 
-psm_long_df <- psm_log_prot_df %>% mutate(id=as.factor(rownames(psm_log_prot_df))) %>% pivot_longer(-id, names_to = "sample", values_to = "log2_intensity")
+psm_long_df <- psm_log_prot_df[,c_anno[order(c_anno$condition),"sample"]] %>% mutate(id=as.factor(rownames(psm_log_prot_df[,c_anno[order(c_anno$condition),"sample"]]))) %>% pivot_longer(-id, names_to = "sample", values_to = "log2_intensity")
 psm_long_df <- suppressMessages(left_join(psm_long_df,c_anno))
 
-
-hs<-ggplot(data=psm_long_df, aes(x=sample,y=log2_intensity,fill=sample,colour=sample))+
+hs<-ggplot(data=psm_long_df, aes(x=factor(sample, levels=unique(psm_long_df$sample)),y=log2_intensity,fill=sample,colour=sample))+
   #geom_hline(yintercept = 0, lty=2)+
   coord_flip()+
   geom_violin(alpha=0.5,scale="width",trim = F,colour=NA)+
@@ -739,11 +738,11 @@ The next graph visualizes the percentage of intensities in the matrix. The perce
 
 ```{r numeric_numbers, echo=F, message=F, warning=F}
 
-numeric_df<- c_anno
+numeric_df<- c_anno[c_anno[order(c_anno$condition),"sample"],]
 numeric_df$numeric_values<-colSums(is.na(psm_sig_prot_df))
 numeric_df$numeric_percentage<- 100-(numeric_df$numeric_values/nrow(psm_sig_prot_df)*100)
 setnames(numeric_df,"numeric_percentage","Percentage of known intensity (%)")
-hs<-ggplot(data=numeric_df, aes(x=sample,y=`Percentage of known intensity (%)`,fill=sample,colour=sample))+
+hs<-ggplot(data=numeric_df, aes(x=factor(sample, levels=unique(psm_long_df$sample)),y=`Percentage of known intensity (%)`,fill=sample,colour=sample))+
   #geom_hline(yintercept = 0, lty=2)+
   coord_flip()+
   geom_bar(stat="identity",width=.7,alpha=.8)+
@@ -870,7 +869,7 @@ psm_long_df <- psm_log_prot_df %>% mutate(id=as.factor(rownames(psm_log_prot_df)
 psm_long_df <- suppressMessages(left_join(psm_long_df,c_anno))
 
 
-hs<-ggplot(data=psm_long_df, aes(x=sample,y=log2_intensity,fill=sample,colour=sample))+
+hs<-ggplot(data=psm_long_df, aes(x=factor(sample, levels=unique(psm_long_df$sample)),y=log2_intensity,fill=sample,colour=sample))+
   #geom_hline(yintercept = 0, lty=2)+
   coord_flip()+
   geom_violin(alpha=0.5,scale="width",trim = F,colour=NA)+
@@ -890,6 +889,7 @@ shiny::setProgress(0.43, detail = "Calculate post-norm distribution...")
 ```
 
 ```{r sig_tables, message=F, warning=F, echo=F, results='hide'}
+
 #Save proteins table
 expr_mat<-dat_gene
 
@@ -967,11 +967,11 @@ Box plot of the normalized and imputed data for each sample.
 
 ```{r norm_distributions, message=F, warning=F, echo=F}
 
-pg_long_df <- dat_gene %>% mutate(id=as.factor(rownames(dat_gene))) %>% pivot_longer(-id, names_to = "sample", values_to = "intensity")
+pg_long_df <- dat_gene[,c_anno[order(c_anno$condition),"sample"]] %>% mutate(id=as.factor(rownames(dat_gene[,c_anno[order(c_anno$condition),"sample"]]))) %>% pivot_longer(-id, names_to = "sample", values_to = "intensity")
 pg_long_df <- suppressMessages(left_join(pg_long_df,c_anno))
 
 
-hs<-ggplot(data=pg_long_df, aes(x=sample,y=intensity,fill=sample,colour=sample))+
+hs<-ggplot(data=pg_long_df, aes(x=factor(sample, levels=unique(psm_long_df$sample)),y=intensity,fill=sample,colour=sample))+
   # ggtitle("Normalized samples")+
   #geom_hline(yintercept = 0, lty=2)+
   coord_flip()+
@@ -1409,7 +1409,7 @@ plot_DEPs<-function(DEPs_df, # dataframe containing DEPs result
 }
 
 cat(" \n \n")
-cat("#### Number of DEPs fro each comparison {.tabset}  \n")
+cat("#### Number of DEPs for each comparison {.tabset}  \n")
 #Execute only if found at least one gene differentiated
 if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   pDEPs<-plot_DEPs(deps_l_df,
@@ -2001,6 +2001,13 @@ shiny::setProgress(0.93, detail = "Network analysis done...")
 ```{r network_string_communities, echo=F, message=F, warning=F, eval = doNextChunk_STRING, results='asis'}
 message("Build PPI network with STRING in progress...")
 
+rm(cluster_ext, cmd, comm, dat_psm,df_to_save,dt_links,edge_list,el,enr_sele_df,enr_sele_names, matches, mds_cmdscale, psm_anno_df, 
+       sample_data, annos, colToKeep, comp, currentTime, dirOutput_1,dirOutput_2, doNextChunk,
+       f, filenames, filt_genes, g_sel, genes, l, links, lookup_words, name_list, net_genes, now, res, sample_distances, word,
+       batch_annotation,comBat_df_gene, comBat_df_pep, dat_gene_long,dat_pep_long,
+       gene_name, input_df, pos, prot_intensity_long, deps_vec_all, i, labels, labels_down, labels_up, list.of.packages,
+       list.of.packages.bio, new.packages, prot_find, template_files)
+gc()
 #Read STRINGdb edges for human
 #Human id --> 9606
 #Mouse id --> 10090
@@ -2070,10 +2077,7 @@ cat("The bar plots below describe the communities discovered in each network. TH
 cat(" \n \n")
 
 
-#Multicore parallelizatio of plot
-ncores <- 2
-cluster_ext <- makeCluster(ncores, type = "SOCK")
-registerDoParallel(cl = cluster_ext)
+
 
 for (comp in names(doComp)){
   scr_thr <-  200# visual
@@ -2150,40 +2154,29 @@ for (comp in names(doComp)){
     edge_list<-as.data.table(edge_list)
     edge_list<-na.omit(edge_list)
     g <- graph_from_data_frame(edge_list, directed=TRUE, vertices=node_list)
-
-    name_list=vector()
-    name_list<-foreach (l = c("fr","kk"), .packages = c("ggraph"), .combine = 'c') %dopar% {
-      tryCatch({
-        l_list<-ggraph(g,layout=l) +
-          geom_edge_link2(aes(edge_width=(0.05+abs(weight-scr_thr)/400)),edge_colour = "grey50",alpha=0.2) +
-          # ggtitle(paste0("Network of ",comp),subtitle = paste0("Layout: ",l))+
-          scale_edge_width(range = c(0.1,1)) +
-          geom_node_point(aes(fill = Community), shape = 21,size=1.5,pch='.') +
-          geom_node_text(aes(label = name,size=5,color=Community),family = bf, repel = TRUE) +
-          scale_fill_manual(values = colour_vector[[comp]]) +
-          # scale_edge_width_continuous(name=c("Weigth","Size","Community")) +
-          scale_color_brewer(palette ="Dark2") +
-          theme_bw(base_size = bs, base_family = bf) +
-          theme(legend.position = "bottom", panel.grid = element_blank(),
-                panel.border = element_blank(), panel.background = element_blank(),
-                axis.text = element_blank(), axis.ticks = element_blank(), axis.title = element_blank()) +
-          guides(text=F)
-        l_list$labels$edge_width<-"Weight"
-        ggsave(paste0(dirOutput_net,comp,"_",l,"_network.pdf"), l_list, device=cairo_pdf, width = 10, height = 6, units = c("in"))
-        #
-        print(paste0(dirOutput_net,comp,"_",l,"_network.pdf"))
-        # name_list<-append(name_list,paste0(dirOutput_net,comp,"_",l,"_network.pdf"))
-      }, error=function(cond){print("Error: Error occur during the plot of network.\n")})
-    }
-    tryCatch({
-      pdf_combine(input = name_list, output = paste0(dirOutput_net,comp,"_network.pdf"))
-      unlink(name_list)
-    }, error=function(cond){print("Error: Not possible combine PDFs network in single file.\n")})
-
+    
+    layouts <- if(length(node_list$name) > 700){c("kk")}else{c("fr","kk")}
+    p = callr::r_bg(
+      func = function(g, scr_thr, bf, comp, colour_vector, bs, dirOutput_net, layouts) {
+        source("functions_2021.R")
+        plot_networks(g, scr_thr, bf, comp, colour_vector, bs, dirOutput_net, layouts)
+      },
+      args = list(g, scr_thr, bf, comp, colour_vector, bs, dirOutput_net, layouts),
+      stdout = "|",
+      stderr = "|",
+      error = getOption("callr.error", "error")
+    )
+    
+    p$wait()
+    
     cat(" \n \n")
+    rm(net_genes, net_edges, gene_links, filt_genes, net_edges, gene_vertices, nc, net_net, 
+           node_list_from, node_list_to, node_list, edge_list, g, name_list, l_list)
+    gc()
+    message(gcinfo(TRUE))
   }
 }
-stopCluster(cluster_ext)
+
 
 cat("\n \n")
 message("Networking with STRING DONE")
