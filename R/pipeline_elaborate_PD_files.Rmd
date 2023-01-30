@@ -915,6 +915,8 @@ toPrint<-expr_avgse_df
 colnames(toPrint)[1]<-"symbol"
 
 n_pep_prot <- psm_anno_df %>% dplyr::group_by(symbol, .drop=FALSE) %>% dplyr::summarise("Num. Peptides"=n_distinct(row)) %>% ungroup()
+n_pep_prot <- left_join(psm_peptide_table, n_pep_prot, by = c("GeneName" = "symbol"))
+colnames(n_pep_prot)[3]<-"symbol"
 toPrint_datGene<-dat_gene
 toPrint_datGene$symbol<-rownames(dat_gene)
 
@@ -949,11 +951,22 @@ expr_avgse_pep_df<- suppressMessages(left_join(left_join(expr_avg_pet_df,expr_se
 rownames(expr_avgse_pep_df) <- expr_avgse_pep_df$id
 toPrint<-expr_avgse_pep_df
 
+#Prepare the README
+readme_sheet <- data.frame("INFO"=c(   NA,
+                                "Tables with the normalized and imputed abundances.",
+                                NA,
+                                "In sheet *Normalized proteins intensity* is written the normalized and imputed version of the original intensities of each protein in each sample.",
+                                "In sheet *Normalized peptides intensity* is written the normalized and imputed version of the original intensities of each peptide in each sample.",
+                                "In sheet *Normalized proteins group by condition* is written the average and the standard deviation of each condition described in the Input file for each protein. Where column *avg* is the average of the replicates, column *se* is the standard error, column *Coef_variant* is the coefficient of variant in %.",
+                                "In sheet *Normalized peptides group by condition* is written the average and the standard deviation of each condition described in the Input file for each peptide. Where column *avg* is the average of the replicates, column *se* is the standard error, column *Coef_variant* is the coefficient of variant in %."
+                              ))
+
 #Export table with SE e MEAN
-df_to_save<-list("Normalized proteins matrix intensity"=df_to_save$`Normalized proteins matrix intensity`,
-                 "Normalized peptides matrix intensity"=merge(psm_peptide_table, dat_pep, by=0)[,-c(1)],
-                 "Normalized proteins intensity group by condition"=df_to_save$`Normalized proteins intensity group by condition`,
-                 "Normalized peptides intensity group by condition"=left_join(rownames_to_column(psm_peptide_table),
+df_to_save<-list("README"=readme_sheet,
+                 "Normalized proteins intensity"=df_to_save$`Normalized proteins matrix intensity`,
+                 "Normalized peptides intensity"=merge(psm_peptide_table, dat_pep, by=0)[,-c(1)],
+                 "Normalized proteins group by condition"=df_to_save$`Normalized proteins intensity group by condition`,
+                 "Normalized peptides group by condition"=left_join(rownames_to_column(psm_peptide_table), 
                                                                               toPrint, by=c("rowname" = "id"))[,-c(1)])
 
 writexl::write_xlsx(df_to_save,paste0(dirOutput,"normalised_intensity_table.xlsx"))
@@ -1350,7 +1363,30 @@ deps_pep_df <- limmafnc("PEP",c_anno,dat_pep,psm_count_table,formule_contrast,ex
 deps_pep_l_df<-deps_pep_df$degs_l_df
 deps_pep_w_df<-deps_pep_df$degs_w_df
 toPrint_pep<-deps_pep_w_df
-df_to_save<-list("DEPs_proteins"=toPrint,
+
+#Prepare the README
+readme_sheet <- data.frame("INFO"=c(   NA,
+                                "Summary of the differential analysis done with DeqMS and Limma",
+                                NA,
+                                "In each sheet, the columns are:",
+                                "1. *Accession* is the UniprotID of protein,",
+                                "2. *Description* is the description of protein,",
+                                "3. *GeneName* is Gene Symbol,",
+                                "4. *Annotated Sequence* is the sequence of peptides,",
+                                "5. *Modifications* is the modification that affect the peptides,",
+                                "6. *Position in Master Proteins* is the UniprotID with the position on the sequence,",
+                                NA,
+                                "And for each comparison:",
+                                "7. *class*: is “+” if the protein is up-regulated following the parameters set reported in the report.html, “-” if the protein is down-regulated, “=” otherwise",
+                                "8. *log2_FC*: is the log2 Fold Change of the contrast",
+                                "9. *p_val*: is the p.value",
+                                "10. *p_adj*: is the adjusted p.value",
+                                "11. *log2_expr*: is the signal log2 expression"
+                              ))
+
+#Export table with SE e MEAN
+df_to_save<-list("README"=readme_sheet,
+                 "DEPs_proteins"=left_join(psm_peptide_table, toPrint, by=c("GeneName" = "GeneSymbol")),
                  "DEPs_peptides"=left_join(rownames_to_column(psm_peptide_table), toPrint_pep, by=c("rowname" = "id"))[,-c(1)])
 writexl::write_xlsx(df_to_save,paste0(dirOutput,"DEPs_table.xlsx"))
 
