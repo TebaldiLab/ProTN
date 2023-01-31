@@ -36,7 +36,8 @@ ui <- dashboardPage(
   dashboardSidebar(
     sidebarMenu(
       menuItem("Info", tabName = "info", icon = icon("info-circle")),
-      menuItem("Run the analysis", tabName = "analysis", icon = icon("rocket")),
+      menuItem("Run ProTN", tabName = "analysis_protn", icon = icon("rocket")),
+      menuItem("Run PhosProTN", tabName = "analysis_phosprotn", icon = icon("rocket")),
       menuItem("Contacts", tabName = "contacts", icon = icon("comment"))
     )
   ),
@@ -77,7 +78,7 @@ ui <- dashboardPage(
                 DT::dataTableOutput("input_df"))
       ),
       tabItem(
-        tabName = "analysis",
+        tabName = "analysis_protn",
         tagList(
           fluidRow(
             column(
@@ -127,6 +128,69 @@ ui <- dashboardPage(
         )
       ),
       tabItem(
+        tabName = "analysis_phosprotn",
+        tagList(
+          fluidRow(
+            column(
+              width = 4,
+              fluidRow(
+                textInput("title_exp_phos", "Title of the analysis"),
+                # uiOutput("help1")
+              ),
+              fluidRow(
+                textAreaInput("description_exp_phos", "Brief description", rows = 6),
+                # uiOutput("help2")
+              ),
+              fluidRow(
+                radioButtons("sw_analyzer_phos", "Software Analyzer", c("PD", "MQ"), inline = TRUE),
+                # uiOutput("help3")
+              ),
+              fluidRow(
+                fileInput("design_phos", "Select a file with the design for the comparisons..."),
+                # uiOutput("help12")
+              )
+            ),
+            column(
+              width = 4,
+              fluidRow(
+                fileInput("input_file_prot", "Select the INPUT file of the PROTEOMICS..."),
+                # uiOutput("help4")
+              ),
+              fluidRow(
+                fileInput("pep_file_prot", "Select the PEP file of the PROTEOMICS..."),
+                # uiOutput("help5")
+              ),
+              fluidRow(
+                fileInput("prot_file_prot", "Select the PROT file of the PROTEOMICS..."),
+                # uiOutput("help6")
+              )
+            ),
+            column(
+              width = 4,
+              fluidRow(
+                fileInput("input_file_phos", "Select the INPUT file of the PHOSPHOproteomics..."),
+                # uiOutput("help4")
+              ),
+              fluidRow(
+                fileInput("pep_file_phos", "Select the PEP file of the PHOSPHOproteomics..."),
+                # uiOutput("help5")
+              ),
+              fluidRow(
+                fileInput("prot_file_phos", "Select the PROT file of the PHOSPHOproteomics..."),
+                # uiOutput("help6")
+              ),
+              radioButtons("custom_param_phos", "Use custom parameter", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
+              fillRow(
+                downloadButton("report_phos", "Generate report"),
+                # downloadButton("case_study_phos", "Case Study Example")
+              )
+            )
+          # )
+          ),
+          uiOutput("input_params_phos")
+        )
+      ),
+      tabItem(
         tabName = "contacts",
         tagList(
           tags$a(
@@ -147,7 +211,7 @@ ui <- dashboardPage(
 # Define server logic required to draw a histogram
 server <- function(input, output, session) {
   options(shiny.maxRequestSize = 10 * 1024^3)
-  # Visibility of the enrichment parameters based on the value of the Enrichment radiobutton
+  # PROTN: Visibility of the enrichment parameters based on the value of the Enrichment radiobutton
   output$input_enrichment <- renderUI({
     if (input$enrichR) {
       tagList(
@@ -218,6 +282,83 @@ server <- function(input, output, session) {
           column(
             width = 4,
             uiOutput("input_enrichment")
+          )
+        )
+      )
+    }
+  })
+  
+  # PHOSPROTN: Visibility of the enrichment parameters based on the value of the Enrichment radiobutton
+  output$input_enrichment_phos <- renderUI({
+    if (input$enrichR_phos) {
+      tagList(
+        fluidRow(
+          selectizeInput("DB_enrich_phos", "DB to analyse",
+                         choices = read_delim("R/dbs_enrichR.txt", delim = "\n", col_names = FALSE)[[1]],
+                         selected = NULL, multiple = TRUE
+          ),
+          # uiOutput("help15")
+        ),
+        fluidRow(
+          textInput("pvalue_enrich_phos", "P.Value thr for enrichment", value = "0.05"),
+          # uiOutput("help16")
+        ),
+        fluidRow(
+          sliderInput("os_enrich_phos", "Overlap size thr for enrichment", 1, 30, step = 1, value = 5),
+          # uiOutput("help17")
+        ),
+        fluidRow(
+          textInput("terms_enrich_phos", "Terms to search"),
+          # uiOutput("help18")
+        )
+      )
+    }
+  })
+  
+  output$input_params_phos <- renderUI({
+    if (input$custom_param_phos){
+      tagList(
+        fluidRow(
+          tags$hr()
+        ),
+        fluidRow(
+          column(
+            width = 4,
+            fluidRow(
+              textInput("signal_DEPs_phos", "Signal log2 expr thr", value = "inf"),
+              # uiOutput("help7")
+            ),
+            fluidRow(
+              textInput("FC_DEPs_phos", "Log2 FC thr", value = "0.75"),
+              # uiOutput("help8")
+            ),
+            fluidRow(
+              textInput("pvalue_DEPs_phos", "P.Value thr", value = "0.05"),
+              # uiOutput("help9")
+            )
+          ),
+          column(
+            width = 4,
+            fluidRow(
+              radioButtons("batch_corr_phos", "Batch effect correction", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
+              # uiOutput("help10")
+            ),
+            fluidRow(
+              textInput("prot_boxplot_phos", "Control Boxplot proteins"),
+              # uiOutput("help11")
+            ),
+            fluidRow(
+              radioButtons("STRING_phos", "Execute PPI network STRINGdb", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
+              # uiOutput("help13")
+            ),
+            fluidRow(
+              radioButtons("enrichR_phos", "Execute enrichment", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
+              # uiOutput("help14")
+            )
+          ),
+          column(
+            width = 4,
+            uiOutput("input_enrichment_phos")
           )
         )
       )
@@ -325,7 +466,7 @@ server <- function(input, output, session) {
       runjs(paste0('setTimeout(function(){$("#', str_remove(.x, "_btn"), '").append($("#shiny-notification-panel"))},0);'))
     }))
 
-  # READ PARAMETERS
+  # EXECUTE ProTN
   output$report <- downloadHandler(
     filename = "results.zip",
     content = function(file) {
@@ -410,6 +551,94 @@ server <- function(input, output, session) {
     }
   )
 
+  # EXECUTE PhosProTN
+  output$report_phos <- downloadHandler(
+    filename = "results.zip",
+    content = function(file) {
+      tryCatch(
+        {
+          withProgress(message = "Rendering, please wait!", {
+            shinyjs::disable("report_phos")
+            # shinyjs::disable("case_study_phos")
+            js$pageDisable("none")
+            
+            dirOutput_2 <- tempdir()
+            currentTime <- gsub(".*?([0-9]+).*?", "\\1", Sys.time())
+            dirOutput_1 <- paste("/", currentTime, "/", sep = "")
+            dir.create(file.path(dirOutput_2, dirOutput_1), showWarnings = FALSE)
+            dirOutput_Server <- paste(dirOutput_2, dirOutput_1, sep = "")
+            message(dirOutput_Server)
+            # tempReport <- file.path(tempdir(), "R/pipeline_elaborate_PD_files.Rmd")
+            # file.copy("pipeline_elaborate_PD_files.Rmd", tempReport, overwrite = TRUE)
+            
+            # Set up parameters to pass to Rmd document
+            params <- list(
+              doc_title = input$title_exp_phos,
+              description = input$description_exp_phos,
+              readPD_files = if (input$sw_analyzer_phos == "PD") {
+                TRUE
+              } else {
+                FALSE
+              },
+              readMQ_files = if (input$sw_analyzer_phos == "MQ") {
+                TRUE
+              } else {
+                FALSE
+              },
+              file_input_prot = input$input_file_prot$datapath,
+              file_prot_prot = input$prot_file_prot$datapath,
+              file_pep_prot = input$pep_file_prot$datapath,
+              file_input_phos = input$input_file_phos$datapath,
+              file_prot_phos = input$prot_file_phos$datapath,
+              file_pep_phos = input$pep_file_phos$datapath,
+              signal_thr = input$signal_DEPs_phos,
+              fc_thr = input$FC_DEPs_phos,
+              pval_thr = input$pvalue_DEPs_phos,
+              batch_corr_exe = input$batch_corr_phos,
+              contr_design = input$design_phos$datapath,
+              prot_boxplot = input$prot_boxplot_phos,
+              run_enrich = input$enrichR_phos,
+              run_STRING = input$STRING_phos,
+              pval_enrich_thr = input$pvalue_enrich_phos,
+              overlap_size_enrich_thr = input$os_enrich_phos,
+              enrich_filter_term = input$terms_enrich_phos,
+              enrich_filter_DBs = input$DB_enrich_phos,
+              dirOutput = dirOutput_Server
+            )
+            
+            # future({
+            # Knit the document, passing in the `params` list, and eval it in a
+            # child of the global environment (this isolates the code in the document
+            # from the code in this app).
+            rmarkdown::render("R/pipeline_elaborate_PD_file_PhosProTN.Rmd",
+                              output_file = "report.html",
+                              output_dir = dirOutput_Server,
+                              params = params,
+                              envir = new.env(parent = globalenv())
+            )
+            
+            oldwd <- getwd()
+            setwd(dirOutput_Server)
+            files2zip <- list.files("./", recursive = TRUE)
+            # TODO
+            zip(zipfile = file, files = files2zip, extra = "-r")
+            setwd(oldwd)
+            # })
+            shinyjs::enable("report_phos")
+            # shinyjs::enable("case_study_phos")
+            js$pageDisable("all")
+          })
+        },
+        error = function(e) {
+          showNotification(paste0("ERROR: ", e), type = "error")
+          shinyjs::enable("report_phos")
+          # shinyjs::enable("case_study_phos")
+          js$pageDisable("all")
+        }
+      )
+    }
+  )
+  
   # EXECUTE EXAMPLE CASE STUDY
   output$case_study <- downloadHandler(
     filename = "case_study_results.zip",
