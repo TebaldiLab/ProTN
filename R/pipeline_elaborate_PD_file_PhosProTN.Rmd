@@ -258,7 +258,7 @@ title: `r params$doc_title`
 
 `r description`
 
-This report summarize the results obtained during the execution of the integrative pipeline for proteomics analysis. More results can be found in the folder.
+This report summarize the results obtained during the execution of the integrative pipeline for phospho-proteomics analysis. More results can be found in the folder.
 
 ## Details on the output files
 
@@ -331,19 +331,6 @@ if(batch_corr_exe){cat("- DONE batch effect correction.")}
 shiny::setProgress(0.18, detail = "Reading files...")
 ```
 
-## Constrast design used for the differential analysis
-The following formulas are the comparison on which is performed the differential analysis.
-
-```{r print_settings_design, warning=FALSE, echo=F, message=FALSE, results='asis'}
-cat("**Contrast design formula are:** ")
-cat(" \n")
-for (i in 1:length(formule_contrast)){
-  cat(paste0("- ",names(formule_contrast[i]),": ",formule_contrast[i]," "))
-  cat(" \n")
-}
-cat(" \n")
-
-```
 
 ## 1. Annotation sample from input file
 The table summarize the input samples. Each case has:
@@ -602,12 +589,18 @@ psm_sig_raw_prot<-res$psm_sig_raw
 c_anno_prot<-res$c_anno
 colour_vec<-res$colour_vec
 formule_contrast<-res$formule_contrast
-kable(c_anno_prot)
+
 
 filenames <- list("Input"=params$file_input_phos,"prot"=params$file_prot_phos,"pep"=params$file_pep_phos)
 res <- read_input_files("PHOS", filenames)
 psm_sig_raw_phos<-res$psm_sig_raw
 c_anno_phos<-res$c_anno
+
+
+cat("#### Phosho-proteome samples \n ")
+kable(c_anno_phos)
+cat("#### Proteome samples \n ")
+kable(c_anno_prot)
 
 remove(filenames, res)
 shiny::setProgress(0.23, detail = "Files correctly read...")
@@ -794,30 +787,9 @@ shiny::setProgress(0.29, detail = "Filtering intensity matrix...")
 The box plot represents the distribution of the intensity values for each samples in the raw data. This figure is generated before the normalization and imputation of the data.
 
 
-```{r raw_distributions, message=F, warning=F, echo=F}
-cat("\n ")
-cat("##### Proteomics distribution \n")
+```{r raw_distributions, message=F, warning=F, echo=F, results='asis'}
 cat("\n \n ")
-psm_long_df <- psm_log_prot_df[,c_anno_prot[order(c_anno_prot$condition),"sample"]] %>% mutate(id=as.factor(rownames(psm_log_prot_df[,c_anno_prot[order(c_anno_prot$condition),"sample"]]))) %>% pivot_longer(-id, names_to = "sample", values_to = "log2_intensity")
-psm_long_df <- suppressMessages(left_join(psm_long_df,c_anno_prot))
-
-hs<-ggplot(data=psm_long_df, aes(x=factor(sample, levels=unique(psm_long_df$sample)),y=log2_intensity,fill=sample,colour=sample))+
-  #geom_hline(yintercept = 0, lty=2)+
-  coord_flip()+
-  geom_violin(alpha=0.5,scale="width",trim = F,colour=NA)+
-  geom_boxplot(alpha=1,fill="white",width=0.2,outlier.shape = NA, notch = T)+
-  theme_bw()+
-  theme(legend.position = "none",axis.title.y = element_blank()) +
-  labs(x = "Log2 Intensity") +
-  scale_fill_manual(values=(colour_vec)) +
-  scale_colour_manual(values=(colour_vec)) +
-  theme(panel.grid.minor = element_blank(),panel.grid.major.y = element_blank())
-
-hs
-
-cat("\n \n ")
-cat("##### Phospho-proteomics distribution \n")
-cat("\n \n ")
+cat("##### Phospho-proteomics distribution \n ")
 
 psm_long_df <- psm_log_pet_df[,c_anno_phos[order(c_anno_phos$condition),"sample"]] %>% mutate(id=as.factor(rownames(psm_log_pet_df[,c_anno_phos[order(c_anno_phos$condition),"sample"]]))) %>% pivot_longer(-id, names_to = "sample", values_to = "log2_intensity")
 psm_long_df <- suppressMessages(left_join(psm_long_df,c_anno_phos))
@@ -834,7 +806,26 @@ hs<-ggplot(data=psm_long_df, aes(x=factor(sample, levels=unique(psm_long_df$samp
   scale_colour_manual(values=(colour_vec)) +
   theme(panel.grid.minor = element_blank(),panel.grid.major.y = element_blank())
 
-hs
+print(hs)
+
+cat("\n \n ")
+cat("##### Proteomics distribution \n ")
+psm_long_df <- psm_log_prot_df[,c_anno_prot[order(c_anno_prot$condition),"sample"]] %>% mutate(id=as.factor(rownames(psm_log_prot_df[,c_anno_prot[order(c_anno_prot$condition),"sample"]]))) %>% pivot_longer(-id, names_to = "sample", values_to = "log2_intensity")
+psm_long_df <- suppressMessages(left_join(psm_long_df,c_anno_prot))
+
+hs<-ggplot(data=psm_long_df, aes(x=factor(sample, levels=unique(psm_long_df$sample)),y=log2_intensity,fill=sample,colour=sample))+
+  #geom_hline(yintercept = 0, lty=2)+
+  coord_flip()+
+  geom_violin(alpha=0.5,scale="width",trim = F,colour=NA)+
+  geom_boxplot(alpha=1,fill="white",width=0.2,outlier.shape = NA, notch = T)+
+  theme_bw()+
+  theme(legend.position = "none",axis.title.y = element_blank()) +
+  labs(x = "Log2 Intensity") +
+  scale_fill_manual(values=(colour_vec)) +
+  scale_colour_manual(values=(colour_vec)) +
+  theme(panel.grid.minor = element_blank(),panel.grid.major.y = element_blank())
+
+print(hs)
 
 cat("\n \n")
 
@@ -844,30 +835,9 @@ shiny::setProgress(0.32, detail = "Calculate distributions...")
 #### 2.2. Percentage of numeric value in peptide intensity matrix for each sample {.tabset} 
 The next graph visualizes the percentage of intensities in the matrix. The percentage of intensity values are counted for each sample separately.
 
-```{r numeric_numbers, echo=F, message=F, warning=F}
+```{r numeric_numbers, echo=F, message=F, warning=F, results='asis'}
 cat("\n ")
-cat("##### Proteomics distribution \n")
-cat("\n \n ")
-numeric_df<- c_anno_prot[c_anno_prot[order(c_anno_prot$condition),"sample"],]
-numeric_df$numeric_values<-colSums(is.na(psm_log_prot_df))
-numeric_df$numeric_percentage<- 100-(numeric_df$numeric_values/nrow(psm_log_prot_df)*100)
-setnames(numeric_df,"numeric_percentage","Percentage of known intensity (%)")
-hs<-ggplot(data=numeric_df, aes(x=factor(sample, levels=unique(numeric_df$sample)),y=`Percentage of known intensity (%)`,fill=sample,colour=sample))+
-  #geom_hline(yintercept = 0, lty=2)+
-  coord_flip()+
-  geom_bar(stat="identity",width=.7,alpha=.8)+
-  theme_bw()+
-  theme(legend.position = "none",axis.title.y = element_blank())+
-  labs(x = "Percentage of known intensity (%)") +
-  scale_fill_manual(values=(colour_vec)) +
-  scale_colour_manual(values=(colour_vec)) +
-  theme(panel.grid.minor = element_blank(),panel.grid.major.y = element_blank())
-
-hs
-
-cat("\n ")
-cat("##### Phospho-proteomics distribution \n")
-cat("\n \n ")
+cat("##### Phospho-proteomics distribution \n ")
 numeric_df<- c_anno_phos[c_anno_phos[order(c_anno_phos$condition),"sample"],]
 numeric_df$numeric_values<-colSums(is.na(psm_log_pet_df))
 numeric_df$numeric_percentage<- 100-(numeric_df$numeric_values/nrow(psm_log_pet_df)*100)
@@ -883,7 +853,27 @@ hs<-ggplot(data=numeric_df, aes(x=factor(sample, levels=unique(numeric_df$sample
   scale_colour_manual(values=(colour_vec)) +
   theme(panel.grid.minor = element_blank(),panel.grid.major.y = element_blank())
 
-hs
+print(hs)
+
+
+cat("\n \n ")
+cat("##### Proteomics distribution \n ")
+numeric_df<- c_anno_prot[c_anno_prot[order(c_anno_prot$condition),"sample"],]
+numeric_df$numeric_values<-colSums(is.na(psm_log_prot_df))
+numeric_df$numeric_percentage<- 100-(numeric_df$numeric_values/nrow(psm_log_prot_df)*100)
+setnames(numeric_df,"numeric_percentage","Percentage of known intensity (%)")
+hs<-ggplot(data=numeric_df, aes(x=factor(sample, levels=unique(numeric_df$sample)),y=`Percentage of known intensity (%)`,fill=sample,colour=sample))+
+  #geom_hline(yintercept = 0, lty=2)+
+  coord_flip()+
+  geom_bar(stat="identity",width=.7,alpha=.8)+
+  theme_bw()+
+  theme(legend.position = "none",axis.title.y = element_blank())+
+  labs(x = "Percentage of known intensity (%)") +
+  scale_fill_manual(values=(colour_vec)) +
+  scale_colour_manual(values=(colour_vec)) +
+  theme(panel.grid.minor = element_blank(),panel.grid.major.y = element_blank())
+
+print(hs)
 
 cat("\n \n ")
 remove(hs,numeric_df)
@@ -1082,32 +1072,9 @@ shiny::setProgress(0.45, detail =  "Save normalized data...")
 #### 2.4. Normalized distributions {.tabset} 
 Box plot of the normalized and imputed data for each sample.
 
-```{r norm_distributions, message=F, warning=F, echo=F}
-cat("\n ")
-cat("##### Proteomics distribution \n")
+```{r norm_distributions, message=F, warning=F, echo=F, results='asis'}
 cat("\n \n ")
-pg_long_df <- dat_gene[,c_anno_prot[order(c_anno_prot$condition),"sample"]] %>% mutate(id=as.factor(rownames(dat_gene[,c_anno_prot[order(c_anno_prot$condition),"sample"]]))) %>% pivot_longer(-id, names_to = "sample", values_to = "intensity")
-pg_long_df <- suppressMessages(left_join(pg_long_df,c_anno_prot))
-
-
-hs<-ggplot(data=pg_long_df, aes(x=factor(sample, levels=unique(psm_long_df$sample)),y=intensity,fill=sample,colour=sample))+
-  # ggtitle("Normalized samples")+
-  #geom_hline(yintercept = 0, lty=2)+
-  coord_flip()+
-  geom_violin(alpha=0.5,scale="width",trim = F,colour=NA)+
-  geom_boxplot(alpha=1,fill="white",width=0.2,outlier.shape = NA, notch = F)+
-  theme_bw()+
-  theme(legend.position = "none",axis.title.y = element_blank())+
-  labs(x = "Log2 Intensity") +
-  scale_fill_manual(values=(colour_vec)) +
-  scale_colour_manual(values=(colour_vec)) +
-  theme(panel.grid.minor = element_blank(),panel.grid.major.y = element_blank())
-
-hs
-
-cat("\n \n ")
-cat("##### Phospho-proteomics distribution \n")
-cat("\n \n ")
+cat("##### Phospho-proteomics distribution \n ")
 
 pg_long_df <- dat_pep[,c_anno_phos[order(c_anno_phos$condition),"sample"]] %>% mutate(id=as.factor(rownames(dat_pep[,c_anno_phos[order(c_anno_phos$condition),"sample"]]))) %>% pivot_longer(-id, names_to = "sample", values_to = "intensity")
 pg_long_df <- suppressMessages(left_join(pg_long_df,c_anno_phos))
@@ -1126,7 +1093,28 @@ hs<-ggplot(data=pg_long_df, aes(x=factor(sample, levels=unique(psm_long_df$sampl
   scale_colour_manual(values=(colour_vec)) +
   theme(panel.grid.minor = element_blank(),panel.grid.major.y = element_blank())
 
-hs
+print(hs)
+
+cat("\n \n ")
+cat("##### Proteomics distribution \n ")
+pg_long_df <- dat_gene[,c_anno_prot[order(c_anno_prot$condition),"sample"]] %>% mutate(id=as.factor(rownames(dat_gene[,c_anno_prot[order(c_anno_prot$condition),"sample"]]))) %>% pivot_longer(-id, names_to = "sample", values_to = "intensity")
+pg_long_df <- suppressMessages(left_join(pg_long_df,c_anno_prot))
+
+
+hs<-ggplot(data=pg_long_df, aes(x=factor(sample, levels=unique(psm_long_df$sample)),y=intensity,fill=sample,colour=sample))+
+  # ggtitle("Normalized samples")+
+  #geom_hline(yintercept = 0, lty=2)+
+  coord_flip()+
+  geom_violin(alpha=0.5,scale="width",trim = F,colour=NA)+
+  geom_boxplot(alpha=1,fill="white",width=0.2,outlier.shape = NA, notch = F)+
+  theme_bw()+
+  theme(legend.position = "none",axis.title.y = element_blank())+
+  labs(x = "Log2 Intensity") +
+  scale_fill_manual(values=(colour_vec)) +
+  scale_colour_manual(values=(colour_vec)) +
+  theme(panel.grid.minor = element_blank(),panel.grid.major.y = element_blank())
+
+print(hs)
 
 cat("\n \n ")
 
@@ -1489,23 +1477,58 @@ In the plot are represented graphically the number of DEPs for each contrast. Ta
 ```{r diff_analysis,  warning=F, message=F, echo=F}
 shiny::setProgress(0.58, detail = "Differential Analysis in progress...")
 message("Differentiation analysis in progress...")
+
+c_anno_phos$sample <- str_c(c_anno_phos$sample, "_p")
+c_anno_prot$sample <- str_c(c_anno_prot$sample, "_i")
+c_anno <- rbind(c_anno_phos,c_anno_prot)
+
+colnames(dat_pep) <- str_c(colnames(dat_pep), "_p")
+colnames(dat_gene) <- str_c(colnames(dat_gene), "_i")
+dat_gene$genename <- rownames(dat_gene)
+dat_pep$genename <- psm_peptide_table[rownames(dat_pep),"GeneName"]
+dat_pep$names <- rownames(dat_pep)
+dat_complete <- left_join(dat_pep, dat_gene)
+rownames(dat_complete) <- dat_complete$names
+dat_complete <- dat_complete %>% dplyr::select(-c("genename", "names"))
+
+dat_pep <- dat_pep %>% dplyr::select(-c("genename", "names"))
+
+colnames(expr_avgse_pep_df)[1] <- "names"
+expr_avgse_pep_df$id <- psm_peptide_table[rownames(expr_avgse_pep_df),"GeneName"]
+expr_avgse_complete_df <- left_join(expr_avgse_pep_df, expr_avgse_df)
+rownames(expr_avgse_complete_df) <- expr_avgse_complete_df$names
+expr_avgse_complete_df <- expr_avgse_complete_df %>% dplyr::select(-c("id"))
+colnames(expr_avgse_complete_df)[1] <- "id"
+
 #Execution of differentiation analysis using DEqMS for proteins
-psm_count_table = as.data.frame(table(dat_psm$symbol))
-contro_list<-formule_contrast[!unlist(lapply(str_split(formule_contrast, "\\(|\\)|\\-|\\+|\\*"), function(x) any(str_ends(x, "_p"))))]
-deps_df<-NULL
-if(length(contro_list) > 0){
-  deps_df <- limmafnc("PROT",c_anno_prot,dat_gene,psm_count_table,contro_list,expr_avgse_df,signal_thr,fc_thr, pval_thr)
-}
-deps_l_df<-deps_df$degs_l_df
-deps_w_df<-deps_df$degs_w_df
-toPrint<-deps_w_df
-if(!is.null(toPrint))colnames(toPrint)[1]<-"GeneSymbol"
+# psm_count_table = as.data.frame(table(dat_psm$symbol))
+# contro_list<-formule_contrast[!unlist(lapply(str_split(formule_contrast, "\\(|\\)|\\-|\\+|\\*"), function(x) any(str_ends(x, "_p"))))]
+# deps_df<-NULL
+# if(length(contro_list) > 0){
+#   deps_df <- limmafnc("PROT",c_anno_prot,dat_gene,psm_count_table,contro_list,expr_avgse_df,signal_thr,fc_thr, pval_thr)
+# }
+# deps_l_df<-deps_df$degs_l_df
+# deps_w_df<-deps_df$degs_w_df
+# toPrint<-deps_w_df
+# if(!is.null(toPrint))colnames(toPrint)[1]<-"GeneSymbol"
 
 #Execution of differentiation analysis using DEqMS for proteins
 psm_count_table<-as.data.frame(table(rownames(dat_pep)))
-contro_list<-formule_contrast[!unlist(lapply(str_split(formule_contrast, "\\(|\\)|\\-|\\+|\\*"), function(x) any(str_ends(x, "_i"))))]
+#Make the design
+df <- data.frame("p" = sort(str_remove(c_anno_phos$condition, "_p\\b")), "i" = sort(str_remove(c_anno_prot$condition, "_i\\b")))
+df <- unique(df[match(df$p, df$i),])
+df$rule <- str_c(str_c(df$p, "_p"), "-", str_c(df$i, "_i"))
+contro_list <- df$rule
+
+contro_list<-c(contro_list,
+               str_c(str_c("(", stringi::stri_replace_all_regex(formule_contrast, df$p, str_c(df$p, "_p"), vectorize = FALSE), ")"),
+                     "-",
+                     str_c("(", stringi::stri_replace_all_regex(formule_contrast, df$p, str_c(df$p, "_i"), vectorize = FALSE), ")"))
+               )
+names(contro_list) <- make.names(c(df$p, names(formule_contrast)), unique = T)
+
 if(length(contro_list) > 0){
-  deps_pep_df <- limmafnc("PEP",c_anno_phos,dat_pep,psm_count_table,contro_list,expr_avgse_pep_df,signal_thr,fc_thr, pval_thr)
+  deps_pep_df <- limmafnc("PEP",c_anno,dat_complete,psm_count_table,contro_list,expr_avgse_complete_df,signal_thr,fc_thr, pval_thr)
 }
 deps_pep_l_df<-deps_pep_df$degs_l_df
 deps_pep_w_df<-deps_pep_df$degs_w_df
@@ -1533,15 +1556,28 @@ readme_sheet <- data.frame("INFO"=c(NA,
                               ))
 
 #Export table with SE e MEAN
-df_to_save<-if(!is.null(toPrint)){ list("README"=readme_sheet,
-                                        "DEPs_Proteome"=left_join(psm_peptide_table_prot, toPrint, by=c("GeneName" = "GeneSymbol")),
-                                        "DEPs_PhosphoProteome"=left_join(rownames_to_column(psm_peptide_table), toPrint_pep, by=c("rowname" = "id"))[,-c(1)])} else {
-                                         list("README"=readme_sheet,
-                                              "DEPs_PhosphoProteome"=left_join(rownames_to_column(psm_peptide_table), toPrint_pep, by=c("rowname" = "id"))[,-c(1)])}
+df_to_save<-list("README"=readme_sheet,
+                 "DEPs_PhosphoProteome"=left_join(rownames_to_column(psm_peptide_table), toPrint_pep, by=c("rowname" = "id"))[,-c(1)])
 writexl::write_xlsx(df_to_save,paste0(dirOutput,"DEPs_table.xlsx"))
+
+formule_contrast <- contro_list
 
 remove(deps_df,toPrint,deps_pep_df,toPrint_pep,df_to_save)
 message("Differentation analysis DONE.")
+
+```
+
+#### Constrast design used for the differential analysis
+The following formulas are the comparison on which is performed the differential analysis.
+
+```{r print_settings_design, warning=FALSE, echo=F, message=FALSE, results='asis'}
+cat("**Contrast design formula are:** ")
+cat(" \n")
+for (i in 1:length(formule_contrast)){
+  cat(paste0("- ",names(formule_contrast[i]),": ",formule_contrast[i]," "))
+  cat(" \n")
+}
+cat(" \n")
 
 ```
 
@@ -1671,6 +1707,18 @@ shiny::setProgress(0.63, detail = "Perform volcano plot...")
 ```
 
 ```{r volcano_pep, fig.height=6, fig.width=6, warning=FALSE, echo=FALSE, results='asis'}
+# save(c_anno_prot,dat_gene,formule_contrast,expr_avgse_df,signal_thr,fc_thr, pval_thr, psm_peptide_table, psm_peptide_table_prot,
+#      c_anno_phos,dat_pep,expr_avgse_pep_df, color_constrast, deps_pep_l_df, file = "tmp.RData")
+
+col_sigle_contrast <- data.frame("color_constrast"=c_anno[match(df$p, str_remove(c_anno$condition, "_p\\b|_i\\b")),"color"], "color_constrast_dark"=c(""), row.names = df$p)
+# darker.col = function(color, how.much = 50){
+#     colorRampPalette(c(color, "black"))(100)[how.much]
+# }
+for(col in rownames(col_sigle_contrast)){
+  col_sigle_contrast[col,"color_constrast_dark"]<-darker.col(col_sigle_contrast[col,"color_constrast"])
+}
+color_constrast<-rbind(color_constrast,col_sigle_contrast)
+
 cat(" \n \n")
 if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
 
@@ -1680,9 +1728,9 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
 
   for(comp in unique(deps_pep_l_df$comp)){
     input_df <- na.omit((deps_pep_l_df[which(deps_pep_l_df$comp == comp),])[order(deps_pep_l_df$id),])
-    pos<-lapply(str_match_all(str_split(psm_peptide_table$`Position in Master Proteins`,";",n=1),"\\[(.*?)\\]"), function(x){x[,1][1]})
-    labels<-str_c(psm_peptide_table$GeneName,pos,sep="_")
-    input_df$id<-labels
+    # pos<-lapply(str_match_all(str_split(psm_peptide_table$`Position in Master Proteins`,";",n=1),"\\[(.*?)\\]"), function(x){x[,1][1]})
+    # labels<-str_c(psm_peptide_table$GeneName,pos,sep="_")
+    # input_df$id<-labels
     labels_up <- (input_df %>% filter(class == '+'))$id
     labels_down <- (input_df %>% filter(class == '-'))$id
 
@@ -1760,7 +1808,7 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   cat("The below figure is the MDS analysis on the significative differentially expressed peptides of the phosphoproteome. \n \n")
   #Select only genes that are differentiated and print PCA of samples
   deps_vec_all<- deps_pep_l_df %>% dplyr::filter(class!="=") %>%
-  pull(id) %>% unique() %>% sort()
+                    pull(id) %>% unique() %>% sort()
 
   # sample_data<-t(dat_gene[toupper(deps_vec_all),])
   sample_data<-t(dat_pep[(deps_vec_all),])
@@ -1866,7 +1914,7 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
 
   pc[,"PC1"] <- as.numeric(pc[,"PC1"]) / (apca_prot$sdev[1] * sqrt(nrow(sample_data)))
   pc[,"PC2"] <- as.numeric(pc[,"PC2"]) / (apca_prot$sdev[2] * sqrt(nrow(sample_data)))
-  pc<- merge(pc, c_anno_phos, by = 0)
+  pc<- merge(c_anno_phos, pc, by.x = "sample", by.y = "row.names")
   pc$condition <- as.factor(pc$condition)
 
   ve <- apca_prot$sdev^2/sum(apca_prot$sdev^2)
@@ -2379,12 +2427,13 @@ shiny::setProgress(0.98, detail = "Network figures generated...")
 
 ```{r save_df, echo=F, message=F, warning=F}
 save(c_anno_phos,
-     dat_gene,
+     # dat_gene,
      dat_pep,
+     dat_complete,
      psm_peptide_table,
-     deps_l_df,
+     # deps_l_df,
      deps_pep_l_df,
-     expr_avgse_df,
+     # expr_avgse_df,
      expr_avgse_pep_df,
      formule_contrast,
      colour_vec,

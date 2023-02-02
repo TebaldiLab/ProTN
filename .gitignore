@@ -1,3 +1,4 @@
+font-awesome-6.2.0/
 background.R
 outputResults/*
 images_style/
@@ -45,3 +46,5 @@ www/images/logo_scritta.ai
 www/images/pc.png
 R/functions_2022_original.R
 Data/Input_multiple.xlsx
+www/fontawesome-free-6.2.0-desktop.zip
+www/fontawesome-free-6.2.0-web.zip

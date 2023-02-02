@@ -35,10 +35,10 @@ ui <- dashboardPage(
   ),
   dashboardSidebar(
     sidebarMenu(
-      menuItem("Info", tabName = "info", icon = icon("info-circle")),
-      menuItem("Run ProTN", tabName = "analysis_protn", icon = icon("rocket")),
-      menuItem("Run PhosProTN", tabName = "analysis_phosprotn", icon = icon("rocket")),
-      menuItem("Contacts", tabName = "contacts", icon = icon("comment"))
+      menuItem("Info", tabName = "info", icon = icon("info-circle", lib="font-awesome")),
+      menuItem("Run ProTN", tabName = "analysis_protn", icon = icon("rocket", "fa-regular")),
+      menuItem("Run PhosProTN", tabName = "analysis_phosprotn", icon = icon("rocket", "fa-solid")),
+      menuItem("Contacts", tabName = "contacts", icon = icon("comment", lib="font-awesome"))
     )
   ),
   dashboardBody(
@@ -46,9 +46,10 @@ ui <- dashboardPage(
     tags$head(tags$link(rel="shortcut icon", href="images/favicon.ico")),
     # tags$head(tags$title("ProTN")),
     useShinyjs(),
+    tags$head(tags$script(src="https://kit.fontawesome.com/5d5f342cf8.js")),
     tags$link(rel="stylesheet", href="https://fonts.googleapis.com/css?family=El+Messiri"),
     includeCSS("www/css/custom_theme.css"),
-    includeCSS("www/css/styles.css"),
+    # includeCSS("www/css/styles.css"),
     tags$meta(charset = "UTF-8"),
     includeCSS("www/css/materialize.css"),
     includeScript("www/js/materialize.js"),
