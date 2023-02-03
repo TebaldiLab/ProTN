@@ -333,10 +333,7 @@ The following formulas are the comparison on which is performed the differential
 ```{r print_settings_design, warning=FALSE, echo=F, message=FALSE, results='asis'}
 cat("**Contrast design formula are:** ")
 cat(" \n")
-for (i in 1:length(formule_contrast)){
-  cat(paste0("- ",names(formule_contrast[i]),": ",formule_contrast[i]," "))
-  cat(" \n")
-}
+kable(formule_contrast, col.names = c("Limma Formula"))
 cat(" \n")
 
 ```
