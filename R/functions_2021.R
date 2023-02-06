@@ -1084,3 +1084,58 @@ plot_networks<-function(g, scr_thr, bf, comp, colour_vector, bs, dirOutput_net, 
   }, error=function(cond){print("Error: Not possible combine PDFs network in single file.\n")})
   stopCluster(cluster_ext)
 }
+
+
+### Function to kinase study in multithreading. It identify the kinases, their activities and it draw the CORAL tree ----
+
+kinase_act_phosr <- function(dirOutput_kinase, formule_CORAL, comp, dat_pep, deps_pep_l_df, psm_peptide_table, c_anno_phos, df){
+  data("KinaseMotifs")
+  data("PhosphoSitePlus")
+  
+  tmp_dat_pep <- dat_pep[deps_pep_l_df[which(deps_pep_l_df$comp == comp & (deps_pep_l_df$class == "+" | deps_pep_l_df$class == "-")),"id"],]
+  rownames(tmp_dat_pep) <- make.names(psm_peptide_table[rownames(tmp_dat_pep), "GeneName"], unique = T)
+  
+  tmp_dat_pep<- tmp_dat_pep[,(c_anno_phos[str_remove(c_anno_phos$condition, "_p\\b") %in% df$p[unlist(lapply(df$p, function(x) grepl(x, formule_CORAL[comp])))], "sample"])]
+  ppe <- PhosphoExperiment(assays = list(Quantification = as.matrix(tmp_dat_pep)))
+  colnames(ppe@assays@data$Quantification) <- c_anno_phos[str_remove(c_anno_phos$condition, "_p\\b") %in% df$p[unlist(lapply(df$p, function(x) grepl(x, formule_CORAL[comp])))], "condition"]
+  GeneSymbol(ppe)<-psm_peptide_table[deps_pep_l_df[which(deps_pep_l_df$comp == comp & (deps_pep_l_df$class == "+" | deps_pep_l_df$class == "-")),"id"],"GeneName"]
+  Sequence(ppe)<-psm_peptide_table[deps_pep_l_df[which(deps_pep_l_df$comp == comp & (deps_pep_l_df$class == "+" | deps_pep_l_df$class == "-")),"id"], "Annotated Sequence"]
+  
+  mat <- SummarizedExperiment::assay(ppe, "Quantification")
+  grps =colnames(ppe)
+  
+  substrate.list = PhosphoSite.human
+  substrate.list=sapply(substrate.list, function(y){unlist(lapply(y, function(x){ gsub(";.+","",x)}))})
+  
+  mat.std <- standardise(mat)
+  mat.std.geneSymbol <- mat.std
+  rownames(mat.std.geneSymbol)<-unlist(str_split_fixed(rownames(mat.std.geneSymbol), "\\.", n=2)[,1])
+  mat.std<-data.frame(mat.std)
+  mat.std$geneSymbol <- unlist(str_split_fixed(rownames((mat.std)), "\\.", n=2)[,1])
+  mat.std$id<-rownames(mat.std)
+  seqs <- na.omit(ppe@Sequence)
+  kssMat <- kinaseSubstrateScore(substrate.list = substrate.list,
+                                 mat = mat.std.geneSymbol,
+                                 seqs = seqs,
+                                 numMotif = 5,
+                                 numSub = 1,
+                                 species = "human",
+                                 verbose = T)
+  set.seed(42)
+  predMat <- kinaseSubstratePred(kssMat)
+  
+  colnames(kssMat$ksActivityMatrix) <- str_remove(c_anno_phos[str_remove(colnames(kssMat$ksActivityMatrix), "_p\\b"), "condition"], "_p\\b")
+  #Fare magia per le varie formule
+  tttt<- str_remove(c_anno_phos$condition, "_p\\b")
+  design = model.matrix(~0+tttt)
+  colnames(design) = levels(as.factor(tttt))
+  rownames(design)<-str_remove(c_anno_phos$sample, "_p\\b")
+  contrast =  limma::makeContrasts(contrasts=formule_CORAL[comp],levels=design)
+  
+  mean_kinase_activity <- lapply(rownames(contrast)[which((contrast != 0)[,1])], function(x){(rowMeans(kssMat$ksActivityMatrix[, grepl(x, colnames(kssMat$ksActivityMatrix))])[colnames(predMat)])*contrast[x,]})
+  kinase_Act <- Reduce("+", mean_kinase_activity)
+  
+  write.table(data.frame(kinase_Act), file = paste0(dirOutput_kinase,comp,"_kinase_activity.txt"), col.names = F, quote = F)
+  
+  renderSvgPanZoom(comp, kinase_Act, dirOutput_kinase)
+}

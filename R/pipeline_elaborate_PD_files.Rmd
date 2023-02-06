@@ -50,6 +50,7 @@ shiny::setProgress(0, detail = "Initialize...")  # set progress to 50%
 # dirOutput_1=paste(currentTime,"/",sep = "")
 # dir.create(file.path(dirOutput_2, dirOutput_1), showWarnings = FALSE)
 # dirOutput=paste(dirOutput_2,dirOutput_1,sep = "")
+
 dirOutput = params$dirOutput
 #Auto-install needed library
 list.of.packages <- c("ggrepel","tidyr","ggraph","graphlayouts","RColorBrewer",
@@ -59,7 +60,7 @@ list.of.packages <- c("ggrepel","tidyr","ggraph","graphlayouts","RColorBrewer",
                       "tibble", "dplyr", "tidyr", "wesanderson","WGCNA","ggbeeswarm","ggthemes")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) suppressMessages(suppressWarnings({install.packages(new.packages, dependencies = T)}))
-list.of.packages.bio <- c("biomaRt","PhosR","DEqMS","STRINGdb",
+list.of.packages.bio <- c("biomaRt","DEqMS","STRINGdb",
                           "GO.db", "impute", "preprocessCore", "pvca","sva")
 new.packages <- list.of.packages.bio[!(list.of.packages.bio %in% installed.packages()[,"Package"])]
 if(length(new.packages)) {
@@ -72,6 +73,7 @@ new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"
 if(length(new.packages)) {
   suppressMessages(suppressWarnings({devtools::install_github("sctyner/geomnet", dependencies = T)}))
   suppressMessages(suppressWarnings({devtools::install_github("symbioticMe/proBatch", dependencies = T)}))
+  suppressMessages(suppressWarnings({devtools::install_github("PYangLab/PhosR", dependencies = T)}))
 }
 
 #Load functions
@@ -145,7 +147,6 @@ shiny::setProgress(0.01, detail = "Initialize...")  # set progress to 50%
 ```{r load_settings, warning=FALSE, echo=F, message=FALSE, results='hide'}
 message("Reading options")
 # tpm<-getwd()
-# save(params, file = "/home/gabriele/Desktop/UNITN/Proteomics_internship/ProTN/lib/tmp.RData")
 #Load the excel file with  the basic settings
 # input_settings <- tryCatch({suppressMessages({readxl::read_excel("options.xlsx", col_names = F)})},
 #                            error=function(cond){stop("Error: \'options.xlsx\' not present in the current folder. Follow the instruction in the README.")})
@@ -1749,7 +1750,7 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
 ```
 
 ```{r enrichment,message=F, warning=F,echo=F, eval=run_enrich, results='asis'}
-shiny::setProgress(0.75, detail = "Enrichment in progress...")
+shiny::setProgress(0.75, detail = "Enrichment in progress... \n Can require several minutes...")
 cat(" \n \n")
 cat("## 4. Functional analysis of Differentially Expressed Proteins \n")
 cat("The enrichment analysis is done by [EnrichR](https://maayanlab.cloud/Enrichr/). It is a web-base application which integrates a large number of data sets that permit to obtain information about many categories. EnrichR organises its hundreds of data sets in 8 sections: Transcription, Pathways, Ontologies, Diseases/Drugs, Cell Types, Misc, Legacy, and Crowd. All the libraries of EnrichR are queried to provide the most complete research. \n")
@@ -1770,11 +1771,11 @@ doNextChunk <- tryCatch({
   TRUE
 },
 error=function(cond){
-  print("WARNING: Not possible to continue with the enrichment. No protein up- or down-regulated.\n")
+  print("\n ERROR: An error occur when connect to EnrichR. \n ")
   FALSE
 })
 message("Enrichment DONE.")
-shiny::setProgress(0.77, detail = "Done Enrichment...")
+shiny::setProgress(0.77, detail = "Done Enrichment... \n Can require several minutes...")
 
 ```
 
@@ -2004,7 +2005,7 @@ shiny::setProgress(0.85, detail = "Plotting enrichment results...")
 
 
 ```{r selection_genes, echo=F, message=F, warning=F, eval=run_STRING, results='asis'}
-shiny::setProgress(0.90, detail = "Network analysis in progress...")
+shiny::setProgress(0.90, detail = "Network analysis in progress... \n Can require several minutes...")
 cat(" \n \n")
 cat("## 5. Differetially Expressed Proteins in STRINGdb network \n")
 cat("Protein-protein interactions (PPIs) is crucial for understanding cell physiology in different states. Also, knowledge from PPIs can be used (EMBL-EBI, 2022) for characterize unknown proteins, study pathways, characterize relationship between proteins. The pipeline uses [STRING](https://string-db.org/) to execute the PPI analysis. The database is prefilter removing the edges with low strength. The iteration searchs the interactions between DEPs in the database. Discovered all the connections, the clusters are identified. \n")
@@ -2015,7 +2016,8 @@ if(run_enrich){knitr::opts_chunk$set(fig.height = def_val_height)}
 g_sel_comp<-list()
 doComp<-list()
 for (comp in unique(deps_l_df$comp)){
-  genes<-deps_l_df[(deps_l_df$class != "=" & deps_l_df$comp == comp), "id"]
+  tmp_deps<-deps_l_df[(deps_l_df$class != "=" & deps_l_df$comp == comp), ]
+  genes<-(tmp_deps[order(tmp_deps$p_val),])[1:min(500, nrow(tmp_deps)),"id"]
   if(length(genes)>0){g_sel_comp[[comp]]<-genes}else{g_sel_comp[[comp]]<-list()}
   if(length(g_sel_comp[[comp]])!=0){doComp[comp]=TRUE}
 }
@@ -2028,11 +2030,11 @@ if(length(doComp)==0 | all(doComp==F)){
   dirOutput_net=paste0(dirOutput,"network/")
 }
 
-shiny::setProgress(0.93, detail = "Network analysis done...")
+shiny::setProgress(0.93, detail = "Network analysis done... \n Can require several minutes...")
 ```
 
-```{r network_string_communities, echo=F, message=F, warning=F, eval = doNextChunk_STRING, results='asis'}
-message("Build PPI network with STRING in progress...")
+```{r network_string_communities, echo=F, message=F, warning=F, eval = doNextChunk_STRING, results='hide'}
+message("Build PPI network with STRING in progress... \n Can require several minutes...")
 
 rm(cluster_ext, cmd, comm, dat_psm,df_to_save,dt_links,edge_list,el,enr_sele_df,enr_sele_names, matches, mds_cmdscale, psm_anno_df, 
        sample_data, annos, colToKeep, comp, currentTime, dirOutput_1,dirOutput_2, doNextChunk,
@@ -2044,7 +2046,7 @@ gc()
 #Read STRINGdb edges for human
 #Human id --> 9606
 #Mouse id --> 10090
-string_db <- STRINGdb$new(version="11.5", species=taxonomy_NCBI, score_threshold=500, input_directory="")
+string_db <- STRINGdb$new(version="11.5", species=taxonomy_NCBI, score_threshold=600, input_directory="")
 gene_name<-unlist(g_sel_comp) %>% unique() %>% as.data.frame()
 colnames(gene_name)<-c("gene_id")
 string_mapped <- string_db$map(gene_name, "gene_id", removeUnmappedRows = TRUE)
@@ -2100,7 +2102,7 @@ if(nrow(string_gene_df) > 0){
   message("Network incomplete.")
 }
 
-shiny::setProgress(0.93, detail = "Generating network figures...")
+shiny::setProgress(0.93, detail = "Generating network figures... \n Can require several minutes...")
 ```
 
 ```{r network_string, echo=F, message=F, warning=F, eval = doNextChunk_STRING, fig.width=12, results='asis'}
@@ -2114,7 +2116,7 @@ cat(" \n \n")
 
 for (comp in names(doComp)){
   scr_thr <-  200# visual
-  links <- 1
+  links <- 2
   # Filter genes and links ----
   # net_genes <- toupper(g_sel_comp[[comp]])
   net_genes <- g_sel_comp[[comp]]
@@ -2188,7 +2190,7 @@ for (comp in names(doComp)){
     edge_list<-na.omit(edge_list)
     g <- graph_from_data_frame(edge_list, directed=TRUE, vertices=node_list)
     
-    layouts <- if(length(node_list$name) > 700){c("kk")}else{c("fr","kk")}
+    layouts <- if(length(node_list$name) > 400){c("kk")}else{c("fr","kk")}
     p = callr::r_bg(
       func = function(g, scr_thr, bf, comp, colour_vector, bs, dirOutput_net, layouts) {
         source("functions_2021.R")
@@ -2206,7 +2208,6 @@ for (comp in names(doComp)){
     rm(net_genes, net_edges, gene_links, filt_genes, net_edges, gene_vertices, nc, net_net, 
            node_list_from, node_list_to, node_list, edge_list, g, name_list, l_list)
     gc()
-    message(gcinfo(TRUE))
   }
 }
 
@@ -2224,6 +2225,8 @@ shiny::setProgress(0.98, detail = "Network figures generated...")
 
 
 ```{r save_df, echo=F, message=F, warning=F}
+save(list = ls(), file = "tmp.RData")
+
 save(c_anno,
      dat_gene,
      dat_pep,
@@ -2235,6 +2238,9 @@ save(c_anno,
      formule_contrast,
      colour_vec,
      file = paste0(dirOutput,"database_env_R.RData"))
+
+remove(list = ls()[-1])
+gc()
 
 shiny::setProgress(1, detail = "Saving RData...")
 ```

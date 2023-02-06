@@ -28,6 +28,7 @@ params:
   prot_boxplot: NA
   run_enrich: NA
   run_STRING: NA
+  run_kinaseTree: NA
   pval_enrich_thr: "0.05"
   overlap_size_enrich_thr: 5
   enrich_filter_term: NA
@@ -63,7 +64,7 @@ list.of.packages <- c("ggrepel","tidyr","ggraph","graphlayouts","RColorBrewer",
                       "tibble", "dplyr", "tidyr", "wesanderson","WGCNA","ggbeeswarm","ggthemes")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) suppressMessages(suppressWarnings({install.packages(new.packages, dependencies = T)}))
-list.of.packages.bio <- c("biomaRt","PhosR","DEqMS","STRINGdb",
+list.of.packages.bio <- c("biomaRt","DEqMS","STRINGdb",
                           "GO.db", "impute", "preprocessCore", "pvca","sva")
 new.packages <- list.of.packages.bio[!(list.of.packages.bio %in% installed.packages()[,"Package"])]
 if(length(new.packages)) {
@@ -76,6 +77,7 @@ new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"
 if(length(new.packages)) {
   suppressMessages(suppressWarnings({devtools::install_github("sctyner/geomnet", dependencies = T)}))
   suppressMessages(suppressWarnings({devtools::install_github("symbioticMe/proBatch", dependencies = T)}))
+  suppressMessages(suppressWarnings({devtools::install_github("PYangLab/PhosR", dependencies = T)}))
 }
 
 #Load functions
@@ -222,9 +224,10 @@ prot_boxplot<-na.omit(strsplit(params$prot_boxplot, split = "\\;|\\,|\\ |\\; |\\
 boxplot_prot_exe <- FALSE
 if(length(prot_boxplot)>0){ boxplot_prot_exe<-TRUE }
 #Read enrich parameter
-doNextChunk_STRING <- doNextChunk <- run_enrich <- run_STRING <- FALSE
+doNextChunk_STRING <- doNextChunk <- run_enrich <- run_STRING <- run_kinaseTree <- FALSE
 run_enrich <- as.logical(params$run_enrich)
 run_STRING <- as.logical(params$run_STRING)
+run_kinaseTree <- as.logical(params$run_kinaseTree)
 # save(params, file = "tmp.RData")
 pval_enrich_thr <- if(is.null(params$pval_enrich_thr)){0.05
                    }else if(is.double(params$pval_enrich_thr)){params$pval_enrich_thr
@@ -1688,7 +1691,7 @@ shiny::setProgress(0.63, detail = "Perform volcano plot...")
 
 ```
 
-```{r volcano_pep, fig.height=6, fig.width=6, warning=FALSE, echo=FALSE, results='asis', eval=FALSE}
+```{r volcano_pep, fig.height=6, fig.width=6, warning=FALSE, echo=FALSE, results='asis'}
 # save(c_anno_prot,dat_gene,formule_contrast,expr_avgse_df,signal_thr,fc_thr, pval_thr, psm_peptide_table, psm_peptide_table_prot,
 #      c_anno_phos,dat_pep,expr_avgse_pep_df, color_constrast, deps_pep_l_df, file = "tmp.RData")
 
@@ -1934,8 +1937,7 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
 
 
 ```{r enrichment,message=F, warning=F,echo=F, eval=run_enrich, results='asis'}
-# save(deps_pep_l_df, psm_peptide_table, df, pval_enrich_thr, overlap_size_enrich_thr, dirOutput, color_constrast, enrich_filter_DBs, file = "/home/gabriele/Desktop/UNITN/Proteomics_internship/ProTN/R/tmp.RData")
-shiny::setProgress(0.75, detail = "Enrichment in progress...")
+shiny::setProgress(0.75, detail = "Enrichment in progress... \n Can require several minutes...")
 cat(" \n \n")
 cat("## 4. Functional analysis of Differentially Expressed Proteins \n")
 cat("The enrichment analysis is done by [EnrichR](https://maayanlab.cloud/Enrichr/). It is a web-base application which integrates a large number of data sets that permit to obtain information about many categories. EnrichR organises its hundreds of data sets in 8 sections: Transcription, Pathways, Ontologies, Diseases/Drugs, Cell Types, Misc, Legacy, and Crowd. All the libraries of EnrichR are queried to provide the most complete research. \n")
@@ -1961,7 +1963,7 @@ error=function(cond){
   FALSE
 })
 message("Enrichment DONE.")
-shiny::setProgress(0.77, detail = "Done Enrichment...")
+shiny::setProgress(0.77, detail = "Done Enrichment... \n Can require several minutes...")
 
 ```
 
@@ -2190,7 +2192,7 @@ shiny::setProgress(0.85, detail = "Plotting enrichment results...")
 
 
 ```{r selection_genes, echo=F, message=F, warning=F, eval=run_STRING, results='asis'}
-shiny::setProgress(0.90, detail = "Network analysis in progress...")
+shiny::setProgress(0.90, detail = "Network analysis in progress... \n Can require several minutes...")
 cat(" \n \n")
 cat("## 5. Differetially Expressed Proteins in STRINGdb network \n")
 cat("Protein-protein interactions (PPIs) is crucial for understanding cell physiology in different states. Also, knowledge from PPIs can be used (EMBL-EBI, 2022) for characterize unknown proteins, study pathways, characterize relationship between proteins. The pipeline uses [STRING](https://string-db.org/) to execute the PPI analysis. The database is prefilter removing the edges with low strength. The iteration searchs the interactions between DEPs in the database. Discovered all the connections, the clusters are identified. \n")
@@ -2202,7 +2204,8 @@ deps_l_df <- deps_pep_l_df[-which(deps_pep_l_df$comp %in% df$p),]
 g_sel_comp<-list()
 doComp<-list()
 for (comp in unique(deps_l_df$comp)){
-  genes<-deps_l_df[(deps_l_df$class != "=" & deps_l_df$comp == comp), "id"]
+  tmp_deps<-deps_l_df[(deps_l_df$class != "=" & deps_l_df$comp == comp), ]
+  genes<-(tmp_deps[order(tmp_deps$p_val),])[1:min(500, nrow(tmp_deps)),"id"]
   if(length(genes)>0){g_sel_comp[[comp]]<-genes}else{g_sel_comp[[comp]]<-list()}
   if(length(g_sel_comp[[comp]])!=0){doComp[comp]=TRUE}
 }
@@ -2215,11 +2218,11 @@ if(length(doComp)==0 | all(doComp==F)){
   dirOutput_net=paste0(dirOutput,"network/")
 }
 
-shiny::setProgress(0.93, detail = "Network analysis done...")
+shiny::setProgress(0.93, detail = "Network analysis done... \n Can require several minutes...")
 ```
 
 ```{r network_string_communities, echo=F, message=F, warning=F, eval = doNextChunk_STRING, results='hide'}
-message("Build PPI network with STRING in progress...")
+message("Build PPI network with STRING in progress... \n Can require several minutes...")
 
 rm(cluster_ext, cmd, comm, dat_psm,df_to_save,dt_links,edge_list,el,enr_sele_df,enr_sele_names, matches, mds_cmdscale, psm_anno_df, 
        sample_data, annos, colToKeep, comp, currentTime, dirOutput_1,dirOutput_2, doNextChunk,
@@ -2287,7 +2290,7 @@ if(nrow(string_gene_df) > 0){
   message("Network incomplete.")
 }
 
-shiny::setProgress(0.93, detail = "Generating network figures...")
+shiny::setProgress(0.93, detail = "Generating network figures... \n Can require several minutes...")
 ```
 
 ```{r network_string, echo=F, message=F, warning=F, eval = doNextChunk_STRING, fig.width=12, results='asis'}
@@ -2301,7 +2304,7 @@ cat(" \n \n")
 
 for (comp in names(doComp)){
   scr_thr <-  200# visual
-  links <- 1
+  links <- 2
   # Filter genes and links ----
   # net_genes <- toupper(g_sel_comp[[comp]])
   net_genes <- g_sel_comp[[comp]]
@@ -2375,7 +2378,7 @@ for (comp in names(doComp)){
     edge_list<-na.omit(edge_list)
     g <- graph_from_data_frame(edge_list, directed=TRUE, vertices=node_list)
     
-    layouts <- if(length(node_list$name) > 700){c("kk")}else{c("fr","kk")}
+    layouts <- if(length(node_list$name) > 400){c("kk")}else{c("fr","kk")}
     p = callr::r_bg(
       func = function(g, scr_thr, bf, comp, colour_vector, bs, dirOutput_net, layouts) {
         source("functions_2021.R")
@@ -2393,7 +2396,6 @@ for (comp in names(doComp)){
     rm(net_genes, net_edges, gene_links, filt_genes, net_edges, gene_vertices, nc, net_net, 
            node_list_from, node_list_to, node_list, edge_list, g, name_list, l_list)
     gc()
-    message(gcinfo(TRUE))
   }
 }
 
@@ -2410,55 +2412,44 @@ shiny::setProgress(0.98, detail = "Network figures generated...")
 ```
 
 
-```{r kinase_tree_CORAL, echo=F, message=T, warning=F, eval=F, results='asis'}
-shiny::setProgress(0.90, detail = "Network analysis in progress...")
+```{r kinase_tree_CORAL, echo=F, message=T, warning=F, eval=run_kinaseTree, results='asis'}
+# save(list = ls(), file = "/home/gabriele/Desktop/UNITN/Proteomics_internship/ProTN/R/tmp.RData")
+
+shiny::setProgress(0.90, detail = "Kinase identification and Kinase draw in progress... \n Can require several minutes...")
 cat(" \n \n")
 cat("## 6. Kinase Trees \n")
-cat("Kinase Tree for each condition made with PhosR and CORAL (http://phanstiel-lab.med.unc.edu/CORAL/) \n")
+cat("In this step PhosProTN study the kinase activity of the differential expressed phosphosite. The identification of the kinase is perfomed by [PhosR](https://github.com/PYangLab/PhosR) package (Kim et al. 2021), which provide a score of their activity based on the comparison formula provided. The activities of the kinases are saved in txt files inside the *KinaseTree* folder. \n \n Other than the numeric results, graphical kinase trees are generated using an adapted version of the webtool [CORAL](http://phanstiel-lab.med.unc.edu/CORAL/) (Metz K.S. et al. 2018). \n \n ")
+cat((paste0("DISCLAIMER CORAL: The kinome tree plots generated by CORAL make use the data generated by",
+                tags$a("Manning et al., Science, 2002",href="http://science.sciencemag.org/content/298/5600/1912.long", target="_blank"),
+                " and are based on a figure generated by ",
+                tags$a("Cell Signaling Technology",href="https://www.cellsignal.com/contents/science/protein-kinases-introduction/kinases", target="_blank"),
+                ".")))
+cat("\n \n Results inside folder: *KinaseTree*")
 
-tmp_dat_pep <- dat_pep
-rownames(tmp_dat_pep) <- make.names(psm_peptide_table[rownames(tmp_dat_pep), "GeneName"], unique = T)
-# colnames(tmp_dat_pep) <- str_remove(colnames(tmp_dat_pep), "_p\\b")
-for (comp in names(formule_CORAL)) {
-  data("KinaseMotifs")
-  data("PhosphoSitePlus")
-  tmp_dat_pep<- tmp_dat_pep[,(c_anno_phos[str_remove(c_anno_phos$condition, "_p\\b") %in% df$p[unlist(lapply(df$p, function(x) grepl(x, formule_CORAL[comp])))], "sample"])]
-  ppe <- PhosphoExperiment(assays = list(Quantification = as.matrix(tmp_dat_pep)))
-  colnames(ppe@assays@data$Quantification) <- c_anno_phos[str_remove(c_anno_phos$condition, "_p\\b") %in% df$p[unlist(lapply(df$p, function(x) grepl(x, formule_CORAL[comp])))], "condition"]
-  GeneSymbol(ppe)<-psm_peptide_table$GeneName
-  Sequence(ppe)<-psm_peptide_table$`Annotated Sequence`
-  
-  mat <- SummarizedExperiment::assay(ppe, "Quantification")
-  grps =colnames(ppe)
-  
-  substrate.list = PhosphoSite.human
-  substrate.list=sapply(substrate.list, function(y){unlist(lapply(y, function(x){ gsub(";.+","",x)}))})
+dir.create(file.path(dirOutput,"kinaseTree/"), showWarnings = FALSE)
+dirOutput_kinase=paste0(dirOutput,"kinaseTree/")
 
-  mat.std <- standardise(mat)
-  mat.std.geneSymbol <- mat.std
-  rownames(mat.std.geneSymbol)<-unlist(str_split_fixed(rownames(mat.std.geneSymbol), "\\.", n=2)[,1])
-  mat.std<-data.frame(mat.std)
-  mat.std$geneSymbol <- unlist(str_split_fixed(rownames((mat.std)), "\\.", n=2)[,1])
-  mat.std$id<-rownames(mat.std)
-  seqs <- na.omit(ppe@Sequence)
-  kssMat <- kinaseSubstrateScore(substrate.list = substrate.list,
-                                 mat = mat.std.geneSymbol,
-                                 seqs = seqs,
-                                 numMotif = 5,
-                                 numSub = 1,
-                                 verbose = T)
-  set.seed(42)
-  predMat <- kinaseSubstratePred(kssMat, inclusion = 10)
-  
-  #Fare magia per le varie formule
-  kinaseActivity<-(rowMeans(kssMat$ksActivityMatrix[, grepl("IL", colnames(kssMat$ksActivityMatrix))])-rowMeans(kssMat$ksActivityMatrix[, grepl("control", colnames(kssMat$ksActivityMatrix))]))[colnames(predMat)]
-  write.table(kinaseActivity, file = "outputResults/KinaseActivity/t120/kinaseActivity_STK.txt")
+kinase_act_phosr_wrapper <- function(comparison) {
+  source("functions_2021.R")
+  library(PhosR)
+  source("CORAL/global.R")
+  source("server.R")
+  kinase_act_phosr(dirOutput_kinase, formule_CORAL, comparison, dat_pep, deps_pep_l_df, psm_peptide_table, c_anno_phos, df)
 }
 
-shiny::setProgress(0.93, detail = "Network analysis done...")
+ncores <- min(detectCores()-2, length(names(formule_CORAL)))
+res <- NULL
+res <- mclapply(names(formule_CORAL), kinase_act_phosr_wrapper, mc.cores = ncores)
+
+# #RUN CORAL
+# source("R/CORAL/global.R")
+
+shiny::setProgress(0.93, detail = "Kinase analysis done...")
 ```
 
 ```{r save_df, echo=F, message=F, warning=F}
+save(list = ls(), file = "tmp.RData")
+
 save(c_anno_phos,
      # dat_gene,
      dat_pep,
@@ -2472,6 +2463,9 @@ save(c_anno_phos,
      colour_vec,
 # save(list = ls(),
      file = paste0(dirOutput,"database_env_R.RData"))
+
+remove(list = ls()[-1])
+gc()
 
 shiny::setProgress(1, detail = "Saving RData...")
 ```

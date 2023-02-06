@@ -349,6 +349,10 @@ server <- function(input, output, session) {
               # uiOutput("help11")
             ),
             fluidRow(
+              radioButtons("kinaseTree_phos", "Draw the kinase trees", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
+              # uiOutput("help14")
+            ),
+            fluidRow(
               radioButtons("STRING_phos", "Execute PPI network STRINGdb", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
               # uiOutput("help13")
             ),
@@ -600,6 +604,7 @@ server <- function(input, output, session) {
               prot_boxplot = input$prot_boxplot_phos,
               run_enrich = input$enrichR_phos,
               run_STRING = input$STRING_phos,
+              run_kinaseTree = input$kinaseTree_phos,
               pval_enrich_thr = input$pvalue_enrich_phos,
               overlap_size_enrich_thr = input$os_enrich_phos,
               enrich_filter_term = input$terms_enrich_phos,
@@ -736,6 +741,13 @@ server <- function(input, output, session) {
       )
     }
   )
+  
+  
+  # ----------------- DELETE TEMP FILES WHEN SESSION ENDS ---------------- #
+  
+  session$onSessionEnded(function() {
+    if (dir.exists(tempdir())){unlink(tempdir(), recursive = T)}
+  })
 }
 
 # Run the application
