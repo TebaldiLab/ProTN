@@ -2225,7 +2225,7 @@ shiny::setProgress(0.98, detail = "Network figures generated...")
 
 
 ```{r save_df, echo=F, message=F, warning=F}
-save(list = ls(), file = "tmp.RData")
+# save(list = ls(), file = "tmp.RData")
 
 save(c_anno,
      dat_gene,
