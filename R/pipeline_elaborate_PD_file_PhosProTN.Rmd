@@ -369,6 +369,13 @@ read_input_files<-function(type, filenames){
   input_files$Input <- input_files$Input[,colToKeep]
   if(!("Condition" %in% colnames(input_files$Input))){ stop("Error: \'Condition\' column missin in \'Input\' file.") }
   if(batch_corr_exe & !("MS_batch" %in% colnames(input_files$Input))){ stop("Error: \'MS_batch\' column missin in \'Input\' file with batch correction activated") }
+  
+  if(type == "PROT"){
+    input_files$Input$Condition <- str_c(input_files$Input$Condition, "_i")
+  } else{
+    input_files$Input$Condition <- str_c(input_files$Input$Condition, "_p")
+  }
+  
   input_files$Input$`File Name`<- lapply(input_files$Input$`File Name`,
                                                      function(x){tail(unlist(strsplit(x,"\\",fixed=T)),n=1)})
   
@@ -401,6 +408,11 @@ read_input_files<-function(type, filenames){
   #Mantain only the first UNIPROT code
   input_files$PEP$`Master Protein Accessions`<-lapply(input_files$PEP$`Master Protein Accessions`,
                                                                   function(x){unlist(str_split(x, ";"))[1]}) %>% unlist()
+  #Filter PHOS taking only phospho modifications
+  # if(type == "PHOS"){
+  #   input_files$PEP <- input_files$PEP[grepl("Phospho",input_files$PEP$Modifications),]
+  # }
+  
   #Verify if the Abundance start in 5 column in PEP table, if not remove extra column
   if(!grepl("Abundance",colnames(input_files$PEP)[5])){
     input_files$PEP<-input_files$PEP[,c("Annotated Sequence","Modifications",
@@ -449,7 +461,7 @@ read_input_files<-function(type, filenames){
   
   remove(uniprot_to_take,input_files)
   #Print Annotation table
-  kable(c_anno)
+  # kable(c_anno)
   return(list("taxonomy_NCBI" = taxonomy_NCBI,
               "psm_sig_raw" = psm_sig_raw,
               "c_anno" = c_anno,
@@ -470,13 +482,18 @@ res <- read_input_files("PHOS", filenames)
 psm_sig_raw_phos<-res$psm_sig_raw
 c_anno_phos<-res$c_anno
 
+cat("#### Phosho-proteome samples \n ")
+kable(c_anno_phos, row.names = F)
+cat("#### Proteome samples \n ")
+kable(c_anno_prot, row.names = F)
+
 remove(filenames, res)
 shiny::setProgress(0.23, detail = "Files correctly read...")
 ```
 
 ```{r load_data_from_MQ, eval=readMQ_files,echo=F, message=F, warning=F, results='asis'}
+#TODO: adapt to filter for PHOSPHO
 message("Reading files from MS...")
-
 read_input_files<-function(type, filenames){
   #Read all files in the input folder
   template_files=c("Input","pep","prot")
@@ -579,7 +596,7 @@ read_input_files<-function(type, filenames){
   
   remove(input_files)
   #Print Annotation table
-  kable(c_anno)
+  # kable(c_anno)
   return(list("taxonomy_NCBI" = taxonomy_NCBI,
               "psm_sig_raw" = psm_sig_raw,
               "c_anno" = c_anno,
@@ -697,14 +714,6 @@ shiny::setProgress(0.27, detail = "Annotate proteins/peptides...")
 
 ```
 
-## 2. Analysis
-
-Raw data consist in the area under the peak (m/z, time, number of events) calculated for PSM (PSMs: peptide-to-spectrum matches).
-
--   PSMs not consistently present in all replicates of at least 1 condition will be removed.
--   Contaminants are removed.
-
-The insentities are transformed in log2 scale.
 
 ```{r preprocess_sig_raw, echo=F, message=F, warning=F}
 #Preprocess Protein intensities
@@ -787,6 +796,21 @@ remove(psm_sig_pet_raw_phos,psm_sig_raw_phos,psm_long_df_phos,psm_filter_df_phos
 
 shiny::setProgress(0.29, detail = "Filtering intensity matrix...")
 ```
+
+#### Statistics of the proteomics
+```{r stat_proteomic, echo=F, message=F, warning=F, results='asis'}
+df_stat <- data.frame("number" = c(length(unique(psm_anno_df$symbol)), nrow(psm_log_pet_df)), row.names = c("Discovered proteins in proteomics:", "Discovered peptides in phospho-proteomiscs:"))
+kable(df_stat)
+```
+
+## 2. Analysis
+
+Raw data consist in the area under the peak (m/z, time, number of events) calculated for PSM (PSMs: peptide-to-spectrum matches).
+
+-   PSMs not consistently present in all replicates of at least 1 condition will be removed.
+-   Contaminants are removed.
+
+The insentities are transformed in log2 scale.
 
 #### 2.1. Log2 signal distributions before imputation {.tabset} 
 The box plot represents the distribution of the intensity values for each samples in the raw data. This figure is generated before the normalization and imputation of the data.
@@ -883,6 +907,7 @@ remove(hs,numeric_df)
 shiny::setProgress(0.34, detail = "Doing normalizations...")
 ```
 
+#### 2.3. Normalization and Imputation
 To perform the double analysis at protein- and peptide-level, two normalization function are applied.
 For the protein study, PSMs values were summarized into proteins and normalized across samples, with the "medianSweeping" function contained in the Bioconductor package [DEqMS](<https://www.bioconductor.org/packages/release/bioc/html/DEqMS.html>).
 At the peptide level, the normalization is done by the function equalMedianNormalization from  [DEqMS](<https://www.bioconductor.org/packages/release/bioc/html/DEqMS.html>), which normalizes to have equal medians in all samples.
@@ -1640,7 +1665,7 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   pDEPs<-plot_DEPs(deps_pep_l_df,
                     contrast_col="comp",
                     class_col="class",
-                    color_vec=c("grey40", "grey60"))
+                    color_vec=c("grey60", "grey40"))
   print(pDEPs)
   cat(" \n \n")
 
@@ -1692,9 +1717,6 @@ shiny::setProgress(0.63, detail = "Perform volcano plot...")
 ```
 
 ```{r volcano_pep, fig.height=6, fig.width=6, warning=FALSE, echo=FALSE, results='asis'}
-# save(c_anno_prot,dat_gene,formule_contrast,expr_avgse_df,signal_thr,fc_thr, pval_thr, psm_peptide_table, psm_peptide_table_prot,
-#      c_anno_phos,dat_pep,expr_avgse_pep_df, color_constrast, deps_pep_l_df, file = "tmp.RData")
-
 col_sigle_contrast <- data.frame("color_constrast"=c_anno[match(df$p, str_remove(c_anno$condition, "_p\\b|_i\\b")),"color"], "color_constrast_dark"=c(""), row.names = df$p)
 # darker.col = function(color, how.much = 50){
 #     colorRampPalette(c(color, "black"))(100)[how.much]
@@ -1713,11 +1735,15 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
 
   for(comp in unique(deps_pep_l_df$comp)){
     input_df <- na.omit((deps_pep_l_df[which(deps_pep_l_df$comp == comp),])[order(deps_pep_l_df$id),])
+    input_df$id <- psm_peptide_table[input_df$id, "GeneName"]
     # pos<-lapply(str_match_all(str_split(psm_peptide_table$`Position in Master Proteins`,";",n=1),"\\[(.*?)\\]"), function(x){x[,1][1]})
     # labels<-str_c(psm_peptide_table$GeneName,pos,sep="_")
     # input_df$id<-labels
-    labels_up <- (input_df %>% filter(class == '+'))$id
-    labels_down <- (input_df %>% filter(class == '-'))$id
+    labels_up <- (input_df[order(input_df$p_val),] %>% filter(class == '+'))$id
+    labels_up <- labels_up[1:min(100, length(labels_up))]
+    labels_down <- (input_df[order(input_df$p_val),] %>% filter(class == '+'))$id
+    labels_down <- labels_down[1:min(100, length(labels_down))]
+
 
     cmd<-ggplot(data=input_df, aes(x=log2_FC, y=-log10(p_val), col=class, label=id)) +
       geom_point(pch=20,cex=2) +

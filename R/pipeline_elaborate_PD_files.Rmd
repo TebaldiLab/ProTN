@@ -615,15 +615,6 @@ shiny::setProgress(0.27, detail = "Annotate proteins/peptides...")
 
 ```
 
-## 2. Analysis
-
-Raw data consist in the area under the peak (m/z, time, number of events) calculated for PSM (PSMs: peptide-to-spectrum matches).
-
--   PSMs not consistently present in all replicates of at least 1 condition will be removed.
--   Contaminants are removed.
-
-The insentities are transformed in log2 scale.
-
 ```{r preprocess_sig_raw, echo=F, message=F, warning=F}
 #Preprocess Protein intensities
 psm_sig_prot_raw[psm_sig_prot_raw == 0] <- NA # transform 0s into NAs
@@ -706,6 +697,21 @@ remove(psm_sig_pet_raw,psm_sig_raw,psm_long_df,psm_filter_df,filter_id,sig_thr)
 shiny::setProgress(0.29, detail = "Filtering intensity matrix...")
 ```
 
+#### Statistics of the proteomics
+```{r stat_proteomic, echo=F, message=F, warning=F, results='asis'}
+df_stat <- data.frame("number" = c(length(unique(psm_anno_df$symbol)), nrow(psm_anno_df)), row.names = c("Discovered proteins:", "Discovered peptides:"))
+kable(df_stat)
+```
+
+## 2. Analysis
+
+Raw data consist in the area under the peak (m/z, time, number of events) calculated for PSM (PSMs: peptide-to-spectrum matches).
+
+-   PSMs not consistently present in all replicates of at least 1 condition will be removed.
+-   Contaminants are removed.
+
+The insentities are transformed in log2 scale.
+
 #### 2.1. Log2 signal distributions before imputation
 The box plot represents the distribution of the intensity values for each samples in the raw data. This figure is generated before the normalization and imputation of the data.
 
@@ -764,7 +770,7 @@ At the peptide level, the normalization is done by the function equalMedianNorma
 
 ```{r prot_summarization, warning=F, message=F, echo=F}
 message("Median normalization in progress...")
-gene_anno_df <- psm_anno_df %>% dplyr::select(symbol) %>% unique()
+# gene_anno_df <- psm_anno_df %>% dplyr::select(symbol) %>% unique()
 
 dat_psm <- cbind(psm_anno_df[,c("id","symbol")],psm_log_prot_df)
 #For peptides analysis
@@ -778,7 +784,7 @@ dat_psm <- cbind(psm_anno_df[,c("id","symbol")],psm_log_prot_df)
 
 #Summarize into proteins and normalize by median
 dat_gene = DEqMS::medianSweeping(dat_psm,group_col = 2)
-remove(gene_anno_df)
+# remove(gene_anno_df)
 
 # Median centering log2 table for peptides
 dat_pep = DEqMS::equalMedianNormalization(psm_log_pet_df)
@@ -858,36 +864,7 @@ remove(ppe,grps)
 shiny::setProgress(0.42, detail = "Done normalization and imputation...")
 ```
 
-
-```{r pre_distributions, message=F, warning=F, echo=F, eval=F}
-
-cat("#### 2.3. Distribution after the imputation and medianSweeping")
-
-psm_long_df <- psm_log_prot_df %>% mutate(id=as.factor(rownames(psm_log_prot_df))) %>% pivot_longer(-id, names_to = "sample", values_to = "log2_intensity")
-psm_long_df <- suppressMessages(left_join(psm_long_df,c_anno))
-
-
-hs<-ggplot(data=psm_long_df, aes(x=factor(sample, levels=unique(psm_long_df$sample)),y=log2_intensity,fill=sample,colour=sample))+
-  #geom_hline(yintercept = 0, lty=2)+
-  coord_flip()+
-  geom_violin(alpha=0.5,scale="width",trim = F,colour=NA)+
-  geom_boxplot(alpha=1,fill="white",width=0.2,outlier.shape = NA, notch = T)+
-  theme_bw()+
-  theme(legend.position = "none",axis.title.y = element_blank())+
-  scale_fill_manual(values=(colour_vec)) +
-  scale_colour_manual(values=(colour_vec)) +
-  theme(panel.grid.minor = element_blank(),panel.grid.major.y = element_blank())
-
-hs
-
-remove(hs,psm_long_df)
-
-
-shiny::setProgress(0.43, detail = "Calculate post-norm distribution...")
-```
-
 ```{r sig_tables, message=F, warning=F, echo=F, results='hide'}
-
 #Save proteins table
 expr_mat<-dat_gene
 
@@ -1449,7 +1426,7 @@ if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   pDEPs<-plot_DEPs(deps_l_df,
                     contrast_col="comp",
                     class_col="class",
-                    color_vec=c("grey40", "grey60"))
+                    color_vec=c("grey60", "grey40"))
   cat("##### Proteins \n")
   print(pDEPs)
   cat(" \n \n")
@@ -1466,7 +1443,7 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   pDEPs<-plot_DEPs(deps_pep_l_df,
                     contrast_col="comp",
                     class_col="class",
-                    color_vec=c("grey40", "grey60"))
+                    color_vec=c("grey60", "grey40"))
   cat("##### Peptides \n")
   print(pDEPs)
   cat(" \n \n")

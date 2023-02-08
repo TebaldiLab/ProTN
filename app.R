@@ -93,7 +93,7 @@ ui <- dashboardPage(
                 uiOutput("help2")
               ),
               fluidRow(
-                radioButtons("sw_analyzer", "Software Analyzer", c("PD", "MQ"), inline = TRUE),
+                radioButtons("sw_analyzer", "Software Analyzer", c("ProteomeDiscoverer", "MaxQuant"), inline = TRUE),
                 uiOutput("help3")
               )
             ),
@@ -143,7 +143,7 @@ ui <- dashboardPage(
                 # uiOutput("help2")
               ),
               fluidRow(
-                radioButtons("sw_analyzer_phos", "Software Analyzer", c("PD", "MQ"), inline = TRUE),
+                radioButtons("sw_analyzer_phos", "Software Analyzer", c("ProteomeDiscoverer", "MaxQuant"), inline = TRUE),
                 # uiOutput("help3")
               ),
               fluidRow(
@@ -495,12 +495,12 @@ server <- function(input, output, session) {
             params <- list(
               doc_title = input$title_exp,
               description = input$description_exp,
-              readPD_files = if (input$sw_analyzer == "PD") {
+              readPD_files = if (input$sw_analyzer == "ProteomeDiscoverer") {
                 TRUE
               } else {
                 FALSE
               },
-              readMQ_files = if (input$sw_analyzer == "MQ") {
+              readMQ_files = if (input$sw_analyzer == "MaxQuant") {
                 TRUE
               } else {
                 FALSE
@@ -580,12 +580,12 @@ server <- function(input, output, session) {
             params <- list(
               doc_title = input$title_exp_phos,
               description = input$description_exp_phos,
-              readPD_files = if (input$sw_analyzer_phos == "PD") {
+              readPD_files = if (input$sw_analyzer_phos == "ProteomeDiscoverer") {
                 TRUE
               } else {
                 FALSE
               },
-              readMQ_files = if (input$sw_analyzer_phos == "MQ") {
+              readMQ_files = if (input$sw_analyzer_phos == "MaxQuant") {
                 TRUE
               } else {
                 FALSE
@@ -684,8 +684,8 @@ server <- function(input, output, session) {
               batch_corr_exe = FALSE,
               contr_design = "../Data/design.xlsx",
               prot_boxplot = "ABCF2, ACIN1",
-              run_enrich = TRUE,
-              run_STRING = TRUE,
+              run_enrich = FALSE,
+              run_STRING = FALSE,
               pval_enrich_thr = "0.05",
               overlap_size_enrich_thr = as.integer(5),
               enrich_filter_term = NULL,
@@ -703,10 +703,7 @@ server <- function(input, output, session) {
               dirOutput = dirOutput_Server
             )
 
-            # future({
-              # Knit the document, passing in the `params` list, and eval it in a
-              # child of the global environment (this isolates the code in the document
-              # from the code in this app).
+
               rmarkdown::render("R/pipeline_elaborate_PD_files.Rmd",
                 output_file = "report.html",
                 output_dir = dirOutput_Server,
@@ -719,7 +716,6 @@ server <- function(input, output, session) {
               files2zip <- list.files("./", recursive = TRUE)
               zip(zipfile = file, files = files2zip, extra = "-r")
               setwd(oldwd)
-            # })
             shinyjs::enable("report")
             shinyjs::enable("case_study")
             # shinyjs::removeClass(id = "cover",class = "cover_run")
@@ -745,9 +741,9 @@ server <- function(input, output, session) {
   
   # ----------------- DELETE TEMP FILES WHEN SESSION ENDS ---------------- #
   
-  session$onSessionEnded(function() {
-    if (dir.exists(tempdir())){unlink(tempdir(), recursive = T)}
-  })
+  # session$onSessionEnded(function() {
+  #   if (dir.exists(tempdir())){unlink(tempdir(), recursive = T)}
+  # })
 }
 
 # Run the application
