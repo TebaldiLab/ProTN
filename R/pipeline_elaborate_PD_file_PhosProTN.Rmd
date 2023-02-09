@@ -110,7 +110,7 @@ options(dplyr.summarise.inform = FALSE)
 
 #Set font and size
 loadfonts(quiet=T)
-bs<-11      # point sizes in ggplot
+bs<-12      # point sizes in ggplot
 bf<-"Arial" # font family in ggplot
 
 # Color definition
@@ -311,6 +311,10 @@ cat("- ```network``` directory: plots of the up- and down- regulated genes based
 #  <!-- - **Prefilter**: histogram representing the number of genes in each community discovered. -->
 cat("  - **Postfilter**: histogram representing the number of genes in each community discovered after a filter on the genes and on the links. \n")
 cat("  - **Graph**: visual representation of the network discovered in two layouts: *fr* and *kk*. \n")
+```
+
+```{r print_descr_KINASE_TREE, warning=FALSE, echo=F, message=FALSE, eval=run_kinaseTree, results='asis'}
+cat("- ```KinaseTree``` directory: Kinase tree generated with CORAL in svg and associated txt file with the activity of each kinase. \n")
 ```
 
 
@@ -860,7 +864,7 @@ cat("\n \n")
 shiny::setProgress(0.32, detail = "Calculate distributions...")
 ```
 
-#### 2.2. Percentage of numeric value in peptide intensity matrix for each sample {.tabset} 
+#### 2.2. Percentage of numeric value in intensity matrix for each sample {.tabset} 
 The next graph visualizes the percentage of intensities in the matrix. The percentage of intensity values are counted for each sample separately.
 
 ```{r numeric_numbers, echo=F, message=F, warning=F, results='asis'}
@@ -908,9 +912,9 @@ shiny::setProgress(0.34, detail = "Doing normalizations...")
 ```
 
 #### 2.3. Normalization and Imputation
-To perform the double analysis at protein- and peptide-level, two normalization function are applied.
-For the protein study, PSMs values were summarized into proteins and normalized across samples, with the "medianSweeping" function contained in the Bioconductor package [DEqMS](<https://www.bioconductor.org/packages/release/bioc/html/DEqMS.html>).
-At the peptide level, the normalization is done by the function equalMedianNormalization from  [DEqMS](<https://www.bioconductor.org/packages/release/bioc/html/DEqMS.html>), which normalizes to have equal medians in all samples.
+To perform the analysis, two normalization function are applied.
+For the Proteomic study, PSMs values were summarized into proteins and normalized across samples, with the "medianSweeping" function contained in the Bioconductor package [DEqMS](<https://www.bioconductor.org/packages/release/bioc/html/DEqMS.html>).
+For result of the phospho-proteomic, the normalization is done by the function equalMedianNormalization from  [DEqMS](<https://www.bioconductor.org/packages/release/bioc/html/DEqMS.html>), which normalizes to have equal medians in all samples.
 
 ```{r prot_summarization, warning=F, message=F, echo=F}
 message("Median normalization in progress...")
@@ -938,7 +942,7 @@ message("Normalization DONE.")
 shiny::setProgress(0.38, detail = "Doing imputation...")
 ```
 
-The principal method is based on the PhosR package. It is a package for comprehensive analysis of phosphoproteomic data. Its core components are data processing and downstream analysis.
+The principal imputation method is based on the PhosR package. It is a package for comprehensive analysis of phosphoproteomic data. Its core components are data processing and downstream analysis.
 PhosR is always applied but in some cases, it does not work, for example, if there is only 1 sample in a specific condition. In this rare case, it uses a simpler round imputation. It calculates the mean and the standard deviation of the matrix and it generates the imputed values based on the gaussian function derived.
 
 ```{r imputation, echo=F, message=F, warning=F, results='asis'}
@@ -1097,7 +1101,7 @@ shiny::setProgress(0.45, detail =  "Save normalized data...")
 ```
 
 #### 2.4. Normalized distributions {.tabset} 
-Box plot of the normalized and imputed data for each sample.
+Box plot of the normalized and imputed data for each sample. In tab "Phospho-proteomics distribution" is represented the normalized distribution of the phospho samples, instead in the second tab there are the nomalized values of the proteomics.
 
 ```{r norm_distributions, message=F, warning=F, echo=F, results='asis'}
 cat("\n \n")
@@ -1179,7 +1183,7 @@ if(is.null(cc)){
 
 cmd<-ggplot(mds_cmdscale, aes(MDS_1, MDS_2, colour=condition)) + #plot according to the new coordinates
   geom_point(size=1.5,alpha=.9) + #colour=factor(df) to choose colour according to the condition
-  geom_text_repel(aes(label=sample), size=0.15*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
+  geom_text_repel(aes(label=sample), size=0.3*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
   scale_colour_manual(values=cc[unique(names(cc))]) +
   theme_bw(base_size = bs, base_family = bf) +
   theme(legend.position = "right", panel.grid.minor=element_blank())
@@ -1212,7 +1216,7 @@ if(is.null(cc)){
 
 cmd<-ggplot(mds_cmdscale, aes(MDS_1, MDS_2, colour=condition)) + #plot according to the new coordinates
   geom_point(size=1.5,alpha=.9) + #colour=factor(df) to choose colour according to the condition
-  geom_text_repel(aes(label=sample), size=0.15*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
+  geom_text_repel(aes(label=sample), size=0.3*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
   scale_colour_manual(values=cc[unique(names(cc))]) +
   theme_bw(base_size = bs, base_family = bf) +
   theme(legend.position = "right", panel.grid.minor=element_blank())
@@ -1260,7 +1264,7 @@ if(is.null(cc)){
 #ggplot method
 p1 <- ggplot(pc, aes(PC1, PC2, colour = condition)) +
       geom_point(size=1.5,alpha=.9) + #colour=factor(df) to choose colour according to the condition
-      geom_text_repel(aes(label=sample), size=0.15*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
+      geom_text_repel(aes(label=sample), size=0.3*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
       scale_colour_manual(values=cc[unique(names(cc))]) +
       theme_bw(base_size = bs, base_family = bf) +
       theme(legend.position = "right", panel.grid.minor=element_blank()) +
@@ -1301,7 +1305,7 @@ if(is.null(cc)){
 #ggplot method
 p1 <- ggplot(pc, aes(PC1, PC2, colour = condition)) +
       geom_point(size=1.5,alpha=.9) + #colour=factor(df) to choose colour according to the condition
-      geom_text_repel(aes(label=sample), size=0.15*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
+      geom_text_repel(aes(label=sample), size=0.3*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
       scale_colour_manual(values=cc[unique(names(cc))]) +
       theme_bw(base_size = bs, base_family = bf) +
       theme(legend.position = "right", panel.grid.minor=element_blank()) +
@@ -1493,11 +1497,12 @@ if(length(prot_find)>0){
 shiny::setProgress(0.56, detail = "Control boxplot proteins...")
 ```
 
-## 3. Identification of Differentially Expressed Proteins and Peptides
+## 3. Identification of Differentially Expressed Peptides of the phospho-proteomic
 
-Differential expression analysis for proteins is performed with the DEqMS package. DEqMS is developed on top of Limma, but the method estimates different prior variances for proteins quantified by different number of PSMs/peptides, therefore achieving better accuracy.
-This methodology can not be applied to the peptides, so, the classical Limma method is used.
-In the plot are represented graphically the number of DEPs for each contrast. Tab **Proteins** for the differentially expressed proteins, **Peptides** for the number of the differentially expressed peptides.
+Differential expression analysis for phospho-proteomics is performed with the Limma package. First are reported the comparison for which PhosProTN execute the differential analysis. Other than the formula desired by the user, for each condition is studied the differentiality between the phospho samples against the proteomic samples. 
+
+The conditions from the phospho-proteomics are represented by an **_p** at the end of the condition, the **_i** represent the conditions from the proteomics. Also, the comparison provided in input by the user are adapted for the phospho differential analysis.
+
 
 
 ```{r diff_analysis,  warning=F, message=F, echo=F}
@@ -1592,8 +1597,10 @@ cat(" \n")
 
 ```
 
-```{r number_deps, warning=FALSE, echo=FALSE, results='asis'}
+#### Number of DEPs for each comparison
+In the folllowing plot is represented graphically the number of DEPs for each contrast desscribed previously.
 
+```{r number_deps, warning=FALSE, echo=FALSE, results='asis'}
 # Plot DEPs barplot (as a double barplot)
 
 plot_DEPs<-function(DEPs_df, # dataframe containing DEPs result
@@ -1616,18 +1623,18 @@ plot_DEPs<-function(DEPs_df, # dataframe containing DEPs result
 
   #Change ratio based on the number of comp
   n_comp<-length(unique(res_df$Contrast))
-  ratio<-1/((5/n_comp)+0.25)
+  # ratio<-1/((5/n_comp)+0.25)
   bs<-11
   bap<-ggplot(res_df,aes(x=Contrast,y=Number,fill=Class)) +
     scale_fill_manual(name="",values=color_vec,labels=c("Up-Regulated","Down-Regulated"))+
     geom_bar(stat="identity",position=position_nudge(),width=0.6,alpha=0.9) +
-    geom_text(aes(x=Contrast, y=Number, label=abs(Number), hjust=ifelse(res_df$Number>=0,1.1,-0.1)), colour="white",size=bs*0.4,fontface="plain") +
+    geom_text(aes(x=Contrast, y=Number, label=abs(Number), hjust=ifelse(res_df$Number>=0,1,-0)), colour="white",size=bs*0.4,fontface="plain") +
     theme_bw(base_size = bs) +
     theme(axis.title.y=element_blank()) +
     theme(panel.border=element_blank()) +
     theme(axis.ticks=element_blank()) +
     theme(panel.grid=element_blank()) +
-    theme(aspect.ratio = ratio) +
+    # theme(aspect.ratio = ratio) +
     geom_hline(yintercept=0,col="grey30",lty=1,lwd=0.05*bs)+
     theme(axis.text.y=element_text(colour="grey20")) +
     theme(axis.text.x=element_blank()) +
@@ -1642,34 +1649,22 @@ plot_DEPs<-function(DEPs_df, # dataframe containing DEPs result
 }
 
 cat(" \n \n")
-cat("#### Number of DEPs for each comparison \n")
-#Execute only if found at least one gene differentiated
-# if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
-#   pDEPs<-plot_DEPs(deps_l_df,
-#                     contrast_col="comp",
-#                     class_col="class",
-#                     color_vec=c("grey40", "grey60"))
-#   cat("##### Proteins \n")
-#   print(pDEPs)
-#   cat(" \n \n")
-# 
-#   suppressMessages(ggsave(paste0(dirOutput,"DEPs_proteins_count_barplot.pdf"), pDEPs, device=cairo_pdf, units = c("in")))
-#   remove(pDEPs,cmd,mds_cmdscale)
-# }else{
-#   message("No gene differentiated discovered.")
-#   cat("No gene differentiated discovered.")
-# }
 #Peptides
 if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   cat(" \n \n")
+  heig<-unique(deps_pep_l_df$comp)
   pDEPs<-plot_DEPs(deps_pep_l_df,
                     contrast_col="comp",
                     class_col="class",
                     color_vec=c("grey60", "grey40"))
+  oldheig <- knitr::opts_chunk$get("fig.height")
+  knitr::opts_chunk$set(fig.height = max(min(20,length(heig)*0.75),2))
   print(pDEPs)
   cat(" \n \n")
+  knitr::opts_chunk$set(fig.height = oldheig)
 
-  suppressMessages(ggsave(paste0(dirOutput,"DEPs_peptides_count_barplot.pdf"), pDEPs, device=cairo_pdf, units = c("in")))
+  suppressMessages(ggsave(paste0(dirOutput,"DEPs_peptides_count_barplot.pdf"), pDEPs, device=cairo_pdf,
+                          height = max(min(20,length(heig)*0.75),2), units = c("in")))
   remove(pDEPs,cmd,mds_cmdscale)
 }else{
   message("No gene differentiated discovered.")
@@ -1729,8 +1724,8 @@ color_constrast<-rbind(color_constrast,col_sigle_contrast)
 cat(" \n \n")
 if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
 
-  cat("#### 3.1.2. Volcano plot of Peptides {.tabset}  \n")
-  cat("In the tabs below, the figures represent the volcano plots of differentially expressed peptides. Each condition has its own tab with the correspoding figure. \n The line in the volcano are the threshold set in the **options** file. \n Class identify the state of the peptides. \"+\" are the Up-regulated DEPs, \"-\" are the Down-regulated DEPs, \"=\" are the non-significative DEPs. The tool writes the labels of the peptides which can fit in the graph. \n")
+  cat("#### 3.1.2. Volcano plot {.tabset}  \n")
+  cat("In the tabs below, the figures represent the volcano plots of differentially expressed peptides. Each condition has its own tab with the correspoding figure. \n The line in the volcano are the threshold set. \n \n Class identify the state of the peptides. \"+\" are the Up-regulated DEPs, \"-\" are the Down-regulated DEPs, \"=\" are the non-significative DEPs. \n \n The tool writes the labels of the peptides which can fit in the graph. \n")
   cat(" \n \n")
 
   for(comp in unique(deps_pep_l_df$comp)){
@@ -1842,7 +1837,7 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   cmd<-ggplot(mds_cmdscale, aes(MDS_1, MDS_2, colour=condition)) + #plot according to the new coordinates
     # ggtitle("samples")+
     geom_point(size=1.5,alpha=.9) + #colour=factor(df) to choose colour according to the condition
-    geom_text_repel(aes(label=sample), size=0.15*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
+    geom_text_repel(aes(label=sample), size=0.3*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
     scale_colour_manual(values=cc[unique(names(cc))]) +
     theme_bw(base_size = bs, base_family = bf) +
     theme(legend.position = "right", panel.grid.minor=element_blank())
@@ -1943,7 +1938,7 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   #ggplot method
   p1 <- ggplot(pc, aes(PC1, PC2, colour = condition)) +
         geom_point(size=1.5,alpha=.9) + #colour=factor(df) to choose colour according to the condition
-        geom_text_repel(aes(label=sample), size=0.15*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
+        geom_text_repel(aes(label=sample), size=0.3*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
         scale_colour_manual(values=cc[unique(names(cc))]) +
         theme_bw(base_size = bs, base_family = bf) +
         theme(legend.position = "right", panel.grid.minor=element_blank()) +
@@ -2218,7 +2213,7 @@ shiny::setProgress(0.85, detail = "Plotting enrichment results...")
 
 
 ```{r selection_genes, echo=F, message=F, warning=F, eval=run_STRING, results='asis'}
-shiny::setProgress(0.90, detail = "Network analysis in progress... \n Can require several minutes...")
+shiny::setProgress(0.82, detail = "Network analysis in progress... \n Can require several minutes...")
 cat(" \n \n")
 cat("## 5. Differetially Expressed Proteins in STRINGdb network \n")
 cat("Protein-protein interactions (PPIs) is crucial for understanding cell physiology in different states. Also, knowledge from PPIs can be used (EMBL-EBI, 2022) for characterize unknown proteins, study pathways, characterize relationship between proteins. The pipeline uses [STRING](https://string-db.org/) to execute the PPI analysis. The database is prefilter removing the edges with low strength. The iteration searchs the interactions between DEPs in the database. Discovered all the connections, the clusters are identified. \n")
@@ -2244,7 +2239,7 @@ if(length(doComp)==0 | all(doComp==F)){
   dirOutput_net=paste0(dirOutput,"network/")
 }
 
-shiny::setProgress(0.93, detail = "Network analysis done... \n Can require several minutes...")
+shiny::setProgress(0.84, detail = "Network analysis done... \n Can require several minutes...")
 ```
 
 ```{r network_string_communities, echo=F, message=F, warning=F, eval = doNextChunk_STRING, results='hide'}
@@ -2316,13 +2311,13 @@ if(nrow(string_gene_df) > 0){
   message("Network incomplete.")
 }
 
-shiny::setProgress(0.93, detail = "Generating network figures... \n Can require several minutes...")
+shiny::setProgress(0.85, detail = "Generating network figures... \n Can require several minutes...")
 ```
 
 ```{r network_string, echo=F, message=F, warning=F, eval = doNextChunk_STRING, fig.width=12, results='asis'}
 message("Plotting STRING network in progress...")
 cat("#### 5.1. Number of proteins in each communities discovered  {.tabset}  \n")
-cat("The bar plots below describe the communities discovered in each network. THe heigth of the bar is the number of gene in that community. Each tab is a different contrast analysis. ")
+cat("The bar plots below describe the communities discovered in each network. The heigth of the bar is the number of gene in that community. Each tab is a different contrast analysis. ")
 cat(" \n \n")
 
 
@@ -2428,13 +2423,13 @@ for (comp in names(doComp)){
 
 cat("\n \n")
 message("Networking with STRING DONE")
-cat("### 5.2. The networks can be found in the pdfs inside *network* directory")
-cat("\n")
+cat("\n \n Results inside folder: *network*")
+cat("\n ")
 cat("The network are not reported in this report since for each comparison are generated 2 figures since we use 2 layouts for the nodes. For each comparison a 2-page pdf file is created. \n")
 
 message("Cleaning...")
 
-shiny::setProgress(0.98, detail = "Network figures generated...")
+shiny::setProgress(0.90, detail = "Network figures generated...")
 ```
 
 
@@ -2456,11 +2451,13 @@ dir.create(file.path(dirOutput,"kinaseTree/"), showWarnings = FALSE)
 dirOutput_kinase=paste0(dirOutput,"kinaseTree/")
 
 kinase_act_phosr_wrapper <- function(comparison) {
+  oldwd<-getwd()
   source("functions_2021.R")
   library(PhosR)
   source("CORAL/global.R")
   source("server.R")
   kinase_act_phosr(dirOutput_kinase, formule_CORAL, comparison, dat_pep, deps_pep_l_df, psm_peptide_table, c_anno_phos, df)
+  setwd(oldwd)
 }
 
 ncores <- min(detectCores()-2, length(names(formule_CORAL)))
@@ -2470,10 +2467,10 @@ res <- mclapply(names(formule_CORAL), kinase_act_phosr_wrapper, mc.cores = ncore
 # #RUN CORAL
 # source("R/CORAL/global.R")
 
-shiny::setProgress(0.93, detail = "Kinase analysis done...")
+shiny::setProgress(0.95, detail = "Kinase analysis done...")
 ```
 
-```{r save_df, echo=F, message=F, warning=F}
+```{r save_df, echo=F, message=F, warning=F, results='hide'}
 # save(list = ls(), file = "tmp.RData")
 
 save(c_anno_phos,

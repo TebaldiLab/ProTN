@@ -1394,7 +1394,7 @@ plot_DEPs<-function(DEPs_df, # dataframe containing DEPs result
 
   #Change ratio based on the number of comp
   n_comp<-length(unique(res_df$Contrast))
-  ratio<-1/((5/n_comp)+0.25)
+  # ratio<-1/((5/n_comp)+0.25)
   bs<-11
   bap<-ggplot(res_df,aes(x=Contrast,y=Number,fill=Class)) +
     scale_fill_manual(name="",values=color_vec,labels=c("Up-Regulated","Down-Regulated"))+
@@ -1405,7 +1405,7 @@ plot_DEPs<-function(DEPs_df, # dataframe containing DEPs result
     theme(panel.border=element_blank()) +
     theme(axis.ticks=element_blank()) +
     theme(panel.grid=element_blank()) +
-    theme(aspect.ratio = ratio) +
+    # theme(aspect.ratio = ratio) +
     geom_hline(yintercept=0,col="grey30",lty=1,lwd=0.05*bs)+
     theme(axis.text.y=element_text(colour="grey20")) +
     theme(axis.text.x=element_blank()) +
@@ -1423,15 +1423,20 @@ cat(" \n \n")
 cat("#### Number of DEPs for each comparison {.tabset}  \n")
 #Execute only if found at least one gene differentiated
 if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
+  heig<-unique(deps_l_df$comp)
   pDEPs<-plot_DEPs(deps_l_df,
                     contrast_col="comp",
                     class_col="class",
                     color_vec=c("grey60", "grey40"))
+  oldheig <- knitr::opts_chunk$get("fig.height")
+  knitr::opts_chunk$set(fig.height = max(min(20,length(heig)*0.75),2))
   cat("##### Proteins \n")
   print(pDEPs)
   cat(" \n \n")
+  knitr::opts_chunk$set(fig.height = oldheig)
 
-  suppressMessages(ggsave(paste0(dirOutput,"DEPs_proteins_count_barplot.pdf"), pDEPs, device=cairo_pdf, units = c("in")))
+  suppressMessages(ggsave(paste0(dirOutput,"DEPs_proteins_count_barplot.pdf"), pDEPs, device=cairo_pdf, 
+                          height = max(min(20,length(heig)*0.75),2), units = c("in")))
   remove(pDEPs,cmd,mds_cmdscale)
 }else{
   message("No gene differentiated discovered.")
@@ -1440,15 +1445,21 @@ if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
 #Peptides
 if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   cat(" \n \n")
+  heig<-unique(deps_pep_l_df$comp)
   pDEPs<-plot_DEPs(deps_pep_l_df,
                     contrast_col="comp",
                     class_col="class",
                     color_vec=c("grey60", "grey40"))
+  
+  oldheig <- knitr::opts_chunk$get("fig.height")
+  knitr::opts_chunk$set(fig.height = max(min(20,length(heig)*0.75),2))
   cat("##### Peptides \n")
   print(pDEPs)
   cat(" \n \n")
+  knitr::opts_chunk$set(fig.height = oldheig)
 
-  suppressMessages(ggsave(paste0(dirOutput,"DEPs_peptides_count_barplot.pdf"), pDEPs, device=cairo_pdf, units = c("in")))
+  suppressMessages(ggsave(paste0(dirOutput,"DEPs_peptides_count_barplot.pdf"), pDEPs, device=cairo_pdf, 
+                          height = max(min(20,length(heig)*0.75),2), units = c("in")))
   remove(pDEPs,cmd,mds_cmdscale)
 }else{
   message("No gene differentiated discovered.")

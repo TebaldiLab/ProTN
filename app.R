@@ -523,10 +523,6 @@ server <- function(input, output, session) {
               dirOutput = dirOutput_Server
             )
             
-            # future({
-              # Knit the document, passing in the `params` list, and eval it in a
-              # child of the global environment (this isolates the code in the document
-              # from the code in this app).
               rmarkdown::render("R/pipeline_elaborate_PD_files.Rmd",
                 output_file = "report.html",
                 output_dir = dirOutput_Server,
@@ -540,7 +536,7 @@ server <- function(input, output, session) {
               # TODO
               zip(zipfile = file, files = files2zip, extra = "-r")
               setwd(oldwd)
-            # })
+              
             shinyjs::enable("report")
             shinyjs::enable("case_study")
             js$pageDisable("all")
