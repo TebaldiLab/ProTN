@@ -1109,7 +1109,7 @@ kinase_act_phosr <- function(dirOutput_kinase, formule_CORAL, comp, dat_pep, dep
   
   mat.std <- standardise(mat)
   mat.std.geneSymbol <- mat.std
-  rownames(mat.std.geneSymbol)<-unlist(str_split_fixed(rownames(mat.std.geneSymbol), "\\.", n=2)[,1])
+  rownames(mat.std.geneSymbol)<-str_to_upper(unlist(str_split_fixed(rownames(mat.std.geneSymbol), "\\.", n=2)[,1]))
   mat.std<-data.frame(mat.std)
   mat.std$geneSymbol <- unlist(str_split_fixed(rownames((mat.std)), "\\.", n=2)[,1])
   mat.std$id<-rownames(mat.std)
@@ -1122,7 +1122,7 @@ kinase_act_phosr <- function(dirOutput_kinase, formule_CORAL, comp, dat_pep, dep
                                  species = "human",
                                  verbose = T)
   set.seed(42)
-  predMat <- kinaseSubstratePred(kssMat)
+  predMat <- kinaseSubstratePred(kssMat, inclusion = 10)
   
   colnames(kssMat$ksActivityMatrix) <- str_remove(c_anno_phos[str_remove(colnames(kssMat$ksActivityMatrix), "_p\\b"), "condition"], "_p\\b")
   #Fare magia per le varie formule

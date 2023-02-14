@@ -100,15 +100,15 @@ ui <- dashboardPage(
             column(
               width = 4,
               fluidRow(
-                fileInput("input_file", "Select the INPUT file..."),
+                fileInput("input_file", "Select the SAMPLE_ANNOTATION file..."),
                 uiOutput("help4")
               ),
               fluidRow(
-                fileInput("pep_file", "Select the PEP file..."),
+                fileInput("pep_file", "Select the PEPTIDES file..."),
                 uiOutput("help5")
               ),
               fluidRow(
-                fileInput("prot_file", "Select the PROT file..."),
+                fileInput("prot_file", "Select the PROTEINS file..."),
                 uiOutput("help6")
               )
             ),
@@ -153,40 +153,12 @@ ui <- dashboardPage(
             ),
             column(
               width = 4,
-              fluidRow(
-                fileInput("input_file_prot", "Select the INPUT file of the PROTEOMICS..."),
-                # uiOutput("help4")
-              ),
-              fluidRow(
-                fileInput("pep_file_prot", "Select the PEP file of the PROTEOMICS..."),
-                # uiOutput("help5")
-              ),
-              fluidRow(
-                fileInput("prot_file_prot", "Select the PROT file of the PROTEOMICS..."),
-                # uiOutput("help6")
-              )
+              uiOutput("input_filePROT_phos")
             ),
             column(
               width = 4,
-              fluidRow(
-                fileInput("input_file_phos", "Select the INPUT file of the PHOSPHOproteomics..."),
-                # uiOutput("help4")
-              ),
-              fluidRow(
-                fileInput("pep_file_phos", "Select the PEP file of the PHOSPHOproteomics..."),
-                # uiOutput("help5")
-              ),
-              fluidRow(
-                fileInput("prot_file_phos", "Select the PROT file of the PHOSPHOproteomics..."),
-                # uiOutput("help6")
-              ),
-              radioButtons("custom_param_phos", "Use custom parameter", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
-              fillRow(
-                downloadButton("report_phos", "Generate report"),
-                # downloadButton("case_study_phos", "Case Study Example")
-              )
+              uiOutput("input_filePHOS_phos")
             )
-          # )
           ),
           uiOutput("input_params_phos")
         )
@@ -370,6 +342,91 @@ server <- function(input, output, session) {
     }
   })
   
+  output$input_filePROT_phos <- renderUI({
+    if (input$sw_analyzer_phos == "ProteomeDiscoverer"){
+      tagList(
+        fluidRow(
+          fileInput("input_file_prot", "Select the SAMPLE_ANNOTATION file of the PROTEOMICS..."),
+          # uiOutput("help4")
+        ),
+        fluidRow(
+          fileInput("pep_file_prot", "Select the PEP file of the PROTEOMICS..."),
+          # uiOutput("help5")
+        ),
+        fluidRow(
+          fileInput("prot_file_prot", "Select the PROT file of the PROTEOMICS..."),
+          # uiOutput("help6")
+        )
+      )
+    } else if(input$sw_analyzer_phos == "MaxQuant"){
+      tagList(
+        fluidRow(
+          fileInput("input_file_prot", "Select the SAMPLE_ANNOTATION file of the PROTEOMICS..."),
+          # uiOutput("help4")
+        ),
+        fluidRow(
+          fileInput("pep_file_prot", "Select the EVIDENCE file of the PROTEOMICS..."),
+          # uiOutput("help5")
+          # ),
+          # fluidRow(
+          #   fileInput("prot_file_prot", "Select the PROT file of the PROTEOMICS..."),
+          # uiOutput("help6")
+        )
+      )
+    } else{
+      tagList(
+        tags$p("BACK")
+      )
+    }
+  })
+  
+  output$input_filePHOS_phos <- renderUI({
+    if (input$sw_analyzer_phos == "ProteomeDiscoverer"){
+      tagList(
+        fluidRow(
+          fileInput("input_file_phos", "Select the SAMPLE_ANNOTATION file of the PHOSPHOproteomics..."),
+          # uiOutput("help4")
+        ),
+        fluidRow(
+          fileInput("pep_file_phos", "Select the PEP file of the PHOSPHOproteomics..."),
+          # uiOutput("help5")
+        ),
+        fluidRow(
+          fileInput("prot_file_phos", "Select the PROT file of the PHOSPHOproteomics..."),
+          # uiOutput("help6")
+        ),
+        radioButtons("custom_param_phos", "Use custom parameter", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
+        fillRow(
+          downloadButton("report_phos", "Generate report"),
+          # downloadButton("case_study_phos", "Case Study Example")
+        )
+      )
+    } else if(input$sw_analyzer_phos == "MaxQuant"){
+      tagList(
+        fluidRow(
+          fileInput("input_file_phos", "Select the SAMPLE_ANNOTATION file of the PHOSPHOproteomics..."),
+          # uiOutput("help4")
+        ),
+        fluidRow(
+          fileInput("pep_file_phos", "Select the EVIDENCE file of the PHOSPHOproteomics..."),
+          # uiOutput("help5")
+          # ),
+          # fluidRow(
+          #   fileInput("prot_file_phos", "Select the PROT file of the PHOSPHOproteomics..."),
+          # uiOutput("help6")
+        ),
+        radioButtons("custom_param_phos", "Use custom parameter", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
+        fillRow(
+          downloadButton("report_phos", "Generate report"),
+          # downloadButton("case_study_phos", "Case Study Example")
+        )
+      )
+    } else{
+      tagList(
+        tags$p("BACK")
+      )
+    }
+  })
   
   #Show modals with example files
   output$input_df <- DT::renderDataTable({
@@ -587,10 +644,10 @@ server <- function(input, output, session) {
                 FALSE
               },
               file_input_prot = input$input_file_prot$datapath,
-              file_prot_prot = input$prot_file_prot$datapath,
+              file_prot_prot = if(input$sw_analyzer_phos == "ProteomeDiscoverer"){input$prot_file_prot$datapath}else{NA},
               file_pep_prot = input$pep_file_prot$datapath,
               file_input_phos = input$input_file_phos$datapath,
-              file_prot_phos = input$prot_file_phos$datapath,
+              file_prot_phos = if(input$sw_analyzer_phos == "ProteomeDiscoverer"){input$prot_file_phos$datapath}else{NA},
               file_pep_phos = input$pep_file_phos$datapath,
               signal_thr = input$signal_DEPs_phos,
               fc_thr = input$FC_DEPs_phos,
