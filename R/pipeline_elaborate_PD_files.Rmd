@@ -24,6 +24,7 @@ params:
   contr_design: NA
   prot_boxplot: NA
   run_enrich: NA
+  run_enrich_universe: NA
   run_STRING: NA
   pval_enrich_thr: "0.05"
   overlap_size_enrich_thr: 5
@@ -217,8 +218,9 @@ prot_boxplot<-na.omit(strsplit(params$prot_boxplot, split = "\\;|\\,|\\ |\\; |\\
 boxplot_prot_exe <- FALSE
 if(length(prot_boxplot)>0){ boxplot_prot_exe<-TRUE }
 #Read enrich parameter
-doNextChunk_STRING <- doNextChunk <- run_enrich <- run_STRING <- FALSE
+doNextChunk_STRING <- doNextChunk <- run_enrich <- run_STRING <- run_enrich_universe <- FALSE
 run_enrich <- as.logical(params$run_enrich)
+run_enrich_universe <- as.logical(params$run_enrich_universe)
 run_STRING <- as.logical(params$run_STRING)
 # save(params, file = "tmp.RData")
 pval_enrich_thr <- if(is.null(params$pval_enrich_thr)){0.05
@@ -244,7 +246,6 @@ enrich_filter_DBs<-if(is.null(params$enrich_filter_DBs)){list()
 }else{list()}
 
 remove(input_settings,contr_design,color_constrast_dark)
-
 shiny::setProgress(0.05, detail = "Reading setting...")  # set progress to 50%
 ```
 
@@ -404,7 +405,7 @@ input_files$PEP$`Master Protein Accessions`<-lapply(input_files$PEP$`Master Prot
                                                                 function(x){unlist(str_split(x, ";"))[1]}) %>% unlist()
 #Verify if the Abundance start in 5 column in PEP table, if not remove extra column
 if(!grepl("Abundance",colnames(input_files$PEP)[5])){
-  input_files$PEP<-input_files$PEP[,c("Annotated Sequence","Modifications",
+  input_files$PEP<-input_files$PEP[,c("Annotated Sequence",if("Modifications" %in% colnames(input_files$PEP)){"Modifications"}else{"Modifications in Master Proteins"},
                                       "Master Protein Accessions","Positions in Master Proteins",
                                       colnames(input_files$PEP)[which(grepl("Abundance",colnames(input_files$PEP)))])]
 }
@@ -414,7 +415,8 @@ uniprot_to_take<-merge(input_files$PROT, input_files$PEP, by.x = "Accession", by
 input_files$PD_PEP_matrix<-merge(input_files$PROT[which(input_files$PROT$Accession %in% uniprot_to_take$Accession),],
                                  input_files$PEP, by.x = "Accession", by.y = "Master Protein Accessions")
 input_files$PD_PEP_matrix<-input_files$PD_PEP_matrix[,c(c("Accession","Description","GeneName","Annotated Sequence",
-                                                          "Modifications","Positions in Master Proteins"),
+                                                          if("Modifications" %in% colnames(input_files$PEP)){"Modifications"}else{"Modifications in Master Proteins"},
+                                                          "Positions in Master Proteins"),
                                                         lapply(input_files$Input$`File ID`, function(x){
                                                           colnames(input_files$PD_PEP_matrix)[grepl(str_c(x,":"), colnames(input_files$PD_PEP_matrix))]
                                                           }) %>% unlist())]
@@ -1737,6 +1739,8 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
 
 ```
 
+
+
 ```{r enrichment,message=F, warning=F,echo=F, eval=run_enrich, results='asis'}
 shiny::setProgress(0.75, detail = "Enrichment in progress... \n Can require several minutes...")
 cat(" \n \n")
@@ -1990,6 +1994,49 @@ if(length(enrich_filter_term) > 0){
 shiny::setProgress(0.85, detail = "Plotting enrichment results...")
 ```
 
+```{r enrichment_universe,message=F, warning=F,echo=F, eval=run_enrich_universe, results='asis'}
+shiny::setProgress(0.75, detail = "Enrichment in progress whole Universe in background... \n Can require several minutes...")
+cat(" \n \n")
+cat("## 4. Functional analysis of whole universe \n")
+# cat("The enrichment analysis is done by [EnrichR](https://maayanlab.cloud/Enrichr/). It is a web-base application which integrates a large number of data sets that permit to obtain information about many categories. EnrichR organises its hundreds of data sets in 8 sections: Transcription, Pathways, Ontologies, Diseases/Drugs, Cell Types, Misc, Legacy, and Crowd. All the libraries of EnrichR are queried to provide the most complete research. \n")
+# cat(" Each comparison is analysed through 3 sets of proteins: the Up-regulated (called **UP**), the Down-regulated (called **DOWN**), and the set (called **ALL**) obtained by the merge of Up- and Down-regulated proteins. \n")
+def_val_height=  knitr::opts_chunk$get("fig.height")
+message("Enrichment in progress whole Universe in background... \n Can require several minutes...")
+doNextChunk <- tryCatch({
+  #Perform enriched analysis with EnrichR
+  p = callr::r_bg(
+      func = function(g) {
+        source("functions_2021.R")
+        enrichRfnc_universe(g)
+      },
+      args = list(unique(psm_anno_df$symbol)),
+      stdout = "|",
+      stderr = "|",
+      error = getOption("callr.error", "error")
+    )
+  p$wait()
+  
+  enr_df_universe<-p$get_result()
+  p$kill()
+  #Save in RData for possible further analysis
+  save(enr_df_universe, file=paste0(dirOutput,"DEPs_enrichment_data_universe.RData"))
+
+  writexl::write_xlsx((enr_df_universe %>% dplyr::filter(p_value<=pval_enrich_thr,overlap_size>=overlap_size_enrich_thr)),
+                      path = paste0(dirOutput,"DEPs_enrichment_table.xlsx"))
+
+  # dir.create(file.path(dirOutput,"enrich/"), showWarnings = FALSE)
+  # dirOutput_enr=paste0(dirOutput,"enrich/")
+  TRUE
+},
+error=function(cond){
+  print("\n ERROR: An error occur when connect to EnrichR. \n ")
+  FALSE
+})
+message("Enrichment DONE.")
+shiny::setProgress(0.77, detail = "Done Enrichment... \n Can require several minutes...")
+
+```
+
 
 
 ```{r selection_genes, echo=F, message=F, warning=F, eval=run_STRING, results='asis'}
@@ -2213,7 +2260,7 @@ shiny::setProgress(0.98, detail = "Network figures generated...")
 
 
 ```{r save_df, echo=F, message=F, warning=F}
-# save(list = ls(), file = "tmp.RData")
+save(list = ls(), file = "tmp.RData")
 
 save(c_anno,
      dat_gene,

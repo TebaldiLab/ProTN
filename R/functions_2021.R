@@ -818,7 +818,7 @@ edgeRglmQLF<-function(mat=edge_f, # object of class DGEGLM
 read_excel_allsheets <- function(filename, tibble = FALSE) 
 {
    sheets <- readxl::excel_sheets(filename)
-   x <- lapply(sheets, function(X) readxl::read_excel(filename, sheet = X))
+   x <- lapply(sheets, function(X) readxl::read_excel(filename, sheet = X, guess_max = 1048576))
    if(!tibble) x <- lapply(x, as.data.frame)
    names(x) <- sheets
    x
@@ -1001,6 +1001,21 @@ enrichRfnc<-function(in_df, dbs=NULL){
    return(enr_df)
 }
 
+### Function for the enrichment of the protein of an universe. It use the function enrichment_enrichr ----
+
+
+enrichRfnc_universe<-function(in_df, dbs=NULL){
+  DEGs_lists<-NULL
+  DEGs_lists[["Universe_all"]]<-in_df
+  
+  enr_df <- enrichment_enrichr(DEGs_lists[["Universe_all"]], input_name="Universe_all", dbs_vec = dbs)
+  
+  enr_df$"P<0.05"<-ifelse(enr_df$p_value<0.05,"T","F") %>% factor(levels=c("T","F"))
+  enr_df$log2_OR<-log2(enr_df$odds_ratio)
+  enr_df <- enr_df[-which(enr_df$`P<0.05` == "F"),]
+  return(enr_df)
+}
+
 
 ### Function to discover the communities in the network of STRING based on our genes. ----
 
@@ -1089,17 +1104,43 @@ plot_networks<-function(g, scr_thr, bf, comp, colour_vector, bs, dirOutput_net, 
 ### Function to kinase study in multithreading. It identify the kinases, their activities and it draw the CORAL tree ----
 
 kinase_act_phosr <- function(dirOutput_kinase, formule_CORAL, comp, dat_pep, deps_pep_l_df, psm_peptide_table, c_anno_phos, df){
+  
   data("KinaseMotifs")
   data("PhosphoSitePlus")
   
-  tmp_dat_pep <- dat_pep[deps_pep_l_df[which(deps_pep_l_df$comp == comp & (deps_pep_l_df$class == "+" | deps_pep_l_df$class == "-")),"id"],]
+  tmp_dat_pep <- dat_pep[rownames(psm_peptide_table[which(psm_peptide_table[, "GeneName"] 
+                                                          %in% 
+                                                            deps_pep_l_df[which(deps_pep_l_df$comp == comp 
+                                                                                & 
+                                                                                  (deps_pep_l_df$class == "+" 
+                                                                                   | 
+                                                                                     deps_pep_l_df$class == "-")),
+                                                                          "id"]),
+                                                    ]),
+                         ]
   rownames(tmp_dat_pep) <- make.names(psm_peptide_table[rownames(tmp_dat_pep), "GeneName"], unique = T)
   
   tmp_dat_pep<- tmp_dat_pep[,(c_anno_phos[str_remove(c_anno_phos$condition, "_p\\b") %in% df$p[unlist(lapply(df$p, function(x) grepl(x, formule_CORAL[comp])))], "sample"])]
   ppe <- PhosphoExperiment(assays = list(Quantification = as.matrix(tmp_dat_pep)))
   colnames(ppe@assays@data$Quantification) <- c_anno_phos[str_remove(c_anno_phos$condition, "_p\\b") %in% df$p[unlist(lapply(df$p, function(x) grepl(x, formule_CORAL[comp])))], "condition"]
-  GeneSymbol(ppe)<-psm_peptide_table[deps_pep_l_df[which(deps_pep_l_df$comp == comp & (deps_pep_l_df$class == "+" | deps_pep_l_df$class == "-")),"id"],"GeneName"]
-  Sequence(ppe)<-psm_peptide_table[deps_pep_l_df[which(deps_pep_l_df$comp == comp & (deps_pep_l_df$class == "+" | deps_pep_l_df$class == "-")),"id"], "Annotated Sequence"]
+  GeneSymbol(ppe)<-psm_peptide_table[rownames(psm_peptide_table[which(psm_peptide_table[, "GeneName"] 
+                                                                      %in% 
+                                                                        deps_pep_l_df[which(deps_pep_l_df$comp == comp 
+                                                                                            & 
+                                                                                              (deps_pep_l_df$class == "+" 
+                                                                                               | 
+                                                                                                 deps_pep_l_df$class == "-")),
+                                                                                      "id"]),
+  ]),"GeneName"]
+  Sequence(ppe)<-psm_peptide_table[rownames(psm_peptide_table[which(psm_peptide_table[, "GeneName"] 
+                                                                    %in% 
+                                                                      deps_pep_l_df[which(deps_pep_l_df$comp == comp 
+                                                                                          & 
+                                                                                            (deps_pep_l_df$class == "+" 
+                                                                                             | 
+                                                                                               deps_pep_l_df$class == "-")),
+                                                                                    "id"]),
+  ]), "Annotated Sequence"]
   
   mat <- SummarizedExperiment::assay(ppe, "Quantification")
   grps =colnames(ppe)
@@ -1122,7 +1163,7 @@ kinase_act_phosr <- function(dirOutput_kinase, formule_CORAL, comp, dat_pep, dep
                                  species = "human",
                                  verbose = T)
   set.seed(42)
-  predMat <- kinaseSubstratePred(kssMat, inclusion = 10)
+  predMat <- kinaseSubstratePred(kssMat, inclusion = 5)
   
   colnames(kssMat$ksActivityMatrix) <- str_remove(c_anno_phos[str_remove(colnames(kssMat$ksActivityMatrix), "_p\\b"), "condition"], "_p\\b")
   #Fare magia per le varie formule
