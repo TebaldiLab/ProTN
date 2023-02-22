@@ -250,6 +250,10 @@ server <- function(input, output, session) {
             fluidRow(
               radioButtons("enrichR", "Execute enrichment", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
               uiOutput("help14")
+            ),
+            fluidRow(
+              radioButtons("enrichR_universe", "Execute enrichment of the whole Universe", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
+              # uiOutput("help14")
             )
           ),
           column(
@@ -321,7 +325,7 @@ server <- function(input, output, session) {
               # uiOutput("help11")
             ),
             fluidRow(
-              radioButtons("kinaseTree_phos", "Draw the kinase trees", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
+              radioButtons("kinaseTree_phos", "Draw the kinase trees (REQUIRE ENRICHMENT)", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
               # uiOutput("help14")
             ),
             fluidRow(
@@ -393,6 +397,10 @@ server <- function(input, output, session) {
         ),
         fluidRow(
           fileInput("prot_file_phos", "Select the PROT file of the PHOSPHOproteomics..."),
+          # uiOutput("help6")
+        ),
+        fluidRow(
+          fileInput("psm_file_phos", "Select the PSM file of the PHOSPHOproteomics..."),
           # uiOutput("help6")
         ),
         radioButtons("custom_param_phos", "Use custom parameter", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
@@ -572,6 +580,7 @@ server <- function(input, output, session) {
               contr_design = input$design$datapath,
               prot_boxplot = input$prot_boxplot,
               run_enrich = input$enrichR,
+              run_enrich_universe = input$enrichR_universe,
               run_STRING = input$STRING,
               pval_enrich_thr = input$pvalue_enrich,
               overlap_size_enrich_thr = input$os_enrich,
@@ -649,6 +658,7 @@ server <- function(input, output, session) {
               file_input_phos = input$input_file_phos$datapath,
               file_prot_phos = if(input$sw_analyzer_phos == "ProteomeDiscoverer"){input$prot_file_phos$datapath}else{NA},
               file_pep_phos = input$pep_file_phos$datapath,
+              file_psm_phos = if(input$sw_analyzer_phos == "ProteomeDiscoverer"){input$psm_file_phos$datapath}else{NA},
               signal_thr = input$signal_DEPs_phos,
               fc_thr = input$FC_DEPs_phos,
               pval_thr = input$pvalue_DEPs_phos,
@@ -737,8 +747,9 @@ server <- function(input, output, session) {
               batch_corr_exe = FALSE,
               contr_design = "../Data/design.xlsx",
               prot_boxplot = "ABCF2, ACIN1",
-              run_enrich = FALSE,
-              run_STRING = FALSE,
+              run_enrich = TRUE,
+              run_enrich_universe = FALSE,
+              run_STRING = TRUE,
               pval_enrich_thr = "0.05",
               overlap_size_enrich_thr = as.integer(5),
               enrich_filter_term = NULL,
