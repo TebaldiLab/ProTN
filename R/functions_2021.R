@@ -965,23 +965,6 @@ enrichRfnc<-function(in_df, dbs=NULL){
       
    }
    
-   # ncores <- detectCores()-1
-   # cluster_ext <- makeCluster(ncores, type = "SOCK")
-   # registerDoParallel(cl = cluster_ext)
-   # 
-   # enr_df<-NULL
-   # enr_df<-foreach(a = names(DEGs_lists),.combine='rbind',.packages = c("dplyr","enrichR","tidyr","stringr")) %dopar% {
-   #   source("functions_2021.R")
-   #    frg<-DEGs_lists[[a]]
-   #    message(frg)
-   #    if(length(frg)>0){
-   #       enrichment_enrichr(frg, input_name=a, dbs_vec = dbs)
-   #    }
-   #    # clu_n <- enrichment_enrichr(frg, input_name=a, dbs_vec = dbs)
-   #    # enr_df<-rbind(enr_df,clu_n)
-   # }
-   # stopCluster(cluster_ext)
-   
    enrfcn <- function(a) {
      source("functions_2021.R")
         frg<-DEGs_lists[[a]]
@@ -994,9 +977,8 @@ enrichRfnc<-function(in_df, dbs=NULL){
    ncores <- min(detectCores()-2, length(unique(in_df$comp))*3)
    enr_df<-NULL
    enr_df<-do.call(rbind, mclapply(names(DEGs_lists), enrfcn, mc.cores = ncores))
-   # save(DEGs_lists, dbs, enr_df, in_df, file = "/home/gabriele/Desktop/UNITN/Proteomics_internship/ProTN/lib/enr.RData")
-   
-   enr_df$"P<0.05"<-ifelse(enr_df$p_value<0.05,"T","F") %>% factor(levels=c("T","F"))
+
+   enr_df$"P<0.05"<-ifelse(enr_df$fdr<0.05,"T","F") %>% factor(levels=c("T","F"))
    enr_df$log2_OR<-log2(enr_df$odds_ratio)
    return(enr_df)
 }
@@ -1005,14 +987,34 @@ enrichRfnc<-function(in_df, dbs=NULL){
 
 
 enrichRfnc_universe<-function(in_df, dbs=NULL){
-  DEGs_lists<-NULL
-  DEGs_lists[["Universe_all"]]<-in_df
-  
-  enr_df <- enrichment_enrichr(DEGs_lists[["Universe_all"]], input_name="Universe_all", dbs_vec = dbs)
-  
-  enr_df$"P<0.05"<-ifelse(enr_df$p_value<0.05,"T","F") %>% factor(levels=c("T","F"))
-  enr_df$log2_OR<-log2(enr_df$odds_ratio)
-  enr_df <- enr_df[-which(enr_df$`P<0.05` == "F"),]
+  enr_df <- tryCatch({
+    DEGs_lists<-NULL
+    DEGs_lists[["Universe_all"]]<-in_df
+    DEGs_lists[["Universe_up"]]<-in_df
+    DEGs_lists[["Universe_down"]]<-in_df
+    
+    enrfcn <- function(a) {
+      source("functions_2021.R")
+      frg<-DEGs_lists[[a]]
+      if(length(frg)>0){
+        enrichment_enrichr(frg, input_name=a, dbs_vec = dbs)
+      }
+      # clu_n <- enrichment_enrichr(frg, input_name=a, dbs_vec = dbs)
+      # enr_df<-rbind(enr_df,clu_n)
+    }
+    ncores <- 3
+    enr_df<-NULL
+    enr_df<-do.call(rbind, mclapply(names(DEGs_lists), enrfcn, mc.cores = ncores))
+
+    enr_df$"P<0.05"<-ifelse(enr_df$fdr<0.05,"T","F") %>% factor(levels=c("T","F"))
+    enr_df$log2_OR<-log2(enr_df$odds_ratio)
+    enr_df <- enr_df[-which(enr_df$`P<0.05` == "F"),]
+    enr_df
+  },
+  error=function(cond){
+    print("\n ERROR: An error occur when connect to EnrichR. \n ")
+    NULL
+  })
   return(enr_df)
 }
 

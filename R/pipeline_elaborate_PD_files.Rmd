@@ -1740,6 +1740,23 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
 ```
 
 
+```{r enrichment_universe,message=F, warning=F,echo=F, eval=run_enrich_universe, results='asis'}
+shiny::setProgress(0.75, detail = "Enrichment in progress whole Universe in background... \n Can require several minutes...")
+
+message("Enrichment in progress whole Universe in background... \n Can require several minutes...")
+#Perform enriched analysis with EnrichR
+p = callr::r_bg(
+    func = function(g) {
+      source("functions_2021.R")
+      enrichRfnc_universe(g)
+    },
+    args = list(unique(psm_anno_df$symbol)),
+    stdout = "|",
+    stderr = "|",
+    error = getOption("callr.error", "error")
+  )
+
+```
 
 ```{r enrichment,message=F, warning=F,echo=F, eval=run_enrich, results='asis'}
 shiny::setProgress(0.75, detail = "Enrichment in progress... \n Can require several minutes...")
@@ -1755,7 +1772,7 @@ doNextChunk <- tryCatch({
   #Save in RData for possible further analysis
   save(enr_df, file=paste0(dirOutput,"DEPs_enrichment_data.RData"))
 
-  writexl::write_xlsx((enr_df %>% dplyr::filter(p_value<=pval_enrich_thr,overlap_size>=overlap_size_enrich_thr)),
+  writexl::write_xlsx((enr_df %>% dplyr::filter(fdr<=pval_enrich_thr,overlap_size>=overlap_size_enrich_thr)),
                       path = paste0(dirOutput,"DEPs_enrichment_table.xlsx"))
 
   dir.create(file.path(dirOutput,"enrich/"), showWarnings = FALSE)
@@ -1767,11 +1784,14 @@ error=function(cond){
   FALSE
 })
 message("Enrichment DONE.")
-shiny::setProgress(0.77, detail = "Done Enrichment... \n Can require several minutes...")
+shiny::setProgress(0.75, detail = "Done Enrichment...")
 
 ```
 
+
+
 ```{r enrichment_plots, echo=F, message=FALSE, warning=FALSE, eval = doNextChunk, results='asis'}
+hide_res<-p$read_output()
 
 if(length(enrich_filter_DBs) > 0){
   cat("#### 4.1. Enrichment of DEPs lists filtered by databases in options file.\n")
@@ -1785,7 +1805,7 @@ if(length(enrich_filter_DBs) > 0){
     dplyr::filter(anno_class %in% annos,
                   overlap_size>=overlap_size_enrich_thr,
                   anno_size<=10000,
-                  p_value<pval_enrich_thr) %>%
+                  fdr<pval_enrich_thr) %>%
     dplyr::arrange(-overlap_size) %>% dplyr::group_by(input_name,anno_class) %>% slice_head(n=5) %>%
     ungroup() %>% dplyr::select(anno_class,anno_name)
 
@@ -1798,6 +1818,7 @@ if(length(enrich_filter_DBs) > 0){
 ```
 
 ```{r enrichment_plots_2, echo=F, message=FALSE, warning=FALSE, eval = doNextChunk, results='hide'}
+hide_res<-p$read_output()
 
 if(length(enrich_filter_DBs) > 0){
   #Print the plot
@@ -1827,6 +1848,7 @@ shiny::setProgress(0.77, detail = "Plotting enrichment results...")
 ```
 
 ```{r enrichment_plots_all, echo=F, message=F, warning=F, eval = doNextChunk, results='asis'}
+hide_res<-p$read_output()
 
 if(length(enrich_filter_DBs) > 0){
   cat("#### 4.2. Enrichment of DEPs lists filtered by databases in options file.\n")
@@ -1839,7 +1861,7 @@ if(length(enrich_filter_DBs) > 0){
     dplyr::filter(anno_class %in% annos,
                   overlap_size>=overlap_size_enrich_thr,
                   anno_size<=10000,
-                  p_value<pval_enrich_thr) %>%
+                  fdr<pval_enrich_thr) %>%
     dplyr::arrange(-overlap_size) %>% dplyr::group_by(input_name,anno_class) %>% slice_head(n=5) %>%
     ungroup() %>% dplyr::select(anno_class,anno_name)
 
@@ -1852,6 +1874,7 @@ if(length(enrich_filter_DBs) > 0){
 ```
 
 ```{r enrichment_plots_all_2, echo=F, message=FALSE, warning=FALSE, eval = doNextChunk, results='hide'}
+hide_res<-p$read_output()
 
 if(length(enrich_filter_DBs) > 0){
     # col_vec<-color_base
@@ -1878,6 +1901,7 @@ shiny::setProgress(0.79, detail = "Plotting enrichment results...")
 ```
 
 ```{r enrichment_plots_terms, echo=F, message=F, warning=F, eval = doNextChunk, results='asis'}
+hide_res<-p$read_output()
 
 if(length(enrich_filter_term) > 0){
   cat("#### 4.3. Enrichment of DEPs lists filtered by terms in options file. \n ")
@@ -1894,7 +1918,7 @@ if(length(enrich_filter_term) > 0){
 
   #For each patter we want, search in each DEPs name to find it
   for(word in lookup_words){
-    matches <- enr_df %>% dplyr::filter(p_value<pval_enrich_thr,
+    matches <- enr_df %>% dplyr::filter(fdr<pval_enrich_thr,
                                         overlap_size>=overlap_size_enrich_thr) %>% dplyr::select(anno_class,anno_name)
     matches <- matches[grepl(paste0("\\b",word,"\\b"),matches$anno_name,ignore.case=TRUE),]
     enr_sele_names<-rbind(enr_sele_names,matches) %>% unique()
@@ -1909,6 +1933,7 @@ if(length(enrich_filter_term) > 0){
 ```
 
 ```{r enrichment_plots_terms_2, echo=F, message=FALSE, warning=FALSE, eval = doNextChunk, results='hide'}
+hide_res<-p$read_output()
 
 if(length(enrich_filter_term) > 0){
   # col_vec<-color_base[sort(rep(c(1:length(color_base)),2))]
@@ -1937,6 +1962,7 @@ shiny::setProgress(0.82, detail = "Plotting enrichment results...")
 ```
 
 ```{r enrichment_plots_all_terms, echo=F, message=F, warning=F, eval = doNextChunk, results='asis'}
+hide_res<-p$read_output()
 
 if(length(enrich_filter_term) > 0){
   cat("#### 4.4. Enrichment of DEPs lists filtered by terms in options file. \n")
@@ -1952,7 +1978,7 @@ if(length(enrich_filter_term) > 0){
   enr_sele_names<-NULL
   #For each pattern search in DEPs name
   for(word in lookup_words){
-    matches <- enr_df %>% dplyr::filter(p_value<pval_enrich_thr,
+    matches <- enr_df %>% dplyr::filter(fdr<pval_enrich_thr,
                                         overlap_size>=overlap_size_enrich_thr) %>% dplyr::select(anno_class,anno_name)
     matches <- matches[grepl(paste0("\\b",word,"\\b"),matches$anno_name,ignore.case=TRUE),]
     enr_sele_names<-rbind(enr_sele_names,matches) %>% unique()
@@ -1967,6 +1993,7 @@ if(length(enrich_filter_term) > 0){
 ```
 
 ```{r enrichment_plots_all_terms_2, echo=F, message=FALSE, warning=FALSE, eval = doNextChunk, results='hide'}
+hide_res<-p$read_output()
 
 if(length(enrich_filter_term) > 0){
   # col_vec<-color_base
@@ -1994,48 +2021,272 @@ if(length(enrich_filter_term) > 0){
 shiny::setProgress(0.85, detail = "Plotting enrichment results...")
 ```
 
-```{r enrichment_universe,message=F, warning=F,echo=F, eval=run_enrich_universe, results='asis'}
+
+```{r enrichment_universe_get, message=F, warning=F,echo=F, eval=run_enrich_universe, results='asis'}
 shiny::setProgress(0.75, detail = "Enrichment in progress whole Universe in background... \n Can require several minutes...")
-cat(" \n \n")
-cat("## 4. Functional analysis of whole universe \n")
-# cat("The enrichment analysis is done by [EnrichR](https://maayanlab.cloud/Enrichr/). It is a web-base application which integrates a large number of data sets that permit to obtain information about many categories. EnrichR organises its hundreds of data sets in 8 sections: Transcription, Pathways, Ontologies, Diseases/Drugs, Cell Types, Misc, Legacy, and Crowd. All the libraries of EnrichR are queried to provide the most complete research. \n")
-# cat(" Each comparison is analysed through 3 sets of proteins: the Up-regulated (called **UP**), the Down-regulated (called **DOWN**), and the set (called **ALL**) obtained by the merge of Up- and Down-regulated proteins. \n")
-def_val_height=  knitr::opts_chunk$get("fig.height")
-message("Enrichment in progress whole Universe in background... \n Can require several minutes...")
-doNextChunk <- tryCatch({
-  #Perform enriched analysis with EnrichR
-  p = callr::r_bg(
-      func = function(g) {
-        source("functions_2021.R")
-        enrichRfnc_universe(g)
-      },
-      args = list(unique(psm_anno_df$symbol)),
-      stdout = "|",
-      stderr = "|",
-      error = getOption("callr.error", "error")
-    )
-  p$wait()
-  
+
+#Wait 10 minutes. If do not end in 10 minutes, kill the process
+hide_res<-p$read_output()
+p$wait(30000)
+for (i in 1:10) {
+  p$read_output()
+  p$wait(1000*60)  
+}
+
+if(p$is_alive() | is.null(p$get_result())){
+  p$kill()
+  print("\n ERROR: An error occur when connect to EnrichR for the enrichemnt of the whole universe of the experiment. \n ")
+  run_enrich_universe <- FALSE
+} else{
   enr_df_universe<-p$get_result()
   p$kill()
   #Save in RData for possible further analysis
   save(enr_df_universe, file=paste0(dirOutput,"DEPs_enrichment_data_universe.RData"))
 
-  writexl::write_xlsx((enr_df_universe %>% dplyr::filter(p_value<=pval_enrich_thr,overlap_size>=overlap_size_enrich_thr)),
-                      path = paste0(dirOutput,"DEPs_enrichment_table.xlsx"))
+  writexl::write_xlsx((enr_df_universe %>% dplyr::filter(fdr<=pval_enrich_thr,overlap_size>=overlap_size_enrich_thr)),
+                      path = paste0(dirOutput,"DEPs_enrichment_table_universe.xlsx"))
 
   # dir.create(file.path(dirOutput,"enrich/"), showWarnings = FALSE)
   # dirOutput_enr=paste0(dirOutput,"enrich/")
-  TRUE
-},
-error=function(cond){
-  print("\n ERROR: An error occur when connect to EnrichR. \n ")
-  FALSE
-})
-message("Enrichment DONE.")
-shiny::setProgress(0.77, detail = "Done Enrichment... \n Can require several minutes...")
+  message("Enrichment whole universe DONE.")
+}
+shiny::setProgress(0.75, detail = "Done Enrichment of universe...")
 
 ```
+
+```{r enrichment_plots_vsUniverse, echo=F, message=FALSE, warning=FALSE, eval = (doNextChunk&run_enrich_universe), results='asis'}
+
+if(length(enrich_filter_DBs) > 0){
+  cat("#### 4.1. Enrichment of DEPs lists filtered by databases in options file.\n")
+  cat("The figure is done by the UP (up-regulated proteins) and the DOWN (down-regulated proteins) analysis. The graph visualizes only the significant enriched terms of the pre-selected data sets. \n")
+  cat("The dimension of the point is given by the Odds Ratio in log2 scale. The filling is based on the significativity of the P.Value against the selected threshold. \n")
+  
+  #Filter the DEPs taking only the ones from the desired DBs
+  annos<- enrich_filter_DBs
+
+  enr_sele_names <- enr_df %>%
+    dplyr::filter(anno_class %in% annos,
+                  overlap_size>=overlap_size_enrich_thr,
+                  anno_size<=10000,
+                  fdr<pval_enrich_thr) %>%
+    dplyr::arrange(-overlap_size) %>% dplyr::group_by(input_name,anno_class) %>% slice_head(n=5) %>%
+    ungroup() %>% dplyr::select(anno_class,anno_name)
+
+  enr_sele_df<-suppressMessages(inner_join(enr_df,enr_sele_names))
+
+  enr_sele_df <- rbind(enr_sele_df, suppressMessages(inner_join(enr_df_universe,enr_sele_names)))
+
+  #Select the results divided in up and down
+  enr_sele_df <- enr_sele_df %>% dplyr::filter(!str_ends(input_name,"_all"))
+  knitr::opts_chunk$set(fig.height = max(min(20,length(unique(enr_sele_df$anno_name))*0.5),3))
+}
+```
+
+```{r enrichment_plots_2_vsUniverse, echo=F, message=FALSE, warning=FALSE, eval = (doNextChunk&run_enrich_universe), results='hide'}
+
+if(length(enrich_filter_DBs) > 0){
+  #Print the plot
+  # col_vec<-color_base[sort(rep(c(1:length(color_base)),2))]
+  # if(length(as.vector(t(color_constrast)))>0){
+  col_vec<-as.vector(c(t(color_constrast), "grey30", "grey70"))
+  names(col_vec)<-unique(enr_sele_df$input_name)
+  # }
+  el<- enrichment_dotmatrix(enr_sele_df,
+                           size_col="log2_OR",
+                           color_col="input_name",
+                           color_vec = col_vec,
+                           # color_vec=color_base[sort(rep(c(1:length(color_base)),2))],
+                           char_max=60)
+
+  tryCatch({
+    print(el +guides(color=F))
+    message(paste0(dirOutput_enr,"enrichment_database_filter_vsUniverse.pdf"))
+    ggsave(paste0(dirOutput_enr,"enrichment_database_filter_vsUniverse.pdf"), el, device=cairo_pdf, width = 7, height = max(min(20,length(unique(enr_sele_df$anno_name))*0.5),3), units = c("in"))
+  },
+  error=function(cond){
+    print("Error: No enriched term found with current parameters\n")
+  })
+}
+
+shiny::setProgress(0.77, detail = "Plotting enrichment results...")
+```
+
+```{r enrichment_plots_all_vsUniverse, echo=F, message=F, warning=F, eval = (doNextChunk&run_enrich_universe), results='asis'}
+
+if(length(enrich_filter_DBs) > 0){
+  cat("#### 4.2. Enrichment of DEPs lists filtered by databases in options file.\n")
+  cat("The figure is done by the ALL (join of up- and down-regulated proteins) analysis. The graph visualizes only the significant enriched terms of the pre-selected data sets. \n")
+  cat(" The dimension of the point is given by the Odds Ratio in log2 scale. The filling is based on the significativity of the P.Value against the selected threshold. \n")
+  #Select DEPs in the DBs of interest
+  annos<- enrich_filter_DBs
+
+  enr_sele_names <- enr_df %>%
+    dplyr::filter(anno_class %in% annos,
+                  overlap_size>=overlap_size_enrich_thr,
+                  anno_size<=10000,
+                  fdr<pval_enrich_thr) %>%
+    dplyr::arrange(-overlap_size) %>% dplyr::group_by(input_name,anno_class) %>% slice_head(n=5) %>%
+    ungroup() %>% dplyr::select(anno_class,anno_name)
+
+  enr_sele_df<-suppressMessages(inner_join(enr_df,enr_sele_names))
+
+  enr_sele_df <- rbind(enr_sele_df, suppressMessages(inner_join(enr_df_universe,enr_sele_names)))
+
+  #Select the ALL column (UP union DOWN)
+  enr_sele_df <- enr_sele_df %>% dplyr::filter(str_ends(input_name,"_all"))
+  knitr::opts_chunk$set(fig.height = max(min(20,length(unique(enr_sele_df$anno_name))*0.5),3))
+}
+```
+
+```{r enrichment_plots_all_2_vsUniverse, echo=F, message=FALSE, warning=FALSE, eval = (doNextChunk&run_enrich_universe), results='hide'}
+
+if(length(enrich_filter_DBs) > 0){
+    # col_vec<-color_base
+    # if(length(as.vector(t(color_constrast)))>0){
+    col_vec<-as.vector(c((color_constrast), "grey30", "grey70"))
+    names(col_vec)<-unique(enr_sele_df$input_name)
+    col_vec["Universe_all"]<-"grey50"
+    # }
+    el<- enrichment_dotmatrix(enr_sele_df,
+                           size_col="log2_OR",
+                           color_col="input_name",
+                           color_vec=col_vec,
+                           char_max=60)
+
+  tryCatch({
+    print(el +guides(color=F))
+    ggsave(paste0(dirOutput_enr,"enrichment_database_filter_all_vsUniverse.pdf"), el, device=cairo_pdf, width = 7, height = max(min(20,length(unique(enr_sele_df$anno_name))*0.5),3), units = c("in"))
+  },
+  error=function(cond){
+    print("Error: No enriched term found with current parameters\n")
+  })
+}
+
+shiny::setProgress(0.79, detail = "Plotting enrichment results...")
+```
+
+```{r enrichment_plots_terms_vsUniverse, echo=F, message=F, warning=F, eval = (doNextChunk&run_enrich_universe), results='asis'}
+
+if(length(enrich_filter_term) > 0){
+  cat("#### 4.3. Enrichment of DEPs lists filtered by terms in options file. \n ")
+  cat("The figure is done by the UP (up-regulated proteins) and the DOWN (down-regulated proteins) analysis. The graph visualizes only the significant enriched terms which contains the selected key-words. \n")
+  cat(" The dimension of the point is given by the Odds Ratio in log2 scale. The filling is based on the significativity of the P.Value against the selected threshold. \n")
+  cat(" \n")
+  cat("**List of terms to search:**")
+  cat(" \n")
+  cat(paste(enrich_filter_term, collapse=", "))
+
+  lookup_words<-enrich_filter_term
+
+  enr_sele_names<-NULL
+
+  #For each patter we want, search in each DEPs name to find it
+  for(word in lookup_words){
+    matches <- enr_df %>% dplyr::filter(fdr<pval_enrich_thr,
+                                        overlap_size>=overlap_size_enrich_thr) %>% dplyr::select(anno_class,anno_name)
+    matches <- matches[grepl(paste0("\\b",word,"\\b"),matches$anno_name,ignore.case=TRUE),]
+    enr_sele_names<-rbind(enr_sele_names,matches) %>% unique()
+  }
+
+  enr_sele_df<-suppressMessages(inner_join(enr_df,enr_sele_names))
+  enr_sele_df <- rbind(enr_sele_df, suppressMessages(inner_join(enr_df_universe,enr_sele_names)))
+
+  # write_tsv(enr_sele_df ,file=paste(dirOutput,dirOutput_ev,"enrich_myc_v1_all.txt",sep=""))
+
+  enr_sele_df <- enr_sele_df %>% dplyr::filter(!str_ends(input_name,"_all"))
+  knitr::opts_chunk$set(fig.height = max(min(20,length(unique(enr_sele_df$anno_name))*0.5),3))
+}
+```
+
+```{r enrichment_plots_terms_2_vsUniverse, echo=F, message=FALSE, warning=FALSE, eval = (doNextChunk&run_enrich_universe), results='hide'}
+
+if(length(enrich_filter_term) > 0){
+  # col_vec<-color_base[sort(rep(c(1:length(color_base)),2))]
+  # if(length(as.vector(t(color_constrast)))>0){
+  col_vec<-as.vector(c(t(color_constrast), "grey30", "grey70"))
+  names(col_vec)<-unique(enr_sele_df$input_name)
+  # }  
+  el<- enrichment_dotmatrix(enr_sele_df,
+                         size_col="log2_OR",
+                         color_col="input_name",
+                         color_vec = col_vec,
+                         # color_vec=color_base[sort(rep(c(1:length(color_base)),2))],
+                         char_max=60) + guides(color=F)
+  tryCatch({
+    print(el)
+
+    ggsave(paste0(dirOutput_enr,"enrichment_term_filter_vsUniverse.pdf"), el, device=cairo_pdf, width = 7, height = max(min(20,length(unique(enr_sele_df$anno_name))*0.5),3), units = c("in"))
+  },
+  error=function(cond){
+    print("Error: No enriched term found with current parameters\n")
+  })
+
+}
+
+shiny::setProgress(0.82, detail = "Plotting enrichment results...")
+```
+
+```{r enrichment_plots_all_terms_vsUniverse, echo=F, message=F, warning=F, eval = (doNextChunk&run_enrich_universe), results='asis'}
+
+if(length(enrich_filter_term) > 0){
+  cat("#### 4.4. Enrichment of DEPs lists filtered by terms in options file. \n")
+  cat("The figure is done by the ALL (join of up- and down-regulated proteins) analysis. The graph visualizes only the significant enriched terms which contains the selected key-words. \n")
+  cat(" The dimension of the point is given by the Odds Ratio in log2 scale. The filling is based on the significativity of the P.Value against the selected threshold. \n")
+  cat(" \n")
+  cat("**List of terms to search:**")
+  cat(" \n")
+  cat(paste(enrich_filter_term, collapse=", "))
+
+  lookup_words<-enrich_filter_term
+
+  enr_sele_names<-NULL
+  #For each pattern search in DEPs name
+  for(word in lookup_words){
+    matches <- enr_df %>% dplyr::filter(fdr<pval_enrich_thr,
+                                        overlap_size>=overlap_size_enrich_thr) %>% dplyr::select(anno_class,anno_name)
+    matches <- matches[grepl(paste0("\\b",word,"\\b"),matches$anno_name,ignore.case=TRUE),]
+    enr_sele_names<-rbind(enr_sele_names,matches) %>% unique()
+  }
+
+  enr_sele_df<-suppressMessages(inner_join(enr_df,enr_sele_names))
+  enr_sele_df <- rbind(enr_sele_df, suppressMessages(inner_join(enr_df_universe,enr_sele_names)))
+
+  # write_tsv(enr_sele_df ,file=paste(dirOutput,dirOutput_ev,"enrich_myc_v1_all.txt",sep=""))
+
+  enr_sele_df <- enr_sele_df %>% dplyr::filter(str_ends(input_name,"_all"))
+  knitr::opts_chunk$set(fig.height = max(min(20,length(unique(enr_sele_df$anno_name))*0.5),3))
+}
+```
+
+```{r enrichment_plots_all_terms_2_vsUniverse, echo=F, message=FALSE, warning=FALSE, eval = (doNextChunk&run_enrich_universe), results='hide'}
+
+if(length(enrich_filter_term) > 0){
+  # col_vec<-color_base
+  #   if(length(as.vector(t(color_constrast)))>0){
+  col_vec<-as.vector(c((color_constrast), "grey30", "grey70"))
+  names(col_vec)<-unique(enr_sele_df$input_name)
+  col_vec["Universe_all"]<-"grey50"
+    # }
+  el<- enrichment_dotmatrix(enr_sele_df,
+                         size_col="log2_OR",
+                         color_col="input_name",
+                         color_vec=col_vec,
+                         char_max=60) + guides(color=F)
+
+  tryCatch({
+    print(el)
+
+    ggsave(paste0(dirOutput_enr,"enrichment_term_filter_all_vsUniverse.pdf"), el, device=cairo_pdf, width = 7, height =
+             max(min(20,length(unique(enr_sele_df$anno_name))*0.5),3), units = c("in"))
+  },
+  error=function(cond){
+    print("Error: No enriched term found with current parameters\n")
+  })
+}
+
+shiny::setProgress(0.85, detail = "Plotting enrichment results...")
+```
+
 
 
 
@@ -2259,9 +2510,7 @@ shiny::setProgress(0.98, detail = "Network figures generated...")
 ```
 
 
-```{r save_df, echo=F, message=F, warning=F}
-save(list = ls(), file = "tmp.RData")
-
+```{r save_df, echo=F, message=F, warning=F, results='hide'}
 save(c_anno,
      dat_gene,
      dat_pep,
