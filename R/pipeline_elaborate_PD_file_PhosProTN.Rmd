@@ -417,139 +417,168 @@ read_input_files<-function(type, filenames){
   #Filter PHOS taking only phospho modifications
   if(type == "PHOS"){
     input_files$PEP <- input_files$PEP[grepl("Phospho",input_files$PEP$Modifications),]
-  
-  #Verify if the Abundance start in 5 column in PEP table, if not remove extra column
-  if(!grepl("Abundance",colnames(input_files$PEP)[5])){
-    input_files$PEP<-input_files$PEP[,c(colnames(input_files$PEP)[grepl(paste("Annotated Sequence",
-                                                                              "Modifications",
-                                                                              "Master Protein Accessions",
-                                                                              "Positions in Master Proteins", sep = "|"), 
-                                                                        colnames(input_files$PEP))],
-                                        colnames(input_files$PEP)[which(grepl("Abundance",colnames(input_files$PEP)))])]
-  }
-  
-  #Modify seqeunce to detect only active phosphosite
-  pattern_sub <- lapply(str_extract_all(input_files$PEP$`Modifications in Master Proteins`, "\\(\\d+\\.\\d+|\\(\\d+"), 
-                        function(x){(unlist(str_remove_all(unlist(x), "\\(")))})
-  replacement <- lapply(str_extract_all(input_files$PEP$`Modifications in Master Proteins`, "\\(\\d+\\.\\d+|\\(\\d+"), 
-                        function(x){as.integer(as.double(unlist(str_remove_all(unlist(x), "\\("))) > 75)})
-  input_files$PEP$modif <- lapply(1:length(input_files$PEP$`Modifications in Master Proteins`), 
-                                     function(x){
-                                       stri_replace_all_regex(input_files$PEP$`Modifications in Master Proteins`[x], 
-                                                              pattern_sub[[x]],
-                                                              as.character(replacement[[x]]),
-                                                              vectorize_all = F)}) %>% unlist()
-  input_files$PEP$modif <- paste(input_files$PEP$`Master Protein Accessions`, input_files$PEP$modif, input_files$PEP$`Annotated Sequence`, sep="_")
-  PEP_collapse <- input_files$PEP[,c(which(grepl("Abundance",colnames(input_files$PEP))), ncol(input_files$PEP))]
-  PEP_collapse <- PEP_collapse %>% group_by(modif) %>% summarize_all(funs(sum(., na.rm = T))) 
-  PEP_collapse <- right_join(input_files$PEP[,c("Annotated Sequence",
-                                                "Modifications in Master Proteins",
-                                                "Master Protein Accessions",
-                                                "Positions in Master Proteins",
-                                                "modif")], PEP_collapse, by ="modif")
-  PEP_collapse <- PEP_collapse[!duplicated(PEP_collapse$modif),]
-  #merge by uniprot the prot description and the pep table
-  uniprot_to_take<-merge(input_files$PROT, PEP_collapse, by.x = "Accession", by.y = "Master Protein Accessions")
-  input_files$PD_PEP_matrix<-merge(input_files$PROT[which(input_files$PROT$Accession %in% uniprot_to_take$Accession),],
-                                   PEP_collapse, by.x = "Accession", by.y = "Master Protein Accessions")
-  input_files$PD_PEP_matrix<-input_files$PD_PEP_matrix[,c(colnames(input_files$PD_PEP_matrix)[grepl(paste(
-                                                                              "Accession",
-                                                                              "Description",
-                                                                              "GeneName",
-                                                                              "Annotated Sequence",
-                                                                              "Modifications",
-                                                                              "Positions in Master Proteins",
-                                                                              "modif", sep = "|"), 
-                                                                        colnames(input_files$PD_PEP_matrix))],
-                                                          lapply(input_files$Input$`File ID`, function(x){
-                                                            colnames(input_files$PD_PEP_matrix)[grepl(str_c(x,":"), colnames(input_files$PD_PEP_matrix))]
-                                                            }) %>% unlist())]
-  if("TRUE" %in% grepl("\\.", colnames(input_files$PD_PEP_matrix))){
-    input_files$PD_PEP_matrix<-input_files$PD_PEP_matrix[,-which(colnames(input_files$PD_PEP_matrix) %in%
-                                                                 c(colnames(input_files$PD_PEP_matrix)[grepl("\\.",
-                                                                                              colnames(input_files$PD_PEP_matrix))]))]
-  }
-  colnames(input_files$PD_PEP_matrix)<-c(colnames(input_files$PD_PEP_matrix)[grepl(paste(
-                                                                              "Accession",
-                                                                              "Description",
-                                                                              "GeneName",
-                                                                              "Annotated Sequence",
-                                                                              "Modifications",
-                                                                              "Positions in Master Proteins",
-                                                                              "modif", sep = "|"), 
-                                                                        colnames(input_files$PD_PEP_matrix))],
-                                          unlist(lapply(colnames(input_files$PD_PEP_matrix), function(x){
-                                             lapply(input_files$Input$`File ID`, function(y){if(str_detect(x,paste0(y,":"))){
-                                                 input_files$Input$`File Name`[which(input_files$Input$`File ID` %in% y)]
-                                             }})
-                                         })))
-  # input_files$PD_PEP_matrix$GeneName<-str_split_fixed(str_split_fixed(input_files$PD_PEP_matrix$GeneName,"-",n=2)[,1],"[.]",n=2)[,1] %>% toupper()
-  input_files$PD_PEP_matrix$GeneName<-str_split_fixed(str_split_fixed(input_files$PD_PEP_matrix$GeneName,"-",n=2)[,1],"[.]",n=2)[,1]
-  #Maintain only the new complete matrix of intensity
-  psm_sig_raw<-as.data.frame(input_files$PD_PEP_matrix)
-  c_anno<-input_files$Input
-  if(!("Sample" %in% colnames(c_anno))){
-    colnames(c_anno)[2]<-"sample"
-  }else{
-    colnames(psm_sig_raw)<-c(c("Accession","Description","GeneName","Annotated Sequence","Modifications","Position in Master Proteins","modif"),
-                             c_anno$Sample)
-  }
-  colnames(c_anno)<-tolower(colnames(c_anno))
-  
-  rownames(c_anno)<-c_anno$sample
-  if("color" %in% colnames(c_anno)){
-    colour_vec<-na.omit(c_anno[colnames(psm_sig_raw),]$color)
-    names(colour_vec)<-na.omit(c_anno[colnames(psm_sig_raw),]$sample)
-  } else{
-    c_anno$color<-colour_vec[match(c_anno$condition,unique(c_anno$condition))]
-  }
-  
-  #READ PSM
-    #PSM ANALYSIS
-    ##############
-    # #Read PSM and manage the Phospho Percentage
-    # input_files[["PSM"]] <- input_files[["PSM"]][-which(input_files[["PSM"]]$`Annotated Sequence` %in% input_files[["PD_PEP_matrix"]]$`Annotated Sequence` |
-    #                                                      !grepl(pattern = "Phospho", input_files[["PSM"]]$`ptmRS: Best Site Probabilities`) |
-    #                                                      (is.na(input_files[["PSM"]]$`Precursor Abundance`))),]
-    # input_files[["PSM"]] <- input_files[["PSM"]][unlist(lapply(str_extract_all(input_files[["PSM"]]$`ptmRS: Best Site Probabilities`, 
-    #                                                                            "\\: \\d+\\.\\d+\\b|\\: \\d+\\b"),
-    #                                                            function(x){any(as.double(unlist(str_remove_all(unlist(x), "\\: "))) > 75)})),]
-    # 
-    # #Mantain only the first UNIPROT code
-    # input_files$PSM$`Master Protein Accessions`<-lapply(input_files$PSM$`Master Protein Accessions`,
-    #                                                                 function(x){unlist(str_split(x, ";"))[1]}) %>% unlist()
-    # 
-    # #Modify sequence to detect only the phosphorilated sites
-    # pattern_sub <- lapply(str_extract_all(input_files$PSM$`ptmRS: Best Site Probabilities`, "\\: \\d+\\.\\d+\\b|\\: \\d+\\b"), 
-    #                       function(x){(unlist(str_remove_all(unlist(x), "\\: ")))})
-    # replacement <- lapply(str_extract_all(input_files$PSM$`ptmRS: Best Site Probabilities`, "\\: \\d+\\.\\d+\\b|\\: \\d+\\b"), 
-    #                       function(x){as.integer(as.double(unlist(str_remove_all(unlist(x), "\\: "))) > 75)})
-    # input_files$PSM$modif <- lapply(1:length(input_files$PSM$`ptmRS: Best Site Probabilities`), 
-    #                                    function(x){
-    #                                      stri_replace_all_regex(input_files$PSM$`ptmRS: Best Site Probabilities`[x], 
-    #                                                             pattern_sub[[x]],
-    #                                                             as.character(replacement[[x]]),
-    #                                                             vectorize_all = F)}) %>% unlist()
-    # 
+    
+    #Verify if the Abundance start in 5 column in PEP table, if not remove extra column
+    if(!grepl("Abundance",colnames(input_files$PEP)[5])){
+      input_files$PEP<-input_files$PEP[,c(colnames(input_files$PEP)[grepl(paste("Annotated Sequence",
+                                                                                "Modifications",
+                                                                                "Master Protein Accessions",
+                                                                                "Positions in Master Proteins", sep = "|"), 
+                                                                          colnames(input_files$PEP))],
+                                          colnames(input_files$PEP)[which(grepl("Abundance",colnames(input_files$PEP)))])]
+    }
+    
+    #Modify seqeunce to detect only active phosphosite
+    pattern_sub <- lapply(str_extract_all(input_files$PEP$`Modifications in Master Proteins`, "\\(\\d+\\.\\d+|\\(\\d+"), 
+                          function(x){(unlist(str_remove_all(unlist(x), "\\(")))})
+    replacement <- lapply(str_extract_all(input_files$PEP$`Modifications in Master Proteins`, "\\(\\d+\\.\\d+|\\(\\d+"), 
+                          function(x){as.integer(as.double(unlist(str_remove_all(unlist(x), "\\("))) > 75)})
+    input_files$PEP$modif <- lapply(1:length(input_files$PEP$`Modifications in Master Proteins`), 
+                                    function(x){
+                                      stri_replace_all_regex(input_files$PEP$`Modifications in Master Proteins`[x], 
+                                                             pattern_sub[[x]],
+                                                             as.character(replacement[[x]]),
+                                                             vectorize_all = F)}) %>% unlist()
+    input_files$PEP$modif <- paste(input_files$PEP$`Master Protein Accessions`, input_files$PEP$modif, input_files$PEP$`Annotated Sequence`, sep="_")
+    PEP_collapse <- input_files$PEP[,c(which(grepl("Abundance",colnames(input_files$PEP))), ncol(input_files$PEP))]
+    PEP_collapse <- PEP_collapse %>% group_by(modif) %>% summarize_all(funs(sum(., na.rm = T))) 
+    PEP_collapse <- right_join(input_files$PEP[,c("Annotated Sequence",
+                                                  "Modifications in Master Proteins",
+                                                  "Master Protein Accessions",
+                                                  "Positions in Master Proteins",
+                                                  "modif")], PEP_collapse, by ="modif")
+    PEP_collapse <- PEP_collapse[!duplicated(PEP_collapse$modif),]
+    #merge by uniprot the prot description and the pep table
+    uniprot_to_take<-merge(input_files$PROT, PEP_collapse, by.x = "Accession", by.y = "Master Protein Accessions")
+    input_files$PD_PEP_matrix<-merge(input_files$PROT[which(input_files$PROT$Accession %in% uniprot_to_take$Accession),],
+                                     PEP_collapse, by.x = "Accession", by.y = "Master Protein Accessions")
+    input_files$PD_PEP_matrix<-input_files$PD_PEP_matrix[,c(colnames(input_files$PD_PEP_matrix)[grepl(paste(
+      "Accession",
+      "Description",
+      "GeneName",
+      "Annotated Sequence",
+      "Modifications",
+      "Positions in Master Proteins",
+      "modif", sep = "|"), 
+      colnames(input_files$PD_PEP_matrix))],
+      lapply(input_files$Input$`File ID`, function(x){
+        colnames(input_files$PD_PEP_matrix)[grepl(str_c(x,":"), colnames(input_files$PD_PEP_matrix))]
+      }) %>% unlist())]
+    if("TRUE" %in% grepl("\\.", colnames(input_files$PD_PEP_matrix))){
+      input_files$PD_PEP_matrix<-input_files$PD_PEP_matrix[,-which(colnames(input_files$PD_PEP_matrix) %in%
+                                                                     c(colnames(input_files$PD_PEP_matrix)[grepl("\\.",
+                                                                                                                 colnames(input_files$PD_PEP_matrix))]))]
+    }
+    colnames(input_files$PD_PEP_matrix)<-c(colnames(input_files$PD_PEP_matrix)[grepl(paste(
+      "Accession",
+      "Description",
+      "GeneName",
+      "Annotated Sequence",
+      "Modifications",
+      "Positions in Master Proteins",
+      "modif", sep = "|"), 
+      colnames(input_files$PD_PEP_matrix))],
+      unlist(lapply(colnames(input_files$PD_PEP_matrix), function(x){
+        lapply(input_files$Input$`File ID`, function(y){if(str_detect(x,paste0(y,":"))){
+          input_files$Input$`File Name`[which(input_files$Input$`File ID` %in% y)]
+        }})
+      })))
+    # input_files$PD_PEP_matrix$GeneName<-str_split_fixed(str_split_fixed(input_files$PD_PEP_matrix$GeneName,"-",n=2)[,1],"[.]",n=2)[,1] %>% toupper()
+    input_files$PD_PEP_matrix$GeneName<-str_split_fixed(str_split_fixed(input_files$PD_PEP_matrix$GeneName,"-",n=2)[,1],"[.]",n=2)[,1]
+    #Maintain only the new complete matrix of intensity
+    psm_sig_raw<-as.data.frame(input_files$PD_PEP_matrix)
+    c_anno<-input_files$Input
+    if(!("Sample" %in% colnames(c_anno))){
+      colnames(c_anno)[2]<-"sample"
+    }else{
+      colnames(psm_sig_raw)<-c(c("Accession","Description","GeneName","Annotated Sequence","Modifications","Position in Master Proteins","modif"),
+                               c_anno$Sample)
+    }
+    colnames(c_anno)<-tolower(colnames(c_anno))
+    
+    rownames(c_anno)<-c_anno$sample
+    if("color" %in% colnames(c_anno)){
+      colour_vec<-na.omit(c_anno[colnames(psm_sig_raw),]$color)
+      names(colour_vec)<-na.omit(c_anno[colnames(psm_sig_raw),]$sample)
+    } else{
+      c_anno$color<-colour_vec[match(c_anno$condition,unique(c_anno$condition))]
+    }
+    
+    # READ PSM
+    # PSM ANALYSIS
+    #Read PSM and manage the Phospho Percentage
+    input_files[["PSM"]] <- input_files[["PSM"]][-which(input_files[["PSM"]]$`Annotated Sequence` %in% input_files[["PD_PEP_matrix"]]$`Annotated Sequence` |
+                                                         !grepl(pattern = "Phospho", input_files[["PSM"]]$`ptmRS: Best Site Probabilities`) |
+                                                         (is.na(input_files[["PSM"]]$`Precursor Abundance`))),]
+    input_files[["PSM"]] <- input_files[["PSM"]][unlist(lapply(str_extract_all(input_files[["PSM"]]$`ptmRS: Best Site Probabilities`,
+                                                                               "\\: \\d+\\.\\d+\\b|\\: \\d+\\b"),
+                                                               function(x){any(as.double(unlist(str_remove_all(unlist(x), "\\: "))) > 75)})),]
+
+    #Mantain only the first UNIPROT code
+    input_files$PSM$`Master Protein Accessions`<-lapply(input_files$PSM$`Master Protein Accessions`,
+                                                                    function(x){unlist(str_split(x, ";"))[1]}) %>% unlist()
+
+    #Modify sequence to detect only the phosphorilated sites
+    pattern_sub <- lapply(str_extract_all(input_files$PSM$`ptmRS: Best Site Probabilities`, "\\: \\d+\\.\\d+\\b|\\: \\d+\\b"),
+                          function(x){(unlist(str_remove_all(unlist(x), "\\: ")))})
+    replacement <- lapply(str_extract_all(input_files$PSM$`ptmRS: Best Site Probabilities`, "\\: \\d+\\.\\d+\\b|\\: \\d+\\b"),
+                          function(x){as.integer(as.double(unlist(str_remove_all(unlist(x), "\\: "))) > 75)})
+    input_files$PSM$modif <- lapply(1:length(input_files$PSM$`ptmRS: Best Site Probabilities`),
+                                       function(x){
+                                         stri_replace_all_regex(input_files$PSM$`ptmRS: Best Site Probabilities`[x],
+                                                                pattern_sub[[x]],
+                                                                as.character(replacement[[x]]),
+                                                                vectorize_all = F)}) %>% unlist()
+    input_files$PSM$`Annotated Sequence` <- str_to_upper(input_files$PSM$`Annotated Sequence`)
+
+    id_pep_doubt <- psm_sig_raw[stri_detect_regex(psm_sig_raw$Modifications,"\\/"),c(1:7)]
+    
+    pattern<-input_files$PSM[,c("Annotated Sequence","Master Protein Accessions", "modif")] %>% filter(`Annotated Sequence` %in% id_pep_doubt$`Annotated Sequence` &
+                                                                                                         `Master Protein Accessions` %in% id_pep_doubt$Accession)
+
+    pattern$modif_split <- lapply(stri_split_regex(pattern$modif, ";"), 
+                                  function(x){stri_c(unlist(lapply(stri_extract_all_regex(str_remove_all(x, "\\ "), "^.|.$"), 
+                                                                   function(y){y[y[2] != "0"]})), collapse = "")}) %>% unlist()
+    
+    pattern2 <- left_join(pattern, id_pep_doubt, by = c("Annotated Sequence" = "Annotated Sequence", "Master Protein Accessions" = "Accession"))
+    pattern2$phospo_PEP <- lapply(stri_extract_all_regex(pattern2$modif.y, "\\w\\d+\\(1"), 
+                                  function(x){stri_c(unlist(stri_extract_all_regex(x, "^.|.$")), collapse = "")}) %>% unlist()
+    #Chance doubt phosphosite with the most probable
+    for(ids in unique(pattern2$modif.y)){
+      test<-pattern2[(pattern2$modif.y == ids) & !(pattern2$modif_split == pattern2$phospo_PEP),]
+      if(nrow(test) > 0){
+        test$doubtSite<-lapply(1:nrow(test), function(x){str_remove(test$modif_split[x], test$phospo_PEP[x])})
+        table_site <- table(unlist(test$doubtSite))
+        site_to_take <- stri_extract_all_regex(names(table_site[which(table_site == max(table_site))])[1], "^.")[[1]]
+        psm_sig_raw$Modifications[which(psm_sig_raw$modif == test$modif.y[1])]<- stri_replace_all_regex(test$modif.y[1], "\\w\\/\\w\\/\\w|\\w\\/\\w",paste0(site_to_take,"(1)"))
+        psm_sig_raw$modif[which(psm_sig_raw$modif == test$modif.y[1])]<- stri_replace_all_regex(test$modif.y[1], "\\w\\/\\w\\/\\w|\\w\\/\\w",paste0(site_to_take,"(1)"))
+      } else{
+        table_site <- table(unlist(unique(pattern2$phospo_PEP[which(pattern2$modif.y == ids)])))
+        site_to_take <- stri_extract_all_regex(names(table_site[which(table_site == max(table_site))])[1], "^.")[[1]]
+        psm_sig_raw$Modifications[which(psm_sig_raw$modif == ids)]<- stri_replace_all_regex(ids, "\\w\\/\\w\\/\\w|\\w\\/\\w",paste0(site_to_take,"(1)"))      
+        psm_sig_raw$modif[which(psm_sig_raw$modif == ids)]<- stri_replace_all_regex(ids, "\\w\\/\\w\\/\\w|\\w\\/\\w",paste0(site_to_take,"(1)"))
+      }
+    }
+    #############
     # #Collapse the PSM with different percentage
     # pattern <- data.frame("Phospho" = str_remove_all(input_files$PSM$`ptmRS: Best Site Probabilities`, pattern = ";"))
-    # pattern <- pattern %>% separate(Phospho, 
+    # pattern <- pattern %>% separate(Phospho,
     #                                 as.character(1:(2*max(str_count(input_files$PSM$`ptmRS: Best Site Probabilities`, "\\:")))),
     #                                 sep=" ")
     # 
     # #Collapse the PSM with different percentage
-    # pattern$group <- paste(input_files$PSM$`Master Protein Accessions`, 
-    #                        str_to_upper(input_files$PSM$`Annotated Sequence`), 
-    #                        input_files$PSM$modif, 
+    # pattern$group <- paste(input_files$PSM$`Master Protein Accessions`,
+    #                        str_to_upper(input_files$PSM$`Annotated Sequence`),
+    #                        input_files$PSM$modif,
     #                        sep="_")
     # pattern$seq <- str_to_upper(input_files$PSM$`Annotated Sequence`)
     # pattern <- pattern[order(pattern$group),]
     # pattern[,as.character(which((1:(2*max(str_count(input_files$PSM$`ptmRS: Best Site Probabilities`, "\\:"))))%%2 == 0))] <- sapply(
-    #   pattern[,as.character(which((1:(2*max(str_count(input_files$PSM$`ptmRS: Best Site Probabilities`, "\\:"))))%%2 == 0))], 
+    #   pattern[,as.character(which((1:(2*max(str_count(input_files$PSM$`ptmRS: Best Site Probabilities`, "\\:"))))%%2 == 0))],
     #   as.double)
     # pattern2 <- aggregate(pattern, list(pattern$group), mean)
     # pattern2[,as.character(which((1:(2*max(str_count(input_files$PSM$`ptmRS: Best Site Probabilities`, "\\:"))))%%2 == 0))] <- sapply(
-    #   pattern2[,as.character(which((1:(2*max(str_count(input_files$PSM$`ptmRS: Best Site Probabilities`, "\\:"))))%%2 == 0))], 
+    #   pattern2[,as.character(which((1:(2*max(str_count(input_files$PSM$`ptmRS: Best Site Probabilities`, "\\:"))))%%2 == 0))],
     #   function(x){round(x, digits = 2)})
     # pattern2[order(pattern2$Group.1),
     #          as.character(which((1:(2*max(str_count(input_files$PSM$`ptmRS: Best Site Probabilities`, "\\:"))))%%2 == 1))] <- unique(
@@ -557,23 +586,23 @@ read_input_files<-function(type, filenames){
     #                    c(as.character(which((1:(2*max(str_count(input_files$PSM$`ptmRS: Best Site Probabilities`, "\\:"))))%%2 == 1)), "group", "seq")])
     # pattern2[] <- lapply(pattern2, as.character)
     # pattern2[is.na(pattern2)] <- "tmpC"
-    # base_string<- paste0(paste(rep("%s %s; ", 
-    #                            max(str_count(input_files$PSM$`ptmRS: Best Site Probabilities`, "\\:"))-1), 
+    # base_string<- paste0(paste(rep("%s %s; ",
+    #                            max(str_count(input_files$PSM$`ptmRS: Best Site Probabilities`, "\\:"))-1),
     #                        collapse = ""),
     #                  "%s %s")
     # pattern2$newseq<-as.character(lapply(1:nrow(pattern2), function(x){
     #   str_remove_all(do.call(sprintf, c(fmt= base_string,
     #           (pattern2[x,as.character(1:(2*max(str_count(input_files$PSM$`ptmRS: Best Site Probabilities`, "\\:"))))]))), " tmpC;| tmpC| ")
     # }))
-    ##############
+    #############
     input_files$PEP_info <- as.data.frame(unique(psm_sig_raw[, c("Accession","Description","GeneName","Annotated Sequence",
-                                                                               "Modifications","Position in Master Proteins", "modif")]))
+                                                                 "Modifications","Position in Master Proteins", "modif")]))
     colnames(input_files$PEP_info) <- c("Accession","Description","GeneName", "Annotated Sequence","Modifications", "Position in Master Proteins", "modif")
     rownames(input_files$PEP_info) <- input_files$PEP_info$ID_peptide
     rownames(psm_sig_raw) <- make.names(psm_sig_raw$modif, unique = T)
     psm_sig_raw <- psm_sig_raw[,-which(colnames(psm_sig_raw) 
-                                     %in% 
-                                      c("Accession","Description","GeneName","Annotated Sequence","Modifications","Position in Master Proteins", "modif"))]
+                                       %in% 
+                                         c("Accession","Description","GeneName","Annotated Sequence","Modifications","Position in Master Proteins", "modif"))]
     #TODO: THINK HOW INTEGRATE PSM WITH PEPTIDES
     # input_files$PEP_info[pattern2$Group.1, "Phospho_%"] <- pattern2[,"newseq"]
     # remove(pattern, pattern2)
@@ -588,40 +617,40 @@ read_input_files<-function(type, filenames){
                                           colnames(input_files$PEP)[which(grepl("Abundance",colnames(input_files$PEP)))])]
     }
     input_files$PEP <- input_files$PEP %>% group_by(`Annotated Sequence` ,`Modifications in Master Proteins`,`Master Protein Accessions`,`Positions in Master Proteins`) %>% summarize_all(funs(sum(., na.rm = T))) 
-
+    
     #merge by uniprot the prot description and the pep table
     uniprot_to_take<-merge(input_files$PROT, input_files$PEP, by.x = "Accession", by.y = "Master Protein Accessions")
     input_files$PD_PEP_matrix<-merge(input_files$PROT[which(input_files$PROT$Accession %in% uniprot_to_take$Accession),],
                                      input_files$PEP, by.x = "Accession", by.y = "Master Protein Accessions")
     input_files$PD_PEP_matrix<-input_files$PD_PEP_matrix[,c(colnames(input_files$PD_PEP_matrix)[grepl(paste(
-                                                                                "Accession",
-                                                                                "Description",
-                                                                                "GeneName",
-                                                                                "Annotated Sequence",
-                                                                                "Modifications",
-                                                                                "Positions in Master Proteins", sep = "|"), 
-                                                                          colnames(input_files$PD_PEP_matrix))],
-                                                            lapply(input_files$Input$`File ID`, function(x){
-                                                              colnames(input_files$PD_PEP_matrix)[grepl(str_c(x,":"), colnames(input_files$PD_PEP_matrix))]
-                                                              }) %>% unlist())]
+      "Accession",
+      "Description",
+      "GeneName",
+      "Annotated Sequence",
+      "Modifications",
+      "Positions in Master Proteins", sep = "|"), 
+      colnames(input_files$PD_PEP_matrix))],
+      lapply(input_files$Input$`File ID`, function(x){
+        colnames(input_files$PD_PEP_matrix)[grepl(str_c(x,":"), colnames(input_files$PD_PEP_matrix))]
+      }) %>% unlist())]
     if("TRUE" %in% grepl("\\.", colnames(input_files$PD_PEP_matrix))){
       input_files$PD_PEP_matrix<-input_files$PD_PEP_matrix[,-which(colnames(input_files$PD_PEP_matrix) %in%
-                                                                   c(colnames(input_files$PD_PEP_matrix)[grepl("\\.",
-                                                                                                colnames(input_files$PD_PEP_matrix))]))]
+                                                                     c(colnames(input_files$PD_PEP_matrix)[grepl("\\.",
+                                                                                                                 colnames(input_files$PD_PEP_matrix))]))]
     }
     colnames(input_files$PD_PEP_matrix)<-c(colnames(input_files$PD_PEP_matrix)[grepl(paste(
-                                                                                "Accession",
-                                                                                "Description",
-                                                                                "GeneName",
-                                                                                "Annotated Sequence",
-                                                                                "Modifications",
-                                                                                "Positions in Master Proteins", sep = "|"), 
-                                                                          colnames(input_files$PD_PEP_matrix))],
-                                            unlist(lapply(colnames(input_files$PD_PEP_matrix), function(x){
-                                               lapply(input_files$Input$`File ID`, function(y){if(str_detect(x,paste0(y,":"))){
-                                                   input_files$Input$`File Name`[which(input_files$Input$`File ID` %in% y)]
-                                               }})
-                                           })))
+      "Accession",
+      "Description",
+      "GeneName",
+      "Annotated Sequence",
+      "Modifications",
+      "Positions in Master Proteins", sep = "|"), 
+      colnames(input_files$PD_PEP_matrix))],
+      unlist(lapply(colnames(input_files$PD_PEP_matrix), function(x){
+        lapply(input_files$Input$`File ID`, function(y){if(str_detect(x,paste0(y,":"))){
+          input_files$Input$`File Name`[which(input_files$Input$`File ID` %in% y)]
+        }})
+      })))
     # input_files$PD_PEP_matrix$GeneName<-str_split_fixed(str_split_fixed(input_files$PD_PEP_matrix$GeneName,"-",n=2)[,1],"[.]",n=2)[,1] %>% toupper()
     input_files$PD_PEP_matrix$GeneName<-str_split_fixed(str_split_fixed(input_files$PD_PEP_matrix$GeneName,"-",n=2)[,1],"[.]",n=2)[,1]
     #Maintain only the new complete matrix of intensity
@@ -642,15 +671,15 @@ read_input_files<-function(type, filenames){
     } else{
       c_anno$color<-colour_vec[match(c_anno$condition,unique(c_anno$condition))]
     }
-  
+    
     input_files$PEP_info <- as.data.frame(unique(psm_sig_raw[, c("Accession","Description","GeneName","Annotated Sequence",
-                                                                               "Modifications","Position in Master Proteins")]))
+                                                                 "Modifications","Position in Master Proteins")]))
     colnames(input_files$PEP_info) <- c("Accession","Description","GeneName", "Annotated Sequence","Modifications", "Position in Master Proteins")
     rownames(input_files$PEP_info) <- paste(input_files$PEP_info$Accession, input_files$PEP_info$Modifications, input_files$PEP_info$`Annotated Sequence`, sep = "_")
     rownames(psm_sig_raw) <- make.names(paste(psm_sig_raw$Accession, psm_sig_raw$Modifications, psm_sig_raw$`Annotated Sequence`, sep="_"), unique = T)
     psm_sig_raw <- psm_sig_raw[,-which(colnames(psm_sig_raw) 
-                                     %in% 
-                                      c("Accession","Description","GeneName","Annotated Sequence","Modifications","Position in Master Proteins"))]
+                                       %in% 
+                                         c("Accession","Description","GeneName","Annotated Sequence","Modifications","Position in Master Proteins"))]
   }
   
   # rownames(psm_sig_raw) <- make.names(paste(psm_sig_raw$Accession, psm_sig_raw$Modifications, psm_sig_raw$`Annotated Sequence`, sep="_"), unique = T)
@@ -1211,7 +1240,7 @@ The following graph represent the percentage of S, T, Y of the phosphosites.
 ```{r numeric_percentage_phosphosite, echo=F, message=F, warning=F, results='asis'}
 cat("\n \n")
 if(readPD_files){
-  active_sites <- lapply(lapply(stri_extract_all_regex(psm_peptide_table$modif, "\\w\\d+\\(1|\\w\\d+\\.|\\ \\w\\]|\\w\\/\\w|\\w\\/\\w\\/\\w"), 
+  active_sites <- lapply(lapply(stri_extract_all_regex(psm_peptide_table$modif, "\\w\\d+\\(1|\\w\\d+\\.|\\ \\w\\]|\\w\\(1"), 
                                 function(x){stri_replace_all(x,regex = "\\ ",replacement = "")}), 
                          function(y){unlist(stri_extract_all_regex(unlist(y), "S|T|Y"))}) %>% unlist() %>% table()
 } else{
@@ -1228,7 +1257,7 @@ numeric_df<- data.frame("Site" = c("S", "T", "Y"),
 setnames(numeric_df,"perc","Percentage of phosphosite (%)")
 
 hs <- ggplot(data=numeric_df, aes(x=Site,y=`Percentage of phosphosite (%)`,fill=Site))+
-  geom_hline(yintercept = c(0, 25, 50, 75, 100), lty=1, alpha=.1)+
+  # geom_hline(yintercept = c(0, 25, 50, 75, 100), lty=1, alpha=.1)+
   #coord_flip()+
   geom_bar(stat="identity",width=.4,alpha=.95)+
   theme_bw(base_size = bs*1.5, base_family = bf)+
@@ -1238,7 +1267,7 @@ hs <- ggplot(data=numeric_df, aes(x=Site,y=`Percentage of phosphosite (%)`,fill=
   # scale_colour_manual(values=(colour_vec)) +
   ylim(0, 100) +
   # scale_fill_hue(l=45) +
-  theme(panel.grid.minor = element_blank(),panel.grid.major.y = element_blank()) +
+  theme(panel.grid.minor = element_blank(),panel.grid.major.x = element_blank()) +
   geom_text(data=numeric_df,aes(label=label, y=Inf),fontface="italic", colour=rep("black",3), alpha=0.9,size=0.4*bs,vjust=1.5,hjust=0.5)
 
 print(hs)
@@ -2341,7 +2370,8 @@ if(length(enrich_filter_DBs) > 0){
     dplyr::filter(anno_class %in% annos,
                   overlap_size>=overlap_size_enrich_thr,
                   anno_size<=10000,
-                  p_value<pval_enrich_thr) %>%
+                  fdr<pval_enrich_thr,
+                  !str_ends(input_name,"_all")) %>%
     dplyr::arrange(-overlap_size) %>% dplyr::group_by(input_name,anno_class) %>% slice_head(n=5) %>%
     ungroup() %>% dplyr::select(anno_class,anno_name)
 
@@ -2395,7 +2425,8 @@ if(length(enrich_filter_DBs) > 0){
     dplyr::filter(anno_class %in% annos,
                   overlap_size>=overlap_size_enrich_thr,
                   anno_size<=10000,
-                  p_value<pval_enrich_thr) %>%
+                  fdr<pval_enrich_thr,
+                  str_ends(input_name,"_all")) %>%
     dplyr::arrange(-overlap_size) %>% dplyr::group_by(input_name,anno_class) %>% slice_head(n=5) %>%
     ungroup() %>% dplyr::select(anno_class,anno_name)
 
@@ -2450,8 +2481,9 @@ if(length(enrich_filter_term) > 0){
 
   #For each patter we want, search in each DEPs name to find it
   for(word in lookup_words){
-    matches <- enr_df %>% dplyr::filter(p_value<pval_enrich_thr,
-                                        overlap_size>=overlap_size_enrich_thr) %>% dplyr::select(anno_class,anno_name)
+    matches <- enr_df %>% dplyr::filter(fdr<pval_enrich_thr,
+                                        overlap_size>=overlap_size_enrich_thr,
+                                        !str_ends(input_name,"_all")) %>% dplyr::select(anno_class,anno_name)
     matches <- matches[grepl(paste0("\\b",word,"\\b"),matches$anno_name,ignore.case=TRUE),]
     enr_sele_names<-rbind(enr_sele_names,matches) %>% unique()
   }
@@ -2508,8 +2540,9 @@ if(length(enrich_filter_term) > 0){
   enr_sele_names<-NULL
   #For each pattern search in DEPs name
   for(word in lookup_words){
-    matches <- enr_df %>% dplyr::filter(p_value<pval_enrich_thr,
-                                        overlap_size>=overlap_size_enrich_thr) %>% dplyr::select(anno_class,anno_name)
+    matches <- enr_df %>% dplyr::filter(fdr<pval_enrich_thr,
+                                        overlap_size>=overlap_size_enrich_thr,
+                                        str_ends(input_name,"_all")) %>% dplyr::select(anno_class,anno_name)
     matches <- matches[grepl(paste0("\\b",word,"\\b"),matches$anno_name,ignore.case=TRUE),]
     enr_sele_names<-rbind(enr_sele_names,matches) %>% unique()
   }

@@ -262,9 +262,9 @@ This report summarize the results obtained during the execution of the integrati
 
 - ```report.html```: complete report of the analysis with all pics and results of the enrichment.
 - ```database_env_R.RData```: RData containing the essential variables for further analysis.
-- ```normalised_intensity_table.xlsx```: excel file with the matrix used in the analysis. In sheet *Normalized proteins matrix intensity* is written the normalized and imputed version of the original intensities of each protein in each sample. In sheet *Normalized peptides matrix intensity* is written the normalized and imputed version of the original intensities of each peptide in each sample. In sheet *Normalized proteins intensity group by* is written the average and the standard deviation of each condition described in the Input file for each protein. In sheet *Normalized peptides intensity group by* is written the average and the standard deviation of each condition described in the Input file for each peptide.
-- ```DEPs_table.xlsx```: summary of the result of Limma. In sheet *DEPs_proteins*, Column *id* is the name of the protein. In sheet *DEPs_peptides*, column *Accession* is the UniprotID of protein, column *Description* is the description of protein, *GeneName* is Gene Symbol, *Annotated Sequence* is the sequence of peptides, *Modifications* is the modification that affect the peptides, *Position in Master Proteins* is the UniprotID with the position on the sequence. For each contrast rule are present 5 columns:
-  - **class**: is "+" if the protein is up-regulated following the parameters set in **options.xlsx**, "-" if the protein is down-regulated, "=" otherwise
+- ```normalised_intensity_table.xlsx```: excel file with the matrix used in the analysis. In sheet *Normalized proteins matrix intensity* is written the normalized and imputed version of the original intensities of each protein in each sample. In sheet *Normalized peptides matrix intensity* is written the normalized and imputed version of the original intensities of each peptide in each sample. In sheet *Normalized proteins intensity group by* is written the average and the standard deviation of each condition described in the Sample Annotation file for each protein. In sheet *Normalized peptides intensity group by* is written the average and the standard deviation of each condition described in the Sample Annotation file for each peptide.
+- ```DEPs_table.xlsx```: summary of the result of Limma. In sheet *DEPs_proteins* describe the differentially expressed proteins. In sheet *DEPs_peptides* are described the differentially expressed peptides. Column description: *Accession* is the UniprotID of protein, column *Description* is the description of protein, *GeneName* is Gene Symbol, *Annotated Sequence* is the sequence of peptides, *Modifications* is the modification that affect the peptides, *Position in Master Proteins* is the UniprotID with the position on the sequence, *tryptic_cond* is the status of the tryptic for each peptide. For each contrast rule are present 5 columns:
+  - **class**: is "+" if the protein is up-regulated following the input parameters, "-" if the protein is down-regulated, "=" otherwise
   - **log2_FC**: is the log2 Fold Change of the contrast
   - **p_val**: is the p. value
   - **p_adj**: is the adjusted p. value
@@ -282,28 +282,43 @@ cat("- ```corrected_mds_peptides.pdf```: MDS of the samples by peptides after th
 cat("- ```boxplot_control_intensity.pdf```: boxplot for the control of the intensities of selected proteins \n")
 ```
 
-- ```DEPs_proteins_count_barplot.pdf```: number of DEPs find for each contrast design based on proteins. Light grey are the down-regulated, dark grey are the up-regulated genes.
-- ```DEPs_peptides_count_barplot.pdf```: number of DEPs find for each contrast design based on peptides. Light grey are the down-regulated, dark grey are the up-regulated genes.
+- ```DEPs_proteins_count_barplot.pdf```: number of DEPs find for each contrast design based on proteins. Dark grey are the down-regulated, light grey are the up-regulated genes.
+- ```DEPs_peptides_count_barplot.pdf```: number of DEPs find for each contrast design based on peptides. Dark grey are the down-regulated, light grey are the up-regulated genes.
 - ```DEPs_proteins_mds.pdf```: MDS of the DEPs discovered based on proteins.
 - ```DEPs_peptides_mds.pdf```: MDS of the DEPs discovered based on peptides.
 
 ```{r print_descr_enrich, warning=FALSE, echo=F, message=FALSE, eval=run_enrich, results='asis'}
 cat("- ```DEPs_enrichment_data.RData```: result of the enrichment made with EnrichR \n")
-cat("- ```DEPs_enrichment_table.xlsx```: excel with only the enriched terms with an high significance (P.Value < 0.05, Overlap Size >= 4) \n")
-cat("- ```enrich``` directory: plots of the enrichment data under the parameters described in the **option.xlsx** file \n")  
-cat("  - **DBs_enr.pdf**: dot matrix of the enrichment result divided in up- and down-regulated genes. Filtered by the datasets choose in the **options** file. \n")
-cat("  - **terms_enr.pdf**: dot matrix of the enrichment result divided in up- and down-regulated genes. Filtered by the terms written in the **options** file. \n")
-cat("  - **DBs_enr_all.pdf**: dot matrix of the enrichment result combining the up- and down- regulated genes in a single list. Filtered by the datasets choose in the **options** file. \n")
-cat("  - **terms_enr_all.pdf**: dot matrix of the enrichment result combining the up- and down- regulated genes in a single list. Filtered by the terms written in the **options** file. \n")
+cat("- ```DEPs_enrichment_table.xlsx```: excel with only the enriched terms with an high significance (Default: adj.P.Value < 0.05, Overlap Size >= 5) \n")
+cat("- ```enrich``` directory: plots of the enrichment data under the parameters set \n")  
+cat("  - **enrichment_database_filter.pdf**: dot matrix of the enrichment result divided in up- and down-regulated genes. Filtered by the datasets choose in the advanced options. \n")
+cat("  - **enrichment_terms_filter.pdf**: dot matrix of the enrichment result divided in up- and down-regulated genes. Filtered by the terms written in the advanced options. \n")
+cat("  - **enrichment_database_filter_all.pdf**: dot matrix of the enrichment result combining the up- and down- regulated genes in a single list. Filtered by the datasets choose in the advanced options. \n")
+cat("  - **enrichment_terms_filter_all.pdf**: dot matrix of the enrichment result combining the up- and down- regulated genes in a single list. Filtered by the terms written in the
+    advanced options. \n")
 
 shiny::setProgress(0.10, detail = "Settings...")
 ```
 
+```{r print_descr_enrich, warning=FALSE, echo=F, message=FALSE, eval=run_enrich_universe, results='asis'}
+cat("- ```DEPs_enrichment_data_universe.RData```: result of the enrichment made with EnrichR \n")
+cat("- ```DEPs_enrichment_table_universe.xlsx```: excel with only the enriched terms with an high significance (Default: adj.P.Value < 0.05, Overlap Size >= 5) \n")
+cat("- ```enrich``` directory: plots of the enrichment data under the parameters set \n")  
+cat("  - **enrichment_database_filter_universe.pdf**: dot matrix of the enrichment result divided in up- and down-regulated genes. Filtered by the datasets choose in the advanced options. \n")
+cat("  - **enrichment_terms_filter_universe.pdf**: dot matrix of the enrichment result divided in up- and down-regulated genes. Filtered by the terms written in the advanced options. \n")
+cat("  - **enrichment_database_filter_all_universe.pdf**: dot matrix of the enrichment result combining the up- and down- regulated genes in a single list. Filtered by the datasets choose in the advanced options. \n")
+cat("  - **enrichment_terms_filter_all_universe.pdf**: dot matrix of the enrichment result combining the up- and down- regulated genes in a single list. Filtered by the terms written in the
+    advanced options. \n")
+
+shiny::setProgress(0.10, detail = "Settings...")
+```
+
+
 ```{r print_descr_STRING, warning=FALSE, echo=F, message=FALSE, eval=run_STRING, results='asis'}
 cat("- ```network``` directory: plots of the up- and down- regulated genes based on STRINGdb. For each contrast design are create 2 files: \n")
 #  <!-- - **Prefilter**: histogram representing the number of genes in each community discovered. -->
-cat("  - **Postfilter**: histogram representing the number of genes in each community discovered after a filter on the genes and on the links. \n")
-cat("  - **Graph**: visual representation of the network discovered in two layouts: *fr* and *kk*. \n")
+cat("  - **community_number_gene_filtered.pdf**: histogram representing the number of genes in each community discovered after a filter on the genes and on the links. \n")
+cat("  - **network.pdf**: visual representation of the network discovered in two layouts: *fr* and *kk*. \n")
 ```
 
 
@@ -1805,7 +1820,8 @@ if(length(enrich_filter_DBs) > 0){
     dplyr::filter(anno_class %in% annos,
                   overlap_size>=overlap_size_enrich_thr,
                   anno_size<=10000,
-                  fdr<pval_enrich_thr) %>%
+                  fdr<pval_enrich_thr,
+                  !str_ends(input_name,"_all")) %>%
     dplyr::arrange(-overlap_size) %>% dplyr::group_by(input_name,anno_class) %>% slice_head(n=5) %>%
     ungroup() %>% dplyr::select(anno_class,anno_name)
 
@@ -1861,7 +1877,8 @@ if(length(enrich_filter_DBs) > 0){
     dplyr::filter(anno_class %in% annos,
                   overlap_size>=overlap_size_enrich_thr,
                   anno_size<=10000,
-                  fdr<pval_enrich_thr) %>%
+                  fdr<pval_enrich_thr,
+                  str_ends(input_name,"_all")) %>%
     dplyr::arrange(-overlap_size) %>% dplyr::group_by(input_name,anno_class) %>% slice_head(n=5) %>%
     ungroup() %>% dplyr::select(anno_class,anno_name)
 
@@ -1919,7 +1936,8 @@ if(length(enrich_filter_term) > 0){
   #For each patter we want, search in each DEPs name to find it
   for(word in lookup_words){
     matches <- enr_df %>% dplyr::filter(fdr<pval_enrich_thr,
-                                        overlap_size>=overlap_size_enrich_thr) %>% dplyr::select(anno_class,anno_name)
+                                        overlap_size>=overlap_size_enrich_thr,
+                                        !str_ends(input_name,"_all")) %>% dplyr::select(anno_class,anno_name)
     matches <- matches[grepl(paste0("\\b",word,"\\b"),matches$anno_name,ignore.case=TRUE),]
     enr_sele_names<-rbind(enr_sele_names,matches) %>% unique()
   }
@@ -1979,7 +1997,8 @@ if(length(enrich_filter_term) > 0){
   #For each pattern search in DEPs name
   for(word in lookup_words){
     matches <- enr_df %>% dplyr::filter(fdr<pval_enrich_thr,
-                                        overlap_size>=overlap_size_enrich_thr) %>% dplyr::select(anno_class,anno_name)
+                                        overlap_size>=overlap_size_enrich_thr,
+                                        str_ends(input_name,"_all")) %>% dplyr::select(anno_class,anno_name)
     matches <- matches[grepl(paste0("\\b",word,"\\b"),matches$anno_name,ignore.case=TRUE),]
     enr_sele_names<-rbind(enr_sele_names,matches) %>% unique()
   }
@@ -2046,8 +2065,8 @@ if(p$is_alive() | is.null(p$get_result())){
   writexl::write_xlsx((enr_df_universe %>% dplyr::filter(fdr<=pval_enrich_thr,overlap_size>=overlap_size_enrich_thr)),
                       path = paste0(dirOutput,"DEPs_enrichment_table_universe.xlsx"))
 
-  # dir.create(file.path(dirOutput,"enrich/"), showWarnings = FALSE)
-  # dirOutput_enr=paste0(dirOutput,"enrich/")
+  dir.create(file.path(dirOutput,"enrich/"), showWarnings = FALSE)
+  dirOutput_enr=paste0(dirOutput,"enrich/")
   message("Enrichment whole universe DONE.")
 }
 shiny::setProgress(0.75, detail = "Done Enrichment of universe...")
@@ -2068,7 +2087,8 @@ if(length(enrich_filter_DBs) > 0){
     dplyr::filter(anno_class %in% annos,
                   overlap_size>=overlap_size_enrich_thr,
                   anno_size<=10000,
-                  fdr<pval_enrich_thr) %>%
+                  fdr<pval_enrich_thr,
+                  !str_ends(input_name,"_all")) %>%
     dplyr::arrange(-overlap_size) %>% dplyr::group_by(input_name,anno_class) %>% slice_head(n=5) %>%
     ungroup() %>% dplyr::select(anno_class,anno_name)
 
@@ -2124,7 +2144,8 @@ if(length(enrich_filter_DBs) > 0){
     dplyr::filter(anno_class %in% annos,
                   overlap_size>=overlap_size_enrich_thr,
                   anno_size<=10000,
-                  fdr<pval_enrich_thr) %>%
+                  fdr<pval_enrich_thr,
+                  str_ends(input_name,"_all")) %>%
     dplyr::arrange(-overlap_size) %>% dplyr::group_by(input_name,anno_class) %>% slice_head(n=5) %>%
     ungroup() %>% dplyr::select(anno_class,anno_name)
 
@@ -2183,7 +2204,8 @@ if(length(enrich_filter_term) > 0){
   #For each patter we want, search in each DEPs name to find it
   for(word in lookup_words){
     matches <- enr_df %>% dplyr::filter(fdr<pval_enrich_thr,
-                                        overlap_size>=overlap_size_enrich_thr) %>% dplyr::select(anno_class,anno_name)
+                                        overlap_size>=overlap_size_enrich_thr,
+                                        !str_ends(input_name,"_all")) %>% dplyr::select(anno_class,anno_name)
     matches <- matches[grepl(paste0("\\b",word,"\\b"),matches$anno_name,ignore.case=TRUE),]
     enr_sele_names<-rbind(enr_sele_names,matches) %>% unique()
   }
@@ -2243,7 +2265,8 @@ if(length(enrich_filter_term) > 0){
   #For each pattern search in DEPs name
   for(word in lookup_words){
     matches <- enr_df %>% dplyr::filter(fdr<pval_enrich_thr,
-                                        overlap_size>=overlap_size_enrich_thr) %>% dplyr::select(anno_class,anno_name)
+                                        overlap_size>=overlap_size_enrich_thr,
+                                        str_ends(input_name,"_all")) %>% dplyr::select(anno_class,anno_name)
     matches <- matches[grepl(paste0("\\b",word,"\\b"),matches$anno_name,ignore.case=TRUE),]
     enr_sele_names<-rbind(enr_sele_names,matches) %>% unique()
   }

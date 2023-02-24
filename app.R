@@ -189,6 +189,10 @@ server <- function(input, output, session) {
     if (input$enrichR) {
       tagList(
         fluidRow(
+          radioButtons("enrichR_universe", "Execute enrichment of the whole Universe", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
+          # uiOutput("help14")
+        ),
+        fluidRow(
           selectizeInput("DB_enrich", "DB to analyse",
             choices = read_delim("R/dbs_enrichR.txt", delim = "\n", col_names = FALSE)[[1]],
             selected = NULL, multiple = TRUE
@@ -250,10 +254,6 @@ server <- function(input, output, session) {
             fluidRow(
               radioButtons("enrichR", "Execute enrichment", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
               uiOutput("help14")
-            ),
-            fluidRow(
-              radioButtons("enrichR_universe", "Execute enrichment of the whole Universe", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
-              # uiOutput("help14")
             )
           ),
           column(
@@ -269,6 +269,10 @@ server <- function(input, output, session) {
   output$input_enrichment_phos <- renderUI({
     if (input$enrichR_phos) {
       tagList(
+        fluidRow(
+          radioButtons("kinaseTree_phos", "Draw the kinase trees (REQUIRE ENRICHMENT)", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
+          # uiOutput("help14")
+        ),
         fluidRow(
           selectizeInput("DB_enrich_phos", "DB to analyse",
                          choices = read_delim("R/dbs_enrichR.txt", delim = "\n", col_names = FALSE)[[1]],
@@ -323,10 +327,6 @@ server <- function(input, output, session) {
             fluidRow(
               textInput("prot_boxplot_phos", "Control Boxplot proteins"),
               # uiOutput("help11")
-            ),
-            fluidRow(
-              radioButtons("kinaseTree_phos", "Draw the kinase trees (REQUIRE ENRICHMENT)", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
-              # uiOutput("help14")
             ),
             fluidRow(
               radioButtons("STRING_phos", "Execute PPI network STRINGdb", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
