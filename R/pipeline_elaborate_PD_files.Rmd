@@ -69,7 +69,7 @@ if(length(new.packages)) {
       install.packages("BiocManager")
   suppressMessages(suppressWarnings({BiocManager::install(new.packages)}))
 }
-list.of.packages <- c("geomnet","proBatch")
+list.of.packages <- c("geomnet","proBatch", "PhosR")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) {
   suppressMessages(suppressWarnings({devtools::install_github("sctyner/geomnet", dependencies = T)}))
@@ -101,6 +101,8 @@ suppressMessages(suppressWarnings({
   library(ggbeeswarm)
   library(parallel)
   library(readr)
+  library(stringi)
+  library(stringr)
 }))
 
 options(dplyr.summarise.inform = FALSE)
@@ -140,7 +142,6 @@ knitr::knit_hooks$set(time_it = local({
   }
 }))
 knitr::opts_chunk$set(time_it = TRUE)
-
 
 shiny::setProgress(0.01, detail = "Initialize...")  # set progress to 50%
 ```
@@ -251,7 +252,7 @@ shiny::setProgress(0.05, detail = "Reading setting...")  # set progress to 50%
 
 
 ---
-title: `r params$doc_title`
+title: `r if(params$doc_title==""){"Report of integrative pipeline for proteomics analysis"}else{params$doc_title}`
 ---
 
 `r description`
@@ -272,6 +273,8 @@ This report summarize the results obtained during the execution of the integrati
 
 - ```general_mds_proteins.pdf```: MDS of the samples by proteins.
 - ```general_mds_peptides.pdf```: MDS of the samples by peptides.
+- ```general_pca_proteins.pdf```: PCA of the samples by proteins.
+- ```general_pca_peptides.pdf```: PCA of the samples by peptides.
 
 ```{r print_descr_batch, warning=FALSE, echo=F, message=FALSE, eval=batch_corr_exe, results='asis'}
 cat("- ```corrected_mds_proteins.pdf```: MDS of the samples by proteins after the bacth effect correction \n")
@@ -286,6 +289,8 @@ cat("- ```boxplot_control_intensity.pdf```: boxplot for the control of the inten
 - ```DEPs_peptides_count_barplot.pdf```: number of DEPs find for each contrast design based on peptides. Dark grey are the down-regulated, light grey are the up-regulated genes.
 - ```DEPs_proteins_mds.pdf```: MDS of the DEPs discovered based on proteins.
 - ```DEPs_peptides_mds.pdf```: MDS of the DEPs discovered based on peptides.
+- ```DEPs_proteins_pca.pdf```: PCA of the DEPs discovered based on proteins.
+- ```DEPs_peptides_pca.pdf```: PCA of the DEPs discovered based on peptides.
 
 ```{r print_descr_enrich, warning=FALSE, echo=F, message=FALSE, eval=run_enrich, results='asis'}
 cat("- ```DEPs_enrichment_data.RData```: result of the enrichment made with EnrichR \n")
@@ -300,29 +305,27 @@ cat("  - **enrichment_terms_filter_all.pdf**: dot matrix of the enrichment resul
 shiny::setProgress(0.10, detail = "Settings...")
 ```
 
-```{r print_descr_enrich, warning=FALSE, echo=F, message=FALSE, eval=run_enrich_universe, results='asis'}
-cat("- ```DEPs_enrichment_data_universe.RData```: result of the enrichment made with EnrichR \n")
+```{r print_descr_enrich_uni, warning=FALSE, echo=F, message=FALSE, eval=run_enrich_universe, results='asis'}
+cat("- ```DEPs_enrichment_data_universe.RData```: result of the enrichment on the whole universe of the experiment made with EnrichR \n")
 cat("- ```DEPs_enrichment_table_universe.xlsx```: excel with only the enriched terms with an high significance (Default: adj.P.Value < 0.05, Overlap Size >= 5) \n")
-cat("- ```enrich``` directory: plots of the enrichment data under the parameters set \n")  
-cat("  - **enrichment_database_filter_universe.pdf**: dot matrix of the enrichment result divided in up- and down-regulated genes. Filtered by the datasets choose in the advanced options. \n")
-cat("  - **enrichment_terms_filter_universe.pdf**: dot matrix of the enrichment result divided in up- and down-regulated genes. Filtered by the terms written in the advanced options. \n")
-cat("  - **enrichment_database_filter_all_universe.pdf**: dot matrix of the enrichment result combining the up- and down- regulated genes in a single list. Filtered by the datasets choose in the advanced options. \n")
-cat("  - **enrichment_terms_filter_all_universe.pdf**: dot matrix of the enrichment result combining the up- and down- regulated genes in a single list. Filtered by the terms written in the
+cat("- ```enrich``` directory: the plots of the enrichment data are in the same folder of the normal enrichment \n")  
+cat("  - **enrichment_database_filter_universe.pdf**: dot matrix of the enrichment result divided in up- and down-regulated genes of the comparisons compared with the universe. Filtered by the datasets choose in the advanced options. \n")
+cat("  - **enrichment_terms_filter_universe.pdf**: dot matrix of the enrichment result divided in up- and down-regulated genes of the comparisons compared with the universe. Filtered by the terms written in the advanced options. \n")
+cat("  - **enrichment_database_filter_all_universe.pdf**: dot matrix of the enrichment result combining the up- and down- regulated genes in a single list, comparisons versus background the proteins discovered by the experiment. Filtered by the datasets choose in the advanced options. \n")
+cat("  - **enrichment_terms_filter_all_universe.pdf**: dot matrix of the enrichment result combining the up- and down- regulated genes in a single list, comparisons versus background the proteins discovered by the experiment. Filtered by the terms written in the
     advanced options. \n")
 
 shiny::setProgress(0.10, detail = "Settings...")
 ```
 
-
 ```{r print_descr_STRING, warning=FALSE, echo=F, message=FALSE, eval=run_STRING, results='asis'}
 cat("- ```network``` directory: plots of the up- and down- regulated genes based on STRINGdb. For each contrast design are create 2 files: \n")
-#  <!-- - **Prefilter**: histogram representing the number of genes in each community discovered. -->
 cat("  - **community_number_gene_filtered.pdf**: histogram representing the number of genes in each community discovered after a filter on the genes and on the links. \n")
 cat("  - **network.pdf**: visual representation of the network discovered in two layouts: *fr* and *kk*. \n")
 ```
 
 
-## Filter thresholds
+## Summary parameters and filter thresholds
 
 ```{r print_settings, warning=FALSE, echo=F, message=FALSE, results='asis'}
 cat(" \n \n")
@@ -333,13 +336,18 @@ cat(paste0("- Log2 Fold Change (FC) threshold: FC > ",fc_thr,", FC < -",fc_thr,"
 cat(" \n")
 cat(paste0("- P-Value threshold: p.val < ",pval_thr," "))
 cat(" \n")
+if(batch_corr_exe){cat("- Execution of batch effect correction.")}
+cat(" \n")
 if(signal_thr != -Inf){cat(paste0("- Signal log2 intesity threshold: signal > ",signal_thr," "))}
 cat(" \n")
 if(run_enrich){cat(paste0("- P-Value threshold for enrichment analysis: p.val < ",pval_enrich_thr," "))}
 cat(" \n")
 if(run_enrich){cat(paste0("- Overlap size threshold for enrichment analysis: OverlapSize > ",overlap_size_enrich_thr," "))}
 cat(" \n")
-if(batch_corr_exe){cat("- DONE batch effect correction.")}
+if(run_enrich_universe){cat("- Execution of whole universe enrichment.")}
+cat(" \n")
+if(run_STRING){cat("- Execution of PPI network analysis with STRINGdb.")}
+
 
 shiny::setProgress(0.18, detail = "Reading files...")
 ```
@@ -355,12 +363,12 @@ cat(" \n")
 
 ```
 
-## 1. Annotation sample from input file
-The table summarize the input samples. Each case has:
+## 1. Sample Annotation
+The table summarize the input samples read in the **Sample_Annotation** file. Each case has:
 
-- a sample name in column "sample",
-- the associated condition of study in column "condition",
-- the color of that sample in column "color".
+- a sample name in column **sample**,
+- the associated condition of study in column **condition**,
+- the color of that sample in column **color**.
 
 
 ```{r load_data_from_PD, eval=readPD_files,echo=F, message=F, warning=F, results='asis'}
@@ -463,7 +471,12 @@ rownames(c_anno)<-c_anno$sample
 if("color" %in% colnames(c_anno)){
   colour_vec<-na.omit(c_anno[colnames(psm_sig_raw),]$color)
   names(colour_vec)<-na.omit(c_anno[colnames(psm_sig_raw),]$sample)
+}else{
+  c_anno<-left_join(c_anno,
+                    data.frame("color"=colour_vec[match(sort(c_anno$condition),unique(sort(c_anno$condition)))],
+                               "sample"=c_anno[order(c_anno$condition), "sample"]))
 }
+rownames(c_anno)<-c_anno$sample
 
 remove(uniprot_to_take,input_files)
 #Print Annotation table
@@ -567,8 +580,12 @@ rownames(c_anno)<-c_anno$sample
 if("color" %in% colnames(c_anno)){
   colour_vec<-na.omit(c_anno[colnames(psm_sig_raw),]$color)
   names(colour_vec)<-na.omit(c_anno[colnames(psm_sig_raw),]$sample)
+}else{
+  c_anno<-left_join(c_anno,
+                    data.frame("color"=colour_vec[match(sort(c_anno$condition),unique(sort(c_anno$condition)))],
+                               "sample"=c_anno[order(c_anno$condition), "sample"]))
 }
-
+rownames(c_anno)<-c_anno$sample
 remove(uniprot_to_take,input_files)
 #Print Annotation table
 kable(c_anno)
@@ -716,7 +733,7 @@ shiny::setProgress(0.29, detail = "Filtering intensity matrix...")
 
 #### Statistics of the proteomics
 ```{r stat_proteomic, echo=F, message=F, warning=F, results='asis'}
-df_stat <- data.frame("number" = c(length(unique(psm_anno_df$symbol)), nrow(psm_anno_df)), row.names = c("Discovered proteins:", "Discovered peptides:"))
+df_stat <- data.frame("number" = c(length(unique(psm_anno_df$symbol)), nrow(psm_anno_df)), row.names = c("Discovered proteins by the experiment:", "Discovered peptides by the experiment:"))
 kable(df_stat)
 ```
 
@@ -727,7 +744,7 @@ Raw data consist in the area under the peak (m/z, time, number of events) calcul
 -   PSMs not consistently present in all replicates of at least 1 condition will be removed.
 -   Contaminants are removed.
 
-The insentities are transformed in log2 scale.
+The intensities are transformed in log2 scale.
 
 #### 2.1. Log2 signal distributions before imputation
 The box plot represents the distribution of the intensity values for each samples in the raw data. This figure is generated before the normalization and imputation of the data.
@@ -745,8 +762,8 @@ hs<-ggplot(data=psm_long_df, aes(x=factor(sample, levels=unique(psm_long_df$samp
   theme_bw()+
   theme(legend.position = "none",axis.title.y = element_blank()) +
   labs(x = "Log2 Intensity") +
-  scale_fill_manual(values=(colour_vec)) +
-  scale_colour_manual(values=(colour_vec)) +
+  scale_fill_manual(values=setNames(as.list(c_anno$color), c_anno$sample)) +
+  scale_colour_manual(values=setNames(as.list(c_anno$color), c_anno$sample)) +
   theme(panel.grid.minor = element_blank(),panel.grid.major.y = element_blank())
 
 hs
@@ -770,8 +787,8 @@ hs<-ggplot(data=numeric_df, aes(x=factor(sample, levels=unique(psm_long_df$sampl
   theme_bw()+
   theme(legend.position = "none",axis.title.y = element_blank())+
   labs(x = "Percentage of known intensity (%)") +
-  scale_fill_manual(values=(colour_vec)) +
-  scale_colour_manual(values=(colour_vec)) +
+  scale_fill_manual(values=setNames(as.list(c_anno$color), c_anno$sample)) +
+  scale_colour_manual(values=setNames(as.list(c_anno$color), c_anno$sample)) +
   theme(panel.grid.minor = element_blank(),panel.grid.major.y = element_blank())
 
 hs
@@ -781,7 +798,10 @@ remove(hs,numeric_df)
 shiny::setProgress(0.34, detail = "Doing normalizations...")
 ```
 
+
+#### 2.3. Normalization and Imputation 
 To perform the double analysis at protein- and peptide-level, two normalization function are applied.
+
 For the protein study, PSMs values were summarized into proteins and normalized across samples, with the "medianSweeping" function contained in the Bioconductor package [DEqMS](<https://www.bioconductor.org/packages/release/bioc/html/DEqMS.html>).
 At the peptide level, the normalization is done by the function equalMedianNormalization from  [DEqMS](<https://www.bioconductor.org/packages/release/bioc/html/DEqMS.html>), which normalizes to have equal medians in all samples.
 
@@ -811,8 +831,8 @@ message("Normalization DONE.")
 shiny::setProgress(0.38, detail = "Doing imputation...")
 ```
 
-The principal method is based on the PhosR package. It is a package for comprehensive analysis of phosphoproteomic data. Its core components are data processing and downstream analysis.
-PhosR is always applied but in some cases, it does not work, for example, if there is only 1 sample in a specific condition. In this rare case, it uses a simpler round imputation. It calculates the mean and the standard deviation of the matrix and it generates the imputed values based on the gaussian function derived.
+The principal imputation method is based on the PhosR package. It is a package for comprehensive analysis of phosphoproteomic data, but it hase two core components: data processing, which has many useful function to manage the raw data, and downstream analysis for the phospho-proteomic analysis.
+PhosR is always applied but in some cases, it does not work like when there is only 1 sample in a specific condition. In this rare case, it uses a simpler round imputation. It calculates the mean and the standard deviation of the matrix and it generates the imputed values based on the gaussian function derived.
 
 ```{r imputation, echo=F, message=F, warning=F, results='asis'}
 message("Imputation of intensity matrix in progress...")
@@ -985,8 +1005,8 @@ hs<-ggplot(data=pg_long_df, aes(x=factor(sample, levels=unique(psm_long_df$sampl
   theme_bw()+
   theme(legend.position = "none",axis.title.y = element_blank())+
   labs(x = "Log2 Intensity") +
-  scale_fill_manual(values=(colour_vec)) +
-  scale_colour_manual(values=(colour_vec)) +
+  scale_fill_manual(values=setNames(as.list(c_anno$color), c_anno$sample)) +
+  scale_colour_manual(values=setNames(as.list(c_anno$color), c_anno$sample)) +
   theme(panel.grid.minor = element_blank(),panel.grid.major.y = element_blank())
 
 hs
@@ -1000,7 +1020,7 @@ shiny::setProgress(0.47, detail =  "Calculate post-norm distribution...")
 ```{r mds_counts, warning=F, message=F, echo=F, results='asis'}
 cat(" \n \n")
 cat("#### 2.5. Multi-dimensional reduction analysis of samples {.tabset}  \n")
-cat("Following are visualized the Multi-dimensional scaling analysis (MDSs) of the normalized data. The MDS in its simpler version is called PCA.Each sample has its own color described in the Input file, if it was not defined it is used the default palette coloring by condition. \n")
+cat("Following are visualized the Multi-dimensional scaling analysis (MDSs) of the normalized data. The MDS in its simpler version is called PCA. Each sample has its own color described in the Sample_Annotation file, if it was not defined it is used the default palette coloring by condition. \n \n ")
 cat("Two MDSs are created, one based on the normalized protein intensities, tab **Proteins**. The second on the normalized peptide intensities, tab **Peptides** \n")
 cat(" \n \n")
 
@@ -1025,7 +1045,7 @@ if(is.null(cc)){
 
 cmd<-ggplot(mds_cmdscale, aes(MDS_1, MDS_2, colour=condition)) + #plot according to the new coordinates
   geom_point(size=1.5,alpha=.9) + #colour=factor(df) to choose colour according to the condition
-  geom_text_repel(aes(label=sample), size=0.15*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
+  geom_text_repel(aes(label=sample), size=0.3*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
   scale_colour_manual(values=cc[unique(names(cc))]) +
   theme_bw(base_size = bs, base_family = bf) +
   theme(legend.position = "right", panel.grid.minor=element_blank())
@@ -1060,7 +1080,7 @@ if(is.null(cc)){
 
 cmd<-ggplot(mds_cmdscale, aes(MDS_1, MDS_2, colour=condition)) + #plot according to the new coordinates
   geom_point(size=1.5,alpha=.9) + #colour=factor(df) to choose colour according to the condition
-  geom_text_repel(aes(label=sample), size=0.15*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
+  geom_text_repel(aes(label=sample), size=0.3*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
   scale_colour_manual(values=cc[unique(names(cc))]) +
   theme_bw(base_size = bs, base_family = bf) +
   theme(legend.position = "right", panel.grid.minor=element_blank())
@@ -1079,7 +1099,7 @@ shiny::setProgress(0.49, detail = "Calculate MDS...")
 ```{r pca_norm, warning=F, message=F, echo=F, results='asis'}
 cat(" \n \n")
 cat("#### 2.6. PCA analysis of samples {.tabset}  \n")
-cat("Following are visualized the Principal Component analysis (PCA) of the normalized data. Each sample has its own color described in the Input file, if it was not defined it is used the default palette coloring by condition. \n")
+cat("Following are visualized the Principal Component analysis (PCA) of the normalized data. Each sample has its own color described in the Sample_Annotation file, if it was not defined it is used the default palette coloring by condition. \n \n ")
 cat("Two PCA are created, one based on the normalized protein intensities, tab **Proteins**. The second on the normalized peptide intensities, tab **Peptides** \n")
 cat(" \n \n")
 
@@ -1109,7 +1129,7 @@ if(is.null(cc)){
 #ggplot method
 p1 <- ggplot(pc, aes(PC1, PC2, colour = condition)) +
       geom_point(size=1.5,alpha=.9) + #colour=factor(df) to choose colour according to the condition
-      geom_text_repel(aes(label=sample), size=0.15*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
+      geom_text_repel(aes(label=sample), size=0.3*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
       scale_colour_manual(values=cc[unique(names(cc))]) +
       theme_bw(base_size = bs, base_family = bf) +
       theme(legend.position = "right", panel.grid.minor=element_blank()) +
@@ -1149,7 +1169,7 @@ if(is.null(cc)){
 #ggplot method
 p1 <- ggplot(pc, aes(PC1, PC2, colour = condition)) +
       geom_point(size=1.5,alpha=.9) + #colour=factor(df) to choose colour according to the condition
-      geom_text_repel(aes(label=sample), size=0.15*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
+      geom_text_repel(aes(label=sample), size=0.3*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
       scale_colour_manual(values=cc[unique(names(cc))]) +
       theme_bw(base_size = bs, base_family = bf) +
       theme(legend.position = "right", panel.grid.minor=element_blank()) +
@@ -1168,7 +1188,7 @@ shiny::setProgress(0.51, detail = "Calculate PCA...")
 ```
 
 ```{r batch_correction, warning=F, message=F, echo=F, eval=batch_corr_exe, results='asis'}
-cat("#### 2.6. Batch correction {.tabset}  \n")
+cat("#### 2.7. Batch correction {.tabset}  \n")
 cat("A batch effect correction is applied to the datased using the proBatch package. \n")
 cat("Two MDSs are created, one based on the corrected protein intensities, tab **Proteins**. The second on the corrected peptide intensities, tab **Peptides** \n")
 cat(" \n \n")
@@ -1209,7 +1229,7 @@ if(is.null(cc)){
 
 cmd<-ggplot(mds_cmdscale, aes(MDS_1, MDS_2, colour=condition)) + #plot according to the new coordinates
   geom_point(size=1.5,alpha=.9) + #colour=factor(df) to choose colour according to the condition
-  geom_text_repel(aes(label=sample), size=0.15*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
+  geom_text_repel(aes(label=sample), size=0.3*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
   scale_colour_manual(values=cc[unique(names(cc))]) +
   theme_bw(base_size = bs, base_family = bf) +
   theme(legend.position = "right", panel.grid.minor=element_blank())
@@ -1243,7 +1263,7 @@ if(is.null(cc)){
 
 cmd<-ggplot(mds_cmdscale, aes(MDS_1, MDS_2, colour=condition)) + #plot according to the new coordinates
   geom_point(size=1.5,alpha=.9) + #colour=factor(df) to choose colour according to the condition
-  geom_text_repel(aes(label=sample), size=0.15*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
+  geom_text_repel(aes(label=sample), size=0.3*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
   scale_colour_manual(values=cc[unique(names(cc))]) +
   theme_bw(base_size = bs, base_family = bf) +
   theme(legend.position = "right", panel.grid.minor=element_blank())
@@ -1266,8 +1286,8 @@ prot_find<-unique(c(intersect(prot_boxplot,rownames(dat_gene)),
                     intersect(str_to_lower(prot_boxplot),rownames(dat_gene))))
 
 if(length(prot_find)>0){
-  cat("#### 2.7. Control boxplot proteins intensities {.tabset}  \n")
-  cat("Boxplot figures for the control of the intensities of selected proteins. The list of proteins need to be written in the options file. For each protein shows the intensity group by condition. \n")
+  cat("#### 2.8. Control boxplot proteins intensities {.tabset}  \n")
+  cat("Boxplot figures for the control of the intensities of selected proteins. For each protein shows the intensity group by condition. \n \n ")
   cat("Selected proteins identified in the normalized list: \n")
   cat(paste(prot_find, sep = ", "))
   cat(" \n")
@@ -1334,6 +1354,7 @@ shiny::setProgress(0.56, detail = "Control boxplot proteins...")
 
 Differential expression analysis for proteins is performed with the DEqMS package. DEqMS is developed on top of Limma, but the method estimates different prior variances for proteins quantified by different number of PSMs/peptides, therefore achieving better accuracy.
 This methodology can not be applied to the peptides, so, the classical Limma method is used.
+
 In the plot are represented graphically the number of DEPs for each contrast. Tab **Proteins** for the differentially expressed proteins, **Peptides** for the number of the differentially expressed peptides.
 
 
@@ -1491,8 +1512,8 @@ cat(" \n \n")
 if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
 
   cat("#### 3.1.1. Volcano plot of Proteins {.tabset}  \n")
-  cat("In the tabs below, the figures represent the volcano plots of differentially expressed proteins. Each condition has its own tab with the correspoding figure. \n")
-  cat("The line in the volcano are the threshold set in the **options** file. \n")
+  cat("In the tabs below, the figures represent the volcano plots of differentially expressed proteins. Each condition has its own tab with the correspoding figure. \n \n ")
+  cat("The line in the volcano are the threshold set. \n \n ")
   cat("Class identify the state of the protein. \"+\" are the Up-regulated DEPs, \"-\" are the Down-regulated DEPs, \"=\" are the non-significative DEPs. The tool writes the labels of the proteins which can fit in the graph. \n")
   cat(" \n \n")
 
@@ -1528,7 +1549,7 @@ cat(" \n \n")
 if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
 
   cat("#### 3.1.2. Volcano plot of Peptides {.tabset}  \n")
-  cat("In the tabs below, the figures represent the volcano plots of differentially expressed peptides. Each condition has its own tab with the correspoding figure. \n The line in the volcano are the threshold set in the **options** file. \n Class identify the state of the peptides. \"+\" are the Up-regulated DEPs, \"-\" are the Down-regulated DEPs, \"=\" are the non-significative DEPs. The tool writes the labels of the peptides which can fit in the graph. \n")
+  cat("In the tabs below, the figures represent the volcano plots of differentially expressed peptides. Each condition has its own tab with the correspoding figure. \n \n The line in the volcano are the threshold set. \n \n Class identify the state of the peptides. \"+\" are the Up-regulated DEPs, \"-\" are the Down-regulated DEPs, \"=\" are the non-significative DEPs. The tool writes the labels of the peptides which can fit in the graph. \n")
   cat(" \n \n")
 
   for(comp in unique(deps_pep_l_df$comp)){
@@ -1565,9 +1586,10 @@ shiny::setProgress(0.65, detail = "Perform volcano plot...")
 
 ```{r MDS_prot_deps, warning=F, message=F, echo=F, eval=T, results='asis'}
 if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
-  cat("#### 3.2.1. Multi-dimensional reduction analysis of samples based on up-/down-regulated proteins \n")
-  cat("The below figure is the MDS analysis on the significative differentially expressed proteins. \n \n")
-  #Select only genes that are differentiated and print PCA of samples
+  cat("#### 3.2. Multi-dimensional reduction analysis of samples based on up-/down-regulated proteins or peptides {.tabset}  \n " )
+  cat("Following are visualized the MDS of the significative differentially expressed proteins/peptides. Each sample has its own color described in the Sample_Annotation file, if it was not defined it is used the default palette coloring by condition. \n")
+  cat("Two MDS are created, one based on the normalized protein intensities, tab **Proteins**. The second on the normalized peptide intensities, tab **Peptides** \n")
+  cat(" \n \n")  #Select only genes that are differentiated and print PCA of samples
   deps_vec_all<- deps_l_df %>% dplyr::filter(class!="=") %>%
   pull(id) %>% unique() %>% sort()
 
@@ -1592,12 +1614,14 @@ if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   cmd<-ggplot(mds_cmdscale, aes(MDS_1, MDS_2, colour=condition)) + #plot according to the new coordinates
     # ggtitle("samples")+
     geom_point(size=1.5,alpha=.9) + #colour=factor(df) to choose colour according to the condition
-    geom_text_repel(aes(label=sample), size=0.15*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
+    geom_text_repel(aes(label=sample), size=0.3*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
     scale_colour_manual(values=cc[unique(names(cc))]) +
     theme_bw(base_size = bs, base_family = bf) +
     theme(legend.position = "right", panel.grid.minor=element_blank())
 
+  cat("##### Proteins \n")
   print(cmd)
+  cat(" \n \n")
 
   ggsave(paste0(dirOutput,"DEPs_proteins_mds.pdf"), cmd, device=cairo_pdf, width = (3+(0.13*nrow(mds_cmdscale))), height = (3+(0.07*nrow(mds_cmdscale))), units = c("in"))
 
@@ -1605,9 +1629,49 @@ if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
 
 }
 
+cat(" \n \n")
+if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
+  #Select only genes that are differentiated and print PCA of samples
+  deps_vec_all<- deps_pep_l_df %>% dplyr::filter(class!="=") %>%
+  pull(id) %>% unique() %>% sort()
+
+  # sample_data<-t(dat_gene[toupper(deps_vec_all),])
+  sample_data<-t(dat_pep[(deps_vec_all),])
+
+  sample_distances <- dist(sample_data, method = "euclidean")
+
+  mds_cmdscale <- as.data.frame(cmdscale(as.matrix(sample_distances)))
+  colnames(mds_cmdscale) <- c("MDS_1","MDS_2")
+  mds_cmdscale$sample <- rownames(mds_cmdscale)
+
+  mds_cmdscale <- suppressMessages(left_join(mds_cmdscale,c_anno))
+  #Take correct order of color
+  cc<-mds_cmdscale$color
+  if(is.null(cc)){
+    cc<-colour_vec[1:length(unique(mds_cmdscale$condition))]
+    names(cc)<-unique(mds_cmdscale$condition)
+  } else{
+    names(cc)<-mds_cmdscale$condition
+  }
+  cmd<-ggplot(mds_cmdscale, aes(MDS_1, MDS_2, colour=condition)) + #plot according to the new coordinates
+    # ggtitle("samples")+
+    geom_point(size=1.5,alpha=.9) + #colour=factor(df) to choose colour according to the condition
+    geom_text_repel(aes(label=sample), size=0.3*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
+    scale_colour_manual(values=cc[unique(names(cc))]) +
+    theme_bw(base_size = bs, base_family = bf) +
+    theme(legend.position = "right", panel.grid.minor=element_blank())
+
+  cat("##### Peptides \n")
+  print(cmd)
+  cat(" \n \n")
+
+  ggsave(paste0(dirOutput,"DEPs_peptides_mds.pdf"), cmd, device=cairo_pdf, width = (3+(0.13*nrow(mds_cmdscale))), height = (3+(0.07*nrow(mds_cmdscale))), units = c("in"))
+
+shiny::setProgress(0.69, detail = "Perform MDS...")
+}
 ```
 
-```{r MDS_deps_pep, warning=F, message=F, echo=F, eval=T, results='asis'}
+```{r MDS_deps_pep, warning=F, message=F, echo=F, eval=F, results='asis'}
 if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   cat("#### 3.2.2. Multi-dimensional reduction analysis of samples based on up-/down-regulated peptides \n")
   cat("The below figure is the MDS analysis on the significative differentially expressed peptides. \n \n")
@@ -1655,8 +1719,8 @@ if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
 
 shiny::setProgress(0.70, detail = "Perform PCA...")
   cat(" \n \n")
-  cat("#### 3.3. PCA analysis of samples based on up-/down-regulated peptides {.tabset}  \n")
-  cat("Following are visualized the Principal Component analysis (PCA) of the normalized data. Each sample has its own color described in the Input file, if it was not defined it is used the default palette coloring by condition. \n")
+  cat("#### 3.3. PCA analysis of samples based on up-/down-regulated proteins or peptides {.tabset}  \n")
+  cat("Following are visualized the Principal Component analysis (PCA) of the differentially expressed proteins or peptides. Each sample has its own color described in the Sample_Annotation file, if it was not defined it is used the default palette coloring by condition. \n")
   cat("Two PCA are created, one based on the normalized protein intensities, tab **Proteins**. The second on the normalized peptide intensities, tab **Peptides** \n")
   cat(" \n \n")
 
@@ -1688,7 +1752,7 @@ shiny::setProgress(0.70, detail = "Perform PCA...")
   #ggplot method
   p1 <- ggplot(pc, aes(PC1, PC2, colour = condition)) +
         geom_point(size=1.5,alpha=.9) + #colour=factor(df) to choose colour according to the condition
-        geom_text_repel(aes(label=sample), size=0.15*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
+        geom_text_repel(aes(label=sample), size=0.3*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
         scale_colour_manual(values=cc[unique(names(cc))]) +
         theme_bw(base_size = bs, base_family = bf) +
         theme(legend.position = "right", panel.grid.minor=element_blank()) +
@@ -1736,7 +1800,7 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   #ggplot method
   p1 <- ggplot(pc, aes(PC1, PC2, colour = condition)) +
         geom_point(size=1.5,alpha=.9) + #colour=factor(df) to choose colour according to the condition
-        geom_text_repel(aes(label=sample), size=0.15*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
+        geom_text_repel(aes(label=sample), size=0.3*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
         scale_colour_manual(values=cc[unique(names(cc))]) +
         theme_bw(base_size = bs, base_family = bf) +
         theme(legend.position = "right", panel.grid.minor=element_blank()) +
@@ -1777,7 +1841,7 @@ p = callr::r_bg(
 shiny::setProgress(0.75, detail = "Enrichment in progress... \n Can require several minutes...")
 cat(" \n \n")
 cat("## 4. Functional analysis of Differentially Expressed Proteins \n")
-cat("The enrichment analysis is done by [EnrichR](https://maayanlab.cloud/Enrichr/). It is a web-base application which integrates a large number of data sets that permit to obtain information about many categories. EnrichR organises its hundreds of data sets in 8 sections: Transcription, Pathways, Ontologies, Diseases/Drugs, Cell Types, Misc, Legacy, and Crowd. All the libraries of EnrichR are queried to provide the most complete research. \n")
+cat("The enrichment analysis is done by [EnrichR](https://maayanlab.cloud/Enrichr/). It is a web-base application which integrates a large number of data sets that permit to obtain information about many categories. EnrichR organises its hundreds of data sets in 8 sections: Transcription, Pathways, Ontologies, Diseases/Drugs, Cell Types, Misc, Legacy, and Crowd. All the libraries of EnrichR are queried to provide the most complete research. \n \n ")
 cat(" Each comparison is analysed through 3 sets of proteins: the Up-regulated (called **UP**), the Down-regulated (called **DOWN**), and the set (called **ALL**) obtained by the merge of Up- and Down-regulated proteins. \n")
 def_val_height=  knitr::opts_chunk$get("fig.height")
 message("Enrichment step with EnrichR in proress...")
@@ -1799,7 +1863,7 @@ error=function(cond){
   FALSE
 })
 message("Enrichment DONE.")
-shiny::setProgress(0.75, detail = "Done Enrichment...")
+shiny::setProgress(0.77, detail = "Done Enrichment...")
 
 ```
 
@@ -1809,9 +1873,9 @@ shiny::setProgress(0.75, detail = "Done Enrichment...")
 hide_res<-p$read_output()
 
 if(length(enrich_filter_DBs) > 0){
-  cat("#### 4.1. Enrichment of DEPs lists filtered by databases in options file.\n")
+  cat("#### 4.1. Enrichment of DEPs lists filtered by databases.\n")
   cat("The figure is done by the UP (up-regulated proteins) and the DOWN (down-regulated proteins) analysis. The graph visualizes only the significant enriched terms of the pre-selected data sets. \n")
-  cat("The dimension of the point is given by the Odds Ratio in log2 scale. The filling is based on the significativity of the P.Value against the selected threshold. \n")
+  cat("The dimension of the point is given by the Odds Ratio in log2 scale. The filling is based on the significativity of the adj.P.Value against the selected threshold. \n")
 
   #Filter the DEPs taking only the ones from the desired DBs
   annos<- enrich_filter_DBs
@@ -1867,9 +1931,9 @@ shiny::setProgress(0.77, detail = "Plotting enrichment results...")
 hide_res<-p$read_output()
 
 if(length(enrich_filter_DBs) > 0){
-  cat("#### 4.2. Enrichment of DEPs lists filtered by databases in options file.\n")
+  cat("#### 4.2. Enrichment of DEPs lists filtered by databases.\n")
   cat("The figure is done by the ALL (join of up- and down-regulated proteins) analysis. The graph visualizes only the significant enriched terms of the pre-selected data sets. \n")
-  cat(" The dimension of the point is given by the Odds Ratio in log2 scale. The filling is based on the significativity of the P.Value against the selected threshold. \n")
+  cat(" The dimension of the point is given by the Odds Ratio in log2 scale. The filling is based on the significativity of the adj.P.Value against the selected threshold. \n")
   #Select DEPs in the DBs of interest
   annos<- enrich_filter_DBs
 
@@ -1921,9 +1985,9 @@ shiny::setProgress(0.79, detail = "Plotting enrichment results...")
 hide_res<-p$read_output()
 
 if(length(enrich_filter_term) > 0){
-  cat("#### 4.3. Enrichment of DEPs lists filtered by terms in options file. \n ")
+  cat("#### 4.3. Enrichment of DEPs lists filtered by key-words \n ")
   cat("The figure is done by the UP (up-regulated proteins) and the DOWN (down-regulated proteins) analysis. The graph visualizes only the significant enriched terms which contains the selected key-words. \n")
-  cat(" The dimension of the point is given by the Odds Ratio in log2 scale. The filling is based on the significativity of the P.Value against the selected threshold. \n")
+  cat(" The dimension of the point is given by the Odds Ratio in log2 scale. The filling is based on the significativity of the adj.P.Value against the selected threshold. \n")
   cat(" \n")
   cat("**List of terms to search:**")
   cat(" \n")
@@ -1983,9 +2047,9 @@ shiny::setProgress(0.82, detail = "Plotting enrichment results...")
 hide_res<-p$read_output()
 
 if(length(enrich_filter_term) > 0){
-  cat("#### 4.4. Enrichment of DEPs lists filtered by terms in options file. \n")
+  cat("#### 4.4. Enrichment of DEPs lists filtered by key-words. \n")
   cat("The figure is done by the ALL (join of up- and down-regulated proteins) analysis. The graph visualizes only the significant enriched terms which contains the selected key-words. \n")
-  cat(" The dimension of the point is given by the Odds Ratio in log2 scale. The filling is based on the significativity of the P.Value against the selected threshold. \n")
+  cat(" The dimension of the point is given by the Odds Ratio in log2 scale. The filling is based on the significativity of the adj.P.Value against the selected threshold. \n")
   cat(" \n")
   cat("**List of terms to search:**")
   cat(" \n")
@@ -2076,9 +2140,9 @@ shiny::setProgress(0.75, detail = "Done Enrichment of universe...")
 ```{r enrichment_plots_vsUniverse, echo=F, message=FALSE, warning=FALSE, eval = (doNextChunk&run_enrich_universe), results='asis'}
 
 if(length(enrich_filter_DBs) > 0){
-  cat("#### 4.1. Enrichment of DEPs lists filtered by databases in options file.\n")
+  cat("#### 4.5. Enrichment of DEPs lists filtered by databases compared to the whole experiment.\n")
   cat("The figure is done by the UP (up-regulated proteins) and the DOWN (down-regulated proteins) analysis. The graph visualizes only the significant enriched terms of the pre-selected data sets. \n")
-  cat("The dimension of the point is given by the Odds Ratio in log2 scale. The filling is based on the significativity of the P.Value against the selected threshold. \n")
+  cat("The dimension of the point is given by the Odds Ratio in log2 scale. The filling is based on the significativity of the adj.P.Value against the selected threshold. \n")
   
   #Filter the DEPs taking only the ones from the desired DBs
   annos<- enrich_filter_DBs
@@ -2134,9 +2198,9 @@ shiny::setProgress(0.77, detail = "Plotting enrichment results...")
 ```{r enrichment_plots_all_vsUniverse, echo=F, message=F, warning=F, eval = (doNextChunk&run_enrich_universe), results='asis'}
 
 if(length(enrich_filter_DBs) > 0){
-  cat("#### 4.2. Enrichment of DEPs lists filtered by databases in options file.\n")
+  cat("#### 4.6. Enrichment of DEPs lists filtered by databases compared to whole experiment.\n")
   cat("The figure is done by the ALL (join of up- and down-regulated proteins) analysis. The graph visualizes only the significant enriched terms of the pre-selected data sets. \n")
-  cat(" The dimension of the point is given by the Odds Ratio in log2 scale. The filling is based on the significativity of the P.Value against the selected threshold. \n")
+  cat(" The dimension of the point is given by the Odds Ratio in log2 scale. The filling is based on the significativity of the adj.P.Value against the selected threshold. \n")
   #Select DEPs in the DBs of interest
   annos<- enrich_filter_DBs
 
@@ -2189,9 +2253,9 @@ shiny::setProgress(0.79, detail = "Plotting enrichment results...")
 ```{r enrichment_plots_terms_vsUniverse, echo=F, message=F, warning=F, eval = (doNextChunk&run_enrich_universe), results='asis'}
 
 if(length(enrich_filter_term) > 0){
-  cat("#### 4.3. Enrichment of DEPs lists filtered by terms in options file. \n ")
+  cat("#### 4.7. Enrichment of DEPs lists filtered by terms compared to whole experiment. \n ")
   cat("The figure is done by the UP (up-regulated proteins) and the DOWN (down-regulated proteins) analysis. The graph visualizes only the significant enriched terms which contains the selected key-words. \n")
-  cat(" The dimension of the point is given by the Odds Ratio in log2 scale. The filling is based on the significativity of the P.Value against the selected threshold. \n")
+  cat(" The dimension of the point is given by the Odds Ratio in log2 scale. The filling is based on the significativity of the adj.P.Value against the selected threshold. \n")
   cat(" \n")
   cat("**List of terms to search:**")
   cat(" \n")
@@ -2251,9 +2315,9 @@ shiny::setProgress(0.82, detail = "Plotting enrichment results...")
 ```{r enrichment_plots_all_terms_vsUniverse, echo=F, message=F, warning=F, eval = (doNextChunk&run_enrich_universe), results='asis'}
 
 if(length(enrich_filter_term) > 0){
-  cat("#### 4.4. Enrichment of DEPs lists filtered by terms in options file. \n")
+  cat("#### 4.8. Enrichment of DEPs lists filtered by terms compared to the whole experiment. \n")
   cat("The figure is done by the ALL (join of up- and down-regulated proteins) analysis. The graph visualizes only the significant enriched terms which contains the selected key-words. \n")
-  cat(" The dimension of the point is given by the Odds Ratio in log2 scale. The filling is based on the significativity of the P.Value against the selected threshold. \n")
+  cat(" The dimension of the point is given by the Odds Ratio in log2 scale. The filling is based on the significativity of the adj.P.Value against the selected threshold. \n")
   cat(" \n")
   cat("**List of terms to search:**")
   cat(" \n")
@@ -2523,9 +2587,11 @@ for (comp in names(doComp)){
 
 cat("\n \n")
 message("Networking with STRING DONE")
-cat("### 5.2. The networks can be found in the pdfs inside *network* directory")
+cat("\n \n")
+cat("#### 5.2. Network plots \n ")
+cat("\n \n Results inside folder: *network*")
 cat("\n")
-cat("The network are not reported in this report since for each comparison are generated 2 figures since we use 2 layouts for the nodes. For each comparison a 2-page pdf file is created. \n")
+cat("\n \n The network are not reported in this report since for each comparison are generated 2 figures since we use 2 layouts for the nodes. For each comparison a 2-page pdf file is created. \n")
 
 message("Cleaning...")
 
