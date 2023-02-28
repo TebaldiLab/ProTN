@@ -1,0 +1,849 @@
+<p>PhosProTN is an integrative pipeline for phosphoproteomic analysis of DDA experimental data
+	obtained from MS. It perform a complete analysis of the raw files from
+	<a
+		href="https://www.thermofisher.com/it/en/home/industrial/mass-spectrometry/liquid-chromatography-mass-spectrometry-lc-ms/lc-ms-software/multi-omics-data-analysis/proteome-discoverer-software.html">Proteome
+		Discoverer</a> (PD) or <a href="https://maxquant.org/">MaxQuant</a>
+	(MQ), with their biological interpretation, enrichement and network
+	analysis.
+</p>
+<p>
+	PhosProTN analyse the phosphoproteomic data at peptide level, with background the proteomic analysis.
+</p>
+<div id="workflow-of-protn" class="section level2">
+	<ul id="collapse_ul" class="collapsible">
+		<li id="collapse_li" class="active">
+			<div class="collapsible-header">
+				<div style="width: 95%;">
+					<h2>1. Workflow of PhosProTN</h2>
+					<hr id="linesubtitle">
+				</div>
+				<i id="plus_elem" class="fa fa-plus"></i>
+			</div>
+			<div class="collapsible-body">
+				<p>Later in this section we describes in details the workflow of the
+					pipeline. In the first phases it imputes and normalizes the data
+					obtaining the normalized matrix. On that is perfomed the enrichment, the PPI network
+					analysis and the kinase tree analysis. During the enrichment steps, the only protein analyzed are
+					the
+					up- or down-regulated, discriminated by the parameters set.
+				</p>
+
+				<img src="images/Workflow_PhosProTN.svg" width="100%" alt="">
+				<div id="set-settings-for-the-execution-and-read-the-raw-data-from-loaded-files" class="section level3">
+					<h3>1.1. Set settings for the execution and read the raw data from
+						loaded files
+					</h3>
+					<p>PhosProTN analyse the results of Proteome Discoverer and MaxQuant. The parameters and files
+						required
+						to run PhosProTN are described in section <a
+							href="#parameters-required-before-the-execution-phos">2.
+							Details on the input parameters and
+							files</a>.
+					</p>
+				</div>
+				<div id="normalization-of-the-intensities" class="section level3">
+					<h3>1.2. Normalization of the intensities</h3>
+					<p>The intensities are log2 transformed and normalized with DEqMS <span class="citation">(Zhu
+							2022)</span>. Two methods are applied because a
+						double normalization is required, one for the phospho-proteomic and one for proteomic.
+						The phoshoproteomic perform a normalization at the peptide level, which is done by the function
+						equalMedianNormalization, that normalizes intensity distributions in
+						samples so that they have median equal to 0.
+					</p>
+					<p>The proteomic executes the normalization at the protein level, this operation is executed by the
+						function
+						medianSweeping. It applies the same median normalization used for
+						peptides, but also it summarizes the peptide intensities into protein
+						relative abundance by the median sweeping method.
+					</p>
+				</div>
+				<div id="imputation-of-the-intensities" class="section level3">
+					<h3>1.3. Imputation of the intensities</h3>
+					<p>After the normalization the intensities from Mass Spectrometer need
+						to be imputed. The principal method is based on the PhosR package <span class="citation">(Kim et
+							al. 2021)</span> that performs a complex and
+						well-balanced imputation of the data based on the conditions of the
+						samples. As a backup method in case of problems with PhosR imputations,
+						PhosProTN uses a Gaussian round imputation.
+					</p>
+				</div>
+				<div id="batch-effect-correction" class="section level3">
+					<h3>1.4. Batch Effect correction</h3>
+					<p>If required by the experiment, a batch correction step can be applyed
+						using <a href="https://www.bioconductor.org/packages/release/bioc/html/proBatch.html"
+							style="font-size: 11pt;">proBatch</a> <span class="citation">(Cuklina et
+							al. 2018)</span>. The batches need to be defined in the
+						<strong>Sample_Annotation</strong> file where column <strong>MS_batch</strong> is
+						required.
+					</p>
+				</div>
+				<div id="statistical-differential-analysis" class="section level3">
+					<h3>1.5. Statistical differential analysis</h3>
+					<p>The workflow continue with the differential analysis. This phase is
+						applied to the peptides of the phospho-proteomic with background the proteins of the proteomic,
+						to obtain the significant phosphosite. The workflow uses the Limma package
+						<span class="citation">(Ritchie et al. 2015)</span>, since we need to handle the phosphosite
+						singurlarly.
+					</p>
+					<p>Limma calculates DEPs for each comparison in the
+						<em>design</em> file parameter and for each condition, it compares the phospho-proteomic sample
+						versus the proteomic ones.
+						Each phosphosite has different parameters: the log2 Fold Change, the P.Value, the adjusted
+						P.Value and
+						the log2 expression. In this pipeline, a protein/peptide is significant
+						if passing 3 thresholds. A peptide for each comparison can be
+						Up-regulated or Down-regulated. It is Up-regulated if:
+					</p>
+					<ul>
+						<li>
+							<p>the log2 FC is higher than the Fold Change threshold (FC &gt;
+								Log2 FC thr),
+							</p>
+						</li>
+						<li>
+							<p>the P.Value is lower than the threshold (P.Value &lt; P.Value
+								thr),
+							</p>
+						</li>
+						<li>
+							<p>the log2 expression is higher than the threshold (log2 expression
+								&gt; Signal log2 expr thr).
+							</p>
+						</li>
+					</ul>
+					<p>It is Down-regulated if:</p>
+					<ul>
+						<li>
+							<p>the log2 FC is lower of the Fold Change threshold (FC &lt; -Log2
+								FC thr),
+							</p>
+						</li>
+						<li>
+							<p>the P.Value is lower than the threshold (P.Value &lt; P.Value
+								thr),
+							</p>
+						</li>
+						<li>
+							<p>the log2 expression is higher than the threshold (log2 expression
+								&gt; Signal log2 expr thr).
+							</p>
+						</li>
+					</ul>
+					<p>In the output, for each comparison, this distinction is reported in
+						the “<em>class</em>” column, which assumes value “+” if is up-regulated,
+						“-” if down-regulated and “=” if it is not significant.
+					</p>
+					<p>Various figures are generated, first a bar plot that graphically
+						represents the DEPs identified. Followed by comparison-specific volcano
+						plots.
+					</p>
+				</div>
+				<div id="enrichment-analysis-of-the-differentially-expressed-proteins" class="section level3">
+					<h3>1.6. Enrichment analysis of the Differentially Expressed
+						Phosphosite
+					</h3>
+					<div style="display: flex;">
+						<p>The biological interpretation of the Differentially Expressed
+							Proteins starts with the enrichment step. To execute this analysis,
+							PhosProTN uses <a href="https://maayanlab.cloud/Enrichr/">EnrichR</a> <span
+								class="citation">(Jawaid 2022)</span>, a widely used tool that search on
+							a large number of data sets to obtain information about many categories.
+							EnrichR organises its hundreds of data sets in 8 sections:
+							Transcription, Pathways, Ontologies, Diseases/Drugs, Cell Types, Misc,
+							Legacy, and Crowd.
+						</p>
+						<p><a href="https://maayanlab.cloud/Enrichr/"><img src="images/enrichr_logo.png" width="200px"
+									alt="" /></a></p>
+					</div>
+					<p>Since the analysis that a user wants to perform can be different,
+						each comparison has 3 sets of proteins: the Up-regulated (called Up),
+						the Down-regulated (called Down), and the set (called all) obtained by
+						the merge of Up- and Down-regulated proteins. EnrichR provides for each
+						term much information. It returns the statistical parameters, like
+						P.Value, fdr, odds ratio and combined score. At the same time, it gives
+						the overlap size, the number of genes in the term and the genes of the
+						input list find in the term.
+					</p>
+					<p>The tons of data downloaded from EnrichR are exported in two
+						modalities. The tool creates an <em>RData</em> of the complete data
+						frame, in this way the user can easily import in R to perform further
+						analysis and plots. But also, it generates an <em>Excel</em> file with
+						only the significant terms. The process uses the filters define in the
+						options file to differentiate the relevant terms from the globality.
+					</p>
+					<p>A term to be significative need to have:</p>
+					<ul>
+						<li>
+							<p>a P.Value lower of P.Value thr for enrichment (P.Value &lt;
+								P.Value thr for enrichment),
+							</p>
+						</li>
+						<li>
+							<p>an Overlap Size higher than Overlap size thr for enrichment
+								(Overlap Size &gt; Overlap size thr for enrichment).
+							</p>
+						</li>
+					</ul>
+					<p>Besides that, the pipeline plots the enrichment results in different
+						figures. The 4 plots can be split into 2 categories. The first two are
+						filtered on the data-sets, they illustrate only the data-sets written in
+						the column DB to analyse of the options file. The other 2 are filtered
+						on words to search on the term description, it uses the list of words in
+						column Terms to search.
+					</p>
+					<h4>1.6.1. Enrichment analysis of the whole set of proteins discovered by the experiment</h4>
+					<p>In same cases can be usefull have the enrichment of the whole proteome discovered by the
+						experiment.
+						For example it can be used as negative control of the differentially expressed proteins. So,
+						the entire proteome is analysed with EnrichR, and saved in an RData and in an Excel file.
+						Also, as before, 4 plots can be generated, in this case adding as last dot column the
+						negative control provided by the whole proteome.</p>
+					<p>Additional details on the output can be found in section <a
+							href="#details-on-the-output-files-phos">3. Details on the output
+							files</a>.
+					</p>
+				</div>
+				<div id="protein-protein-interaction-network-analysis-of-differentially-expressed-proteins"
+					class="section level3">
+					<h3>1.7. Protein-Protein Interaction network analysis of Differentially
+						Expressed Phosphosite
+					</h3>
+					<div style="display: flex;">
+						<p>Later the pipeline executes the Protein-Protein Interaction (PPI) network
+							analysis, since PPIs are essential in almost all processes of the cell,
+							and it is crucial for understanding cell physiology in different states.
+							For each comparison, ProTN analyses the interaction between the DEPs
+							using <a href="https://string-db.org/">STRING</a> <span class="citation">(Szklarczyk et al.
+								2021)</span>.
+						</p>
+						<p><a href="https://string-db.org/"><img src="images/string_logo_2015.png" width="200"
+									alt=""></a></p>
+					</div>
+					<p>The species-specific database is retrieved from STRING server, an
+						accurate analysis discover all the interactions and an iGraph <span class="citation">(Csardi and
+							Nepusz 2006)</span> network is generated.
+						Later, the proteins are clustered via iGraph function which identify
+						dense subgraph by optimizing modularity score.
+					</p>
+					<p>Since the network can vary a lot on composition, two ggplot layout
+						are used: Fruchterman-Reingold algorithm and the Kamada-Kawai
+						algorithm.
+					</p>
+				</div>
+				<div id="kinase-tree-analysis" class="section level3">
+					<h3>1.8. Activity kinase tree analysis of the Differentially Expressed Phosphosite
+					</h3>
+					<div style="display: flex;">
+						<p>Last analitical step is the kinase tree analysis. In phospho-proteomic it extremely useful
+							to study the activation status of the kinase based on the differentially expressed
+							substrate idenfied by the differential analysis.
+							For each comparison, PhosProTN predicts the activation state of the kinases using PhosR
+							<span class="citation">(Kim et al. 2021)</span>. PhosR provides a kinase-substrate
+							relationship
+							score, and on that it prioritises potential kinases that could be responsible for the
+							phosphorylation
+							change of phosphosite on the basis of kinase recognition motif and phosphoproteomic
+							dynamics.
+						</p>
+						<p><a href="http://phanstiel-lab.med.unc.edu/CORAL/"><img src="images/coral-logo-black.png"
+									width="200px" alt="" /></a></p>
+					</div>
+					<p>The activity score provide by PhosR is used to generated a graphical versione of the human kinome
+						tree using
+						<a href="http://phanstiel-lab.med.unc.edu/CORAL/">CORAL</a> <span class="citation">(Metz K.S. et
+							al. 2018)</span>,
+						a web shiny app for visualizing both quantitative and qualitative data. It generates
+						high-resolution scalable vector graphic files suitable for publication
+						without the need for refinement in graphic editing software.
+					</p>
+				</div>
+				<div id="report-creation-and-download-of-the-results" class="section level3">
+					<h3>1.9. Report creation and download of the results</h3>
+					<p>The results are summarized in a web-page HTML report. Other than
+						this, the experiment is described by a large number of files, a
+						description of each file generated can be found in section <a
+							href="#details-on-the-output-files-phos">3. Details on the output files</a>.
+						All the files are group in a <em>zip</em> file and downloaded.
+					</p>
+				</div>
+			</div>
+		</li>
+	</ul>
+</div>
+<div id="parameters-required-before-the-execution-phos" class="section level2">
+	<ul id="collapse_ul" class="collapsible">
+		<li id="collapse_li">
+			<div class="collapsible-header">
+				<div style="width: 95%;">
+					<h2>2. Details on the input parameters and files</h2>
+					<hr id="linesubtitle">
+				</div>
+				<i id="plus_elem" class="fa fa-plus"></i>
+			</div>
+			<div class="collapsible-body">
+				<!--TODO: ADD DIA analysis-->
+				<ul>
+					<li>
+						<p><code>Title of Analysis</code>: title of the experiment. It will
+							be the title of the web page report.
+						</p>
+					</li>
+					<li>
+						<p><code>Brief Description</code>: description of the current
+							experiment. It is the first paragraph of the report.
+						</p>
+					</li>
+					<li>
+						<p><code>Software Analyzer</code>: determine with software was use
+							to identify peptides and proteins. <strong>PD</strong> for Protein
+							Discoverer, <strong>MQ</strong> for MaxQuant.
+						</p>
+					</li>
+					<li>
+						<code>Required for Proteome Discoverer:</code>
+						<ul>
+							<li>
+								<strong>PROTEOMIC files:</strong>
+								<ul>
+									<li>
+										<p><code>Sample Annotation file</code>: file with the information about the
+											samples and the correlation between replicate ID and condition of the
+											proteomic. The
+											<strong>Sample_Annotation</strong> file is an Excel file with the following
+											column
+											<button id="preview_input_phos" type="button" class="btn_example"
+												data-toggle="modal" data-target="#modal_Input_Example_phos">[Example of
+												an Sample_Annotation file
+												HERE...]</button>:
+										</p>
+										<ul>
+											<li><strong>Condition</strong> column (<code>REQUIRED</code>): define
+												the condition of each sample that divide the samples in groups. The
+												conditions need to be the same of the the Contrast Design and the same
+												of the phospho-proteomics.
+											</li>
+											<li><strong>Color</strong> columns (<code>OPTIONAL</code>): define a
+												color for the samples in the graphs. If not present use a default
+												palette.
+											</li>
+											<li><strong>MS_batch</strong> columns: define the groups of batch in the
+												samples. <code>REQUIRED FOR BATCH EFFECT CORRECTION</code>.
+											</li>
+											<li>
+												<strong>Sample</strong> column: define the names for the samples.
+												In case of <strong>PD</strong> files use the <em>Sample_Annotation</em>
+												file
+												obtained from PD, the <strong>Sample</strong>
+												column in optional, if is not present the software extract the names for
+												the <strong>File Name</strong> column.
+											</li>
+										</ul>
+									</li>
+									<li>
+										<p><code>Peptides file</code>: raw file of peptides.
+										</p>
+									</li>
+									<li>
+										<p><code>Proteins file</code>: raw file of protein groups.
+										</p>
+									</li>
+								</ul>
+							</li>
+							<li>
+								<strong>PHOSPHO-PROTEOMIC files:</strong>
+								<ul>
+									<li>
+										<p><code>Sample Annotation file</code>: file with the information about the
+											samples and the correlation between replicate ID and condition of the
+											phospho-proteomics. The
+											<strong>Sample_Annotation</strong> file is an Excel file with the following
+											column
+											<button id="preview_input_phos" type="button" class="btn_example"
+												data-toggle="modal" data-target="#modal_Input_Example_phos">[Example of
+												an Sample_Annotation file
+												HERE...]</button>:
+										</p>
+										<ul>
+											<li><strong>Condition</strong> column (<code>REQUIRED</code>): define
+												the condition of each sample that divide the samples in groups. The
+												conditions need to be the same of the the Contrast Design and the same
+												of the proteomics.
+											</li>
+											<li><strong>Color</strong> columns (<code>OPTIONAL</code>): define a
+												color for the samples in the graphs. If not present use a default
+												palette.
+											</li>
+											<li><strong>MS_batch</strong> columns: define the groups of batch in the
+												samples. <code>REQUIRED FOR BATCH EFFECT CORRECTION</code>.
+											</li>
+											<li>
+												<strong>Sample</strong> column: define the names for the samples.
+												In case of <strong>PD</strong> files use the <em>Sample_Annotation</em>
+												file
+												obtained from PD, the <strong>Sample</strong>
+												column in optional, if is not present the software extract the names for
+												the <strong>File Name</strong> column.
+											</li>
+										</ul>
+									</li>
+									<li>
+										<p><code>Peptides file</code>: raw file of peptides.
+										</p>
+									</li>
+									<li>
+										<p><code>Proteins file</code>: raw file of protein groups.
+										</p>
+									</li>
+									<li>
+										<p><code>PSM file</code>: raw file of the PSM obtained
+											from PD. It is required to overcome the uncertain phosphorilation site
+											identification.
+										</p>
+									</li>
+
+								</ul>
+							</li>
+						</ul>
+					</li>
+					<li>
+						File Required for MaxQuant:
+						<ul>
+							<li>
+								<strong>PROTEOMIC files:</strong>
+								<ul>
+									<li>
+										<p><code>Sample Annotation file</code>: file with the information about the
+											samples and the correlation between replicate ID and condition of the
+											proteomic. The
+											<strong>Sample_Annotation</strong> file is an Excel file with the following
+											column
+											<button id="preview_input_phos" type="button" class="btn_example"
+												data-toggle="modal" data-target="#modal_Input_Example_phos">[Example of
+												an
+												Sample_Annotation file
+												HERE...]</button>:
+										</p>
+										<ul>
+											<li><strong>Condition</strong> column (<code>REQUIRED</code>): define
+												the condition of each sample that divide the samples in groups. The
+												conditions need to be the same of the the Contrast Design and the same
+												of the phospho-proteomics.
+											</li>
+											<li>
+												<strong>Sample</strong> column (<code>REQUIRED</code>): define the names
+												for the samples.
+											</li>
+											<li><strong>Color</strong> columns (<code>OPTIONAL</code>): define a
+												color for the samples in the graphs. If not present use a default
+												palette.
+											</li>
+											<li><strong>MS_batch</strong> columns: define the groups of batch in the
+												samples. <code>REQUIRED FOR BATCH EFFECT CORRECTION</code>.
+											</li>
+										</ul>
+									</li>
+									<li>
+										<p><code>Evidence file</code>: raw file of peptides. The file required is the
+											<strong>evidence.txt</strong> file.
+										</p>
+									</li>
+
+								</ul>
+							</li>
+							<li>
+								<strong>PHOSPHO-PROTEOMIC files:</strong>
+								<ul>
+									<li>
+										<p><code>Sample Annotation file</code>: file with the information about the
+											samples and the correlation between replicate ID and condition of the
+											phospho-proteomics. The
+											<strong>Sample_Annotation</strong> file is an Excel file with the following
+											column
+											<button id="preview_input_phos" type="button" class="btn_example"
+												data-toggle="modal" data-target="#modal_Input_Example_phos">[Example of
+												an
+												Sample_Annotation file
+												HERE...]</button>:
+										</p>
+										<ul>
+											<li><strong>Condition</strong> column (<code>REQUIRED</code>): define
+												the condition of each sample that divide the samples in groups. The
+												conditions need to be the same of the the Contrast Design and the same
+												of the proteomics.
+											</li>
+											<li>
+												<strong>Sample</strong> column (<code>REQUIRED</code>): define the names
+												for the samples.
+											</li>
+											<li><strong>Color</strong> columns (<code>OPTIONAL</code>): define a
+												color for the samples in the graphs. If not present use a default
+												palette.
+											</li>
+											<li><strong>MS_batch</strong> columns: define the groups of batch in the
+												samples. <code>REQUIRED FOR BATCH EFFECT CORRECTION</code>.
+											</li>
+										</ul>
+									</li>
+									<li>
+										<p><code>Evidence file</code>: raw file of peptides. The file required is the
+											<strong>evidence.txt</strong> file
+										</p>
+									</li>
+								</ul>
+							</li>
+						</ul>
+					</li>
+					<li>
+						<p><code>Design for the comparison file</code>: Excel file
+							containing the formulas of the contrast comparison you want to analyse.
+							The table can have 3 columns <button id="preview_design_phos" type="button"
+								class="btn_example" data-toggle="modal"
+								data-target="#modal_Design_Example_phos">[Example of Design file
+								HERE...]</button>:
+						</p>
+						<ul>
+							<li><strong>Formule</strong> column (<code>REQUIRED</code>): The
+								formulas need to follow the syntax of <a
+									href="https://bioinf.wehi.edu.au/limma/">Limma</a>.
+								<code>AT LEAST 1 FORMULA IS REQUIRED</code>.
+							</li>
+							<li><strong>Name</strong> column (<code>OPTIONAL</code>): personalized
+								name assign to the comparison.
+							</li>
+							<li><strong>Color</strong> columns (<code>OPTIONAL</code>): define a
+								color for the condition in the graphs. If not present use the default
+								palette.
+							</li>
+						</ul>
+					</li>
+					<li>
+						<p><code>OPTIONAL</code>:</p>
+						<ul>
+							<li>
+								<p><strong>Signal log2 expr thr</strong>: signal log2 expression
+									threshold for the differential analysis. <em>DEFAULT:</em> DEPs if
+									<code>Signal log2 expression threshold &gt; -∞</code> (No Limit,
+									represent by value “inf” in the cell)
+								</p>
+							</li>
+							<li>
+								<p><strong>Log2 FC thr</strong>: Fold Change threshold for the
+									differential analysis. <em>DEFAULT:</em> DEPs if
+									<code>log2 Fold Change threshold = 0.75</code> (Up-regulated &gt; 0.75,
+									Down-regulated &lt; -0.75)
+								</p>
+							</li>
+							<li>
+								<p><strong>P.Value thr</strong>: p.value threshold for the
+									differential analysis. <em>DEFAULT:</em> DEPs if
+									<code>P value threshold &lt; 0.05</code>
+								</p>
+							</li>
+							<li>
+								<p><strong>Batch Correction</strong>: execution of the batch effect
+									correction performed by <a
+										href="https://www.bioconductor.org/packages/release/bioc/html/proBatch.html">proBatch</a>.
+									<span class="citation">(Cuklina et al. 2018)</span>.
+									(<strong>TRUE</strong> or <strong>FALSE</strong>). If
+									<strong>TRUE</strong>, column <strong>MS_batch</strong> required in
+									<strong>Sample_Annotation</strong> file.
+								</p>
+							</li>
+							<li>
+								<p><strong>Control Boxplot proteins</strong>: list of proteins used as
+									control of the intensities. For each protein a boxplot is generated
+									comparing the mean of the intensities group by condition.
+								</p>
+							</li>
+							<li>
+								<p><strong>Execute PPI network STRINGdb</strong>: boolean value for the
+									execution of the network analysis. (<strong>TRUE</strong> or
+									<strong>FALSE</strong>)
+								</p>
+							</li>
+							<li>
+								<p><strong>Execute Enrichment</strong>: boolean value for the
+									execution of the enrichment step. (<strong>TRUE</strong> or
+									<strong>FALSE</strong>)
+								</p>
+								<ul>
+									<li>
+										<p><strong>Execute of Whole universe Enrichment</strong>: boolean value for the
+											execution of the enrichment step on the whole set of proteins of the
+											experiment. (<strong>TRUE</strong> or
+											<strong>FALSE</strong>)
+										</p>
+									</li>
+									<li>
+										<p><strong>Draw the kinase trees</strong>: boolean value for the
+											execution of the kinase tree analysis for each comparison.
+											(<strong>TRUE</strong> or
+											<strong>FALSE</strong>)
+										</p>
+									</li>
+									<li>
+										<p><strong>P.Value thr for enrichment</strong>: p.value threshold of the
+											enriched terms. <strong>DEFAULT:</strong> Term is significant if
+											<code>P Value threshold for Enrichment &lt; 0.05</code>
+										</p>
+									</li>
+									<li>
+										<p><strong>Overlap size thr for enrichment</strong>: Overlap size
+											threshold. The overlap size is the number of DEPs discovered in the
+											enriched terms. <strong>DEFAULT:</strong> Term is significant if
+											<code>Minimum number of overlap genes with enriched terms &gt; 5</code>
+										</p>
+									</li>
+									<li>
+										<p><strong>Terms to search</strong>: key-word that you
+											want to search in the results of EnrichR and visualize in a plot (EX: MYC,
+											C-MYC, Senescence,…).
+										</p>
+									</li>
+									<li>
+										<p><strong>DB to analyse</strong>: datasets
+											that you want to see in your plots (EX: ChEA_2016, KEGG_2021_Human,
+											BioPlanet_2019, GO_Biological_Process_2021,…), using the same name that
+											you can find in EnrichR and visualize in a plot .
+										</p>
+									</li>
+								</ul>
+							</li>
+
+						</ul>
+			</div>
+		</li>
+	</ul>
+</div>
+<!--
+<div id="example-case-study---proteomics-of-mcf7-cells" class="section level2">
+  <ul id="collapse_ul"  class="collapsible">
+    <li id="collapse_li">
+    	<div class="collapsible-header">
+    	  <div style="width: 95%;">
+        	<h2>3. Example case study</h2>
+        	<hr id="linesubtitle">
+    	  </div>
+    	  <i id="plus_elem" class="fa fa-plus"></i>
+    	</div>
+      <div class="collapsible-body">
+	      <p><code>Proteomics of MCF7 cells (LC-MS/MS Orbitrap Fusion Tribrid)</code></p> 
+	      <p>PRIDE:	<a href="http://proteomecentral.proteomexchange.org/cgi/GetDataset?ID=PXD009417">PXD009417</a>.
+      	<p>Clamer M, Tebaldi T, Lauria F, et al. Active Ribosome Profiling with RiboLace. Cell Rep. 2018;25(4):1097-1108.e5.</p>
+      	<p>Its execution is performed clicking the button <strong>Case Study Example</strong>.</p>
+      </div>
+    </li>
+  </ul>
+</div>
+-->
+<div id="details-on-the-output-files-phos" class="section level2">
+	<ul id="collapse_ul" class="collapsible">
+		<li id="collapse_li">
+			<div class="collapsible-header">
+				<div style="width: 95%;">
+					<h2>3. Details on the output files</h2>
+					<hr id="linesubtitle">
+				</div>
+				<i id="plus_elem" class="fa fa-plus"></i>
+			</div>
+			<div class="collapsible-body">
+				<ul>
+					<li><code>report.html</code>: complete report of the analysis with all pics and results of the
+						enrichment.</li>
+					<li><code>database_env_R.RData</code>: RData containing the essential variables for further
+						analysis.</li>
+					<li><code>normalised_intensity_table.xlsx</code>: excel file with the matrix used in the analysis.
+						In sheet <em>Proteome Normalized intensity</em> is written the normalized and imputed version of
+						the
+						original intensities of each protein in each sample of the proteomics analysis. In sheet
+						<em>Phospho-proteome Normalized intensity</em> is written the normalized and imputed version of
+						the
+						original intensities of each peptide in each sample of the phospho-proteomics analysis. In sheet
+						<em>Proteome Normalized group by condition</em> is written the average and the standard
+						deviation of
+						each condition described in the Sample_annotation file for each protein of the proteomics
+						analysis. Where column <em>avg</em> is the average of the replicates, column <em>se</em> is the
+						standard
+						error, column <em>Coef_variant</em> is the coefficient of variant in %. In sheet
+						<em>Phospho-proteome
+							Normalized group by condition</em> is written the average and the standard deviation of each
+						condition described in the Sanple_annotation file for each peptide of the phospho-proteomics
+						analysis. Where column <em>avg</em> is the average of the replicates, column <em>se</em> is the
+						standard
+						error, column <em>Coef_variant</em> is the coefficient of variant in %.
+					</li>
+					<li>
+						<code>DEPs_table.xlsx</code>: summary of the result of Limma. In sheet
+						<em>DEPs_phosphoProteome</em> describe the differentially expressed proteins. Column
+						description: <em>Accession</em> is
+						the UniprotID of protein, column <em>Description</em> is the description
+						of protein, <em>GeneName</em> is Gene Symbol, <em>Annotated
+							Sequence</em> is the sequence of peptides, <em>Modifications</em> is the
+						modification that affect the peptides, <em>Position in Master
+							Proteins</em> is the UniprotID with the position on the sequence, <em>tryptic_cond</em> is
+						the status of the tryptic for each peptide. For
+						each contrast rule are present 5 columns:
+						<ul>
+							<li><em>class</em>: is “+” if the protein is up-regulated following the parameters set, “-”
+								if the protein is down-regulated, “=” otherwise</li>
+							<li><em>log2_FC</em>: is the log2 Fold Change of the contrast</li>
+							<li><em>p_val</em>: is the p. value</li>
+							<li><em>p_adj</em>: is the adjusted p. value</li>
+							<li><em>log2_expr</em>: is the signal log2 expression</li>
+						</ul>
+					</li>
+					<li><code>MDS</code>
+						<ul>
+							<li><code>general_mds_phosphoproteome.pdf</code>: MDS of the samples of the phosphoproteomic
+								analysis.</li>
+							<li><code>general_mds_proteome.pdf</code>: MDS of the samples of the proteomic analysis.
+							</li>
+							<li><code>corrected_mds_phosphoproteomic.pdf</code>: MDS of the samples by phosphoproteomics
+								after the bacth effect correction.</li>
+							<li><code>corrected_mds_proteome.pdf</code>: MDS of the samples by proteome after the bacth
+								effect correction.</li>
+							<li><code>DEPs_mds_phosphoproteome.pdf</code>: MDS of the DEPs discovered.</li>
+						</ul>
+					</li>
+					<li><code>PCA</code>
+						<ul>
+							<li><code>general_pca_pohosphoproteome.pdf</code>: PCA of the samples of the
+								phosphoproteomic analysis.</li>
+							<li><code>general_pca_proteome.pdf</code>: PCA of the samples of the proteomic analysis.
+							</li>
+							<li><code>DEPs_phosphoproteome_PCA.pdf</code>: PCA of the DEPs discovered.</li>
+						</ul>
+					</li>
+					<li><code>boxplot_control_intensity.pdf</code>: boxplot for the control of the intensities of
+						selected proteins.</li>
+					<li><code>DEPs_peptides_count_barplot.pdf</code>: number of DEPs find for each contrast design based
+						on peptides. Light grey are the
+						down-regulated, dark grey are the up-regulated genes.</li>
+					<li><code>DEPs_enrichment_data.RData</code>: result of the enrichment made with EnrichR.</li>
+					<li><code>DEPs_enrichment_table.xlsx</code>: excel with only the enriched terms with an high
+						significance (Default: adj.P.Value &lt; 0.05, Overlap Size &gt;= 5).</li>
+					<li><code>DEPs_enrichment_data_universe.RData</code>: result of the enrichment on the whole universe
+						of the experiment made with EnrichR.</li>
+					<li><code>DEPs_enrichment_table_universe.xlsx</code>: excel with only the enriched terms with an
+						high significance (Default: adj.P.Value &lt; 0.05, Overlap Size &gt;= 5).</li>
+					<li>
+						<code>enrich</code> directory: plots of the enrichment data under the parameters selected
+						<ul>
+							<li><code>enrichment_database_filter.pdf</code>: dot matrix of the enrichment result divided
+								in up- and down-regulated genes. Filtered by the datasets choose.</li>
+							<li><code>enrichment_terms_filter.pdf</code>: dot matrix of the enrichment result divided in
+								up- and down-regulated genes. Filtered by the terms written.</li>
+							<li><code>enrichment_database_filter_all.pdf</code>: dot matrix of the enrichment result
+								combining the up- and down- regulated genes in a single list.
+								Filtered by the datasets choose</li>
+							<li><code>enrichment_terms_filter_all.pdf</code>: dot matrix of the enrichment result
+								combining the up- and down- regulated genes in a single list.
+								Filtered by the terms written.</li>
+							<li><code>enrichment_database_filter_universe.pdf</code>: dot matrix of the enrichment
+								result divided in up- and down-regulated genes of the comparisons compared with the
+								universe. Filtered by the datasets choose in the advanced options.</li>
+							<li><code>enrichment_terms_filter_universe.pdf</code>: dot matrix of the enrichment result
+								divided in up- and down-regulated genes of the comparisons compared with the universe.
+								Filtered by the terms written in the advanced options.</li>
+							<li><code>enrichment_database_filter_all_universe.pdf</code>: dot matrix of the enrichment
+								result combining the up- and down- regulated genes in a single list, comparisons versus
+								background the proteins discovered by the experiment. Filtered by the datasets choose in
+								the advanced options.</li>
+							<li><code>enrichment_terms_filter_all_universe.pdf</code>: dot matrix of the enrichment
+								result combining the up- and down- regulated genes in a single list, comparisons versus
+								background the proteins discovered by the experiment. Filtered by the terms written in
+								the advanced options.</li>
+						</ul>
+					</li>
+					<li>
+						<code>network</code> directory: plots of the up- and down-
+						regulated genes based on STRINGdb. For each contrast design are create 2
+						files:
+						<!-- - **Prefilter**: histogram representing the number of genes in each community discovered. -->
+						<ul>
+							<li><code>community_number_gene_filtered.pdf</code>: histogram representing the number of
+								genes in each community discovered after a filter on the genes and on
+								the links.
+							</li>
+							<li><code>network.pdf</code>: visual representation of the network
+								discovered in two layouts: <em>fr</em> and <em>kk</em>.
+							</li>
+						</ul>
+					</li>
+					<li>
+						<code>KinaseTree</code> directory: figures and files with the kinase activity trees generated
+						with PhosR and CORAL. For each deasign there are two files:
+						<ul>
+							<li>
+								<code>TXT file</code>: text table with the identified actifity of each kinase.
+							</li>
+							<li>
+								<code>SVG file</code>: vectorail image of the kinase tree generated with CORAL.
+							</li>
+						</ul>
+					</li>
+				</ul>
+			</div>
+		</li>
+	</ul>
+</div>
+<hr id="linesubtitle">
+<div id="refs" class="references csl-bib-body hanging-indent">
+	<div id="ref-igraph" class="csl-entry">
+		Csardi, Gabor, and Tamas Nepusz. 2006. <span>“The Igraph Software
+			Package for Complex Network Research”</span> Complex Systems: 1695. <a
+			href="https://igraph.org">https://igraph.org</a>.
+	</div>
+	<br>
+	<div id="ref-proBatch" class="csl-entry">
+		Cuklina, Jelena, Chloe H. Lee, Evan G. Willams, Ben Collins, Tatjana
+		Sajic, Patrick Pedrioli, Maria Rodriguez-Martinez, and Ruedi Aebersold.
+		2018. <span>“Computational Challenges in Biomarker Discovery from
+			High-Throughput Proteomic Data.”</span> <a
+			href="https://doi.org/10.3929/ethz-b-000307772">https://doi.org/10.3929/ethz-b-000307772</a>.
+	</div>
+	<br>
+	<div id="ref-enrichR" class="csl-entry">
+		Jawaid, Wajid. 2022. <span>“enrichR: Provides an r Interface to
+			’Enrichr’.”</span> <a
+			href="https://CRAN.R-project.org/package=enrichR">https://CRAN.R-project.org/package=enrichR</a>.
+	</div>
+	<br>
+	<div id="ref-PhosR" class="csl-entry">
+		Kim, Hani Jieun, Taiyun Kim, Nolan J Hoffman, Di Xiao, David E James,
+		Sean J Humphrey, and Pengyi Yang. 2021. <span>“PhosR Enables Processing
+			and Functional Analysis of Phosphoproteomic Data”</span> 34. <a
+			href="https://doi.org/10.1016/j.celrep.2021.108771">https://doi.org/10.1016/j.celrep.2021.108771</a>.
+	</div>
+	<br>
+	<div id="ref-limma" class="csl-entry">
+		Ritchie, Matthew E, Belinda Phipson, Di Wu, Yifang Hu, Charity W Law,
+		Wei Shi, and Gordon K Smyth. 2015.
+		<span>“<span></span>Limma<span></span> Powers Differential Expression
+			Analyses for <span></span>RNA<span></span>-Sequencing and Microarray
+			Studies”</span> 43: e47. <a
+			href="https://doi.org/10.1093/nar/gkv007">https://doi.org/10.1093/nar/gkv007</a>.
+	</div>
+	<br>
+	<div id="ref-coral" class="csl-entry">
+		Kathleen S. Metz, Erika M. Deoudes, Matthew E. Berginski, Ivan Jimenez-Ruiz,
+		Bulent Arman Aksoy, Jeff Hammerbacher, Shawn M. Gomez and Douglas H. Phanstie. 2018.
+		<span>Coral: Clear and Customizable Visualization of Human Kinome Data</span>
+		<span>Cell Systems</span>Volume 7, Issue 3, 347-350
+		<a href="https://doi.org/10.1016/j.cels.2018.07.001">https://doi.org/10.1016/j.cels.2018.07.001</a>.
+	</div>
+	<br>
+	<div id="ref-STRINGdb" class="csl-entry">
+		Szklarczyk, Damian, Annika L Gable, Katerina C Nastou, David Lyon,
+		Rebecca Kirsch, Sampo Pyysalo, Nadezhda T Doncheva, et al. 2021.
+		<span>“The STRING Database in 2021: Customizable Protein-Protein
+			Networks, and Functional Characterization of User-Uploaded
+			Gene/Measurement Sets.”</span> 49.
+	</div>
+	<br>
+	<div id="ref-DEqMS" class="csl-entry">
+		Zhu, Yafeng. 2022. <span>“DEqMS: A Tool to Perform Statistical Analysis
+			of Differential Protein Expression for Quantitative Proteomics
+			Data.”</span>
+	</div>
+</div>
