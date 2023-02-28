@@ -110,6 +110,11 @@ h3 {
   color: #008752 !important;
 }
 
+h4 {
+  font-size: 18px;
+  color: #008752 !important;
+}
+
 h1, h2, h3, h4, h5, h6 {
   font-family: el messiri;
   font-weight: bold;
@@ -164,8 +169,20 @@ p {
 }
 
 #logo_UNITN {
-  width: 30%;
+  width: 40%;
   max-width: 400px;
+  margin-right: 40px;
+}
+
+#logo_RDDS {
+  width: 15%;
+  max-width: 150px;
+  margin-right: 40px;
+}
+
+#logo_RDDS_footer {
+  width: 5%;
+  max-width: 30px;
 }
 
 #logo_protn {
@@ -280,4 +297,35 @@ button:hover, a:hover {
 
 .form-control {
   border-radius: 10px;
+}
+
+footer {
+  position:fixed;
+  bottom:0;
+  width:100%;
+  height:5%;
+  max-height:50px;   /* Height of the footer */
+  color: white;
+  padding: 10px;
+  background-color: #222d32;
+  z-index: 1000;
+}
+
+
+.footer-col{
+  float: left;
+  width: 33.33%;
+}
+
+/* Clear floats after the columns */
+.footer-row:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+@media screen and (max-width: 600px) {
+  .footer-col {
+    width: 100%;
+  }
 }
