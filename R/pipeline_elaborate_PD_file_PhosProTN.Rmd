@@ -251,7 +251,7 @@ if(is.na(overlap_size_enrich_thr)){
 
 enrich_filter_term<-if(is.null(params$enrich_filter_term)){list()
 }else if(params$enrich_filter_term == ""){list()
-}else{na.omit(strsplit(params$enrich_filter_term, split = "\\;|\\,|\\ |\\; |\\, ")[[1]])}
+}else{na.omit(strsplit(params$enrich_filter_term, split = "\\;|\\,|\\; |\\, ")[[1]])}
 enrich_filter_DBs<-if(is.null(params$enrich_filter_DBs)){list()
 }else if(is.character(params$enrich_filter_DBs)){ na.omit(params$enrich_filter_DBs)
 }else{list()}
@@ -1905,6 +1905,8 @@ The conditions from the phospho-proteomics are represented by an **_p** at the e
 shiny::setProgress(0.58, detail = "Differential Analysis in progress...")
 message("Differentiation analysis in progress...")
 
+save(list = ls(), file = "tmp.RData")
+
 c_anno_phos$sample <- str_c(c_anno_phos$sample, "_p")
 c_anno_prot$sample <- str_c(c_anno_prot$sample, "_i")
 c_anno <- rbind(c_anno_phos,c_anno_prot)
@@ -1932,7 +1934,7 @@ colnames(expr_avgse_complete_df)[1] <- "id"
 #Execution of differentiation analysis using DEqMS for proteins
 psm_count_table<-as.data.frame(table(rownames(dat_pep)))
 #Make the design
-df <- data.frame("p" = sort(str_remove(c_anno_phos$condition, "_p\\b")), "i" = sort(str_remove(c_anno_prot$condition, "_i\\b")))
+df <- data.frame("p" = unique(sort(str_remove(c_anno_phos$condition, "_p\\b"))), "i" = unique(sort(str_remove(c_anno_prot$condition, "_i\\b"))))
 df <- unique(df[match(df$p, df$i),])
 df$rule <- str_c(str_c(df$p, "_p"), "-", str_c(df$i, "_i"))
 contro_list <- df$rule
@@ -2406,7 +2408,7 @@ shiny::setProgress(0.77, detail = "Done Enrichment...")
 
 
 ```{r enrichment_plots, echo=F, message=FALSE, warning=FALSE, eval = doNextChunk, results='asis'}
-hide_res<-p$read_output()
+if(run_enrich_universe){hide_res<-p$read_output()}
 
 if(length(enrich_filter_DBs) > 0){
   cat("#### 4.1. Enrichment of DEPs lists filtered by databases.\n")
@@ -2434,7 +2436,7 @@ if(length(enrich_filter_DBs) > 0){
 ```
 
 ```{r enrichment_plots_2, echo=F, message=FALSE, warning=FALSE, eval = doNextChunk, results='hide'}
-hide_res<-p$read_output()
+if(run_enrich_universe){hide_res<-p$read_output()}
 
 if(length(enrich_filter_DBs) > 0){
   #Print the plot
@@ -2464,7 +2466,7 @@ shiny::setProgress(0.77, detail = "Plotting enrichment results...")
 ```
 
 ```{r enrichment_plots_all, echo=F, message=F, warning=F, eval = doNextChunk, results='asis'}
-hide_res<-p$read_output()
+if(run_enrich_universe){hide_res<-p$read_output()}
 
 if(length(enrich_filter_DBs) > 0){
   cat("#### 4.2. Enrichment of DEPs lists filtered by databases.\n")
@@ -2491,7 +2493,7 @@ if(length(enrich_filter_DBs) > 0){
 ```
 
 ```{r enrichment_plots_all_2, echo=F, message=FALSE, warning=FALSE, eval = doNextChunk, results='hide'}
-hide_res<-p$read_output()
+if(run_enrich_universe){hide_res<-p$read_output()}
 
 if(length(enrich_filter_DBs) > 0){
     # col_vec<-color_base
@@ -2518,7 +2520,7 @@ shiny::setProgress(0.79, detail = "Plotting enrichment results...")
 ```
 
 ```{r enrichment_plots_terms, echo=F, message=F, warning=F, eval = doNextChunk, results='asis'}
-hide_res<-p$read_output()
+if(run_enrich_universe){hide_res<-p$read_output()}
 
 if(length(enrich_filter_term) > 0){
   cat("#### 4.3. Enrichment of DEPs lists filtered by key-words \n ")
@@ -2551,7 +2553,7 @@ if(length(enrich_filter_term) > 0){
 ```
 
 ```{r enrichment_plots_terms_2, echo=F, message=FALSE, warning=FALSE, eval = doNextChunk, results='hide'}
-hide_res<-p$read_output()
+if(run_enrich_universe){hide_res<-p$read_output()}
 
 if(length(enrich_filter_term) > 0){
   # col_vec<-color_base[sort(rep(c(1:length(color_base)),2))]
@@ -2580,7 +2582,7 @@ shiny::setProgress(0.82, detail = "Plotting enrichment results...")
 ```
 
 ```{r enrichment_plots_all_terms, echo=F, message=F, warning=F, eval = doNextChunk, results='asis'}
-hide_res<-p$read_output()
+if(run_enrich_universe){hide_res<-p$read_output()}
 
 if(length(enrich_filter_term) > 0){
   cat("#### 4.4. Enrichment of DEPs lists filtered by key-words. \n")
@@ -2612,7 +2614,7 @@ if(length(enrich_filter_term) > 0){
 ```
 
 ```{r enrichment_plots_all_terms_2, echo=F, message=FALSE, warning=FALSE, eval = doNextChunk, results='hide'}
-hide_res<-p$read_output()
+if(run_enrich_universe){hide_res<-p$read_output()}
 
 if(length(enrich_filter_term) > 0){
   # col_vec<-color_base

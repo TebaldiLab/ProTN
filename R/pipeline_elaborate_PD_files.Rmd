@@ -241,7 +241,7 @@ if(is.na(overlap_size_enrich_thr)){
 
 enrich_filter_term<-if(is.null(params$enrich_filter_term)){list()
 }else if(params$enrich_filter_term == ""){list()
-}else{na.omit(strsplit(params$enrich_filter_term, split = "\\;|\\,|\\ |\\; |\\, ")[[1]])}
+}else{na.omit(strsplit(params$enrich_filter_term, split = "\\;|\\,|\\; |\\, ")[[1]])}
 enrich_filter_DBs<-if(is.null(params$enrich_filter_DBs)){list()
 }else if(is.character(params$enrich_filter_DBs)){ na.omit(params$enrich_filter_DBs)
 }else{list()}
@@ -1870,7 +1870,7 @@ shiny::setProgress(0.77, detail = "Done Enrichment...")
 
 
 ```{r enrichment_plots, echo=F, message=FALSE, warning=FALSE, eval = doNextChunk, results='asis'}
-hide_res<-p$read_output()
+if(run_enrich_universe){hide_res<-p$read_output()}
 
 if(length(enrich_filter_DBs) > 0){
   cat("#### 4.1. Enrichment of DEPs lists filtered by databases.\n")
@@ -1898,7 +1898,7 @@ if(length(enrich_filter_DBs) > 0){
 ```
 
 ```{r enrichment_plots_2, echo=F, message=FALSE, warning=FALSE, eval = doNextChunk, results='hide'}
-hide_res<-p$read_output()
+if(run_enrich_universe){hide_res<-p$read_output()}
 
 if(length(enrich_filter_DBs) > 0){
   #Print the plot
@@ -1928,7 +1928,7 @@ shiny::setProgress(0.77, detail = "Plotting enrichment results...")
 ```
 
 ```{r enrichment_plots_all, echo=F, message=F, warning=F, eval = doNextChunk, results='asis'}
-hide_res<-p$read_output()
+if(run_enrich_universe){hide_res<-p$read_output()}
 
 if(length(enrich_filter_DBs) > 0){
   cat("#### 4.2. Enrichment of DEPs lists filtered by databases.\n")
@@ -1955,7 +1955,7 @@ if(length(enrich_filter_DBs) > 0){
 ```
 
 ```{r enrichment_plots_all_2, echo=F, message=FALSE, warning=FALSE, eval = doNextChunk, results='hide'}
-hide_res<-p$read_output()
+if(run_enrich_universe){hide_res<-p$read_output()}
 
 if(length(enrich_filter_DBs) > 0){
     # col_vec<-color_base
@@ -1982,7 +1982,7 @@ shiny::setProgress(0.79, detail = "Plotting enrichment results...")
 ```
 
 ```{r enrichment_plots_terms, echo=F, message=F, warning=F, eval = doNextChunk, results='asis'}
-hide_res<-p$read_output()
+if(run_enrich_universe){hide_res<-p$read_output()}
 
 if(length(enrich_filter_term) > 0){
   cat("#### 4.3. Enrichment of DEPs lists filtered by key-words \n ")
@@ -2015,7 +2015,7 @@ if(length(enrich_filter_term) > 0){
 ```
 
 ```{r enrichment_plots_terms_2, echo=F, message=FALSE, warning=FALSE, eval = doNextChunk, results='hide'}
-hide_res<-p$read_output()
+if(run_enrich_universe){hide_res<-p$read_output()}
 
 if(length(enrich_filter_term) > 0){
   # col_vec<-color_base[sort(rep(c(1:length(color_base)),2))]
@@ -2044,7 +2044,7 @@ shiny::setProgress(0.82, detail = "Plotting enrichment results...")
 ```
 
 ```{r enrichment_plots_all_terms, echo=F, message=F, warning=F, eval = doNextChunk, results='asis'}
-hide_res<-p$read_output()
+if(run_enrich_universe){hide_res<-p$read_output()}
 
 if(length(enrich_filter_term) > 0){
   cat("#### 4.4. Enrichment of DEPs lists filtered by key-words. \n")
@@ -2076,7 +2076,7 @@ if(length(enrich_filter_term) > 0){
 ```
 
 ```{r enrichment_plots_all_terms_2, echo=F, message=FALSE, warning=FALSE, eval = doNextChunk, results='hide'}
-hide_res<-p$read_output()
+if(run_enrich_universe){hide_res<-p$read_output()}
 
 if(length(enrich_filter_term) > 0){
   # col_vec<-color_base
