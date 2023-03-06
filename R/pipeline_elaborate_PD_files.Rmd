@@ -482,7 +482,7 @@ remove(uniprot_to_take,input_files)
 #Print Annotation table
 kable(c_anno)
 
-
+save(list = ls(), file="tmp.RData")
 shiny::setProgress(0.23, detail = "Files correctly read...")
 ```
 
@@ -650,6 +650,8 @@ shiny::setProgress(0.27, detail = "Annotate proteins/peptides...")
 ```
 
 ```{r preprocess_sig_raw, echo=F, message=F, warning=F}
+n_prot_preFILT <- length(unique(psm_anno_raw$symbol))
+n_pep_pre_FILT <- length(psm_peptide_table$Accession)
 #Preprocess Protein intensities
 psm_sig_prot_raw[psm_sig_prot_raw == 0] <- NA # transform 0s into NAs
 
@@ -731,11 +733,6 @@ remove(psm_sig_pet_raw,psm_sig_raw,psm_long_df,psm_filter_df,filter_id,sig_thr)
 shiny::setProgress(0.29, detail = "Filtering intensity matrix...")
 ```
 
-#### Statistics of the proteomics
-```{r stat_proteomic, echo=F, message=F, warning=F, results='asis'}
-df_stat <- data.frame("number" = c(length(unique(psm_anno_df$symbol)), nrow(psm_anno_df)), row.names = c("Discovered proteins by the experiment:", "Discovered peptides by the experiment:"))
-kable(df_stat)
-```
 
 ## 2. Analysis
 
@@ -745,6 +742,13 @@ Raw data consist in the area under the peak (m/z, time, number of events) calcul
 -   Contaminants are removed.
 
 The intensities are transformed in log2 scale.
+
+#### Statistics of the proteomics
+```{r stat_proteomic, echo=F, message=F, warning=F, results='asis'}
+df_stat <- data.frame("number" = c(n_prot_preFILT, n_pep_pre_FILT, length(unique(psm_anno_df$symbol)), nrow(psm_anno_df)), 
+                      row.names = c("Discovered proteins by the experiment - PRE FILTER:", "Discovered peptides by the experiment - PRE FILTER:", "Discovered proteins by the experiment:", "Discovered peptides by the experiment:"))
+kable(df_stat)
+```
 
 #### 2.1. Log2 signal distributions before imputation
 The box plot represents the distribution of the intensity values for each samples in the raw data. This figure is generated before the normalization and imputation of the data.

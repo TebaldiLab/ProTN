@@ -33,7 +33,7 @@ ui <- tagList(
     header=dashboardHeader(
       # title = "ProTN"
       title=tags$a(href="#shiny-tab-info",
-                   tags$img(id="logo_protn", src="images/logo_scritta.png"))
+                   tags$img(id="logo_protn"))
     ),
     sidebar=dashboardSidebar(
       sidebarMenu(

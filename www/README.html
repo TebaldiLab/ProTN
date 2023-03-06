@@ -27,7 +27,7 @@
 				</p>
 				<img src="images/Workflow_ProTN.svg" width="100%" alt="">
 				<div id="set-settings-for-the-execution-and-read-the-raw-data-from-loaded-files" class="section level3">
-					<h3>1.1. Set settings for the execution and read the raw data from
+					<h3>01. Set settings for the execution and read the raw data from
 						loaded files
 					</h3>
 					<p>ProTN analyse the results of Proteome Discoverer and MaxQuant. The essential parameters and files
@@ -75,7 +75,7 @@
 					</ul>
 				</div>
 				<div id="normalization-of-the-intensities" class="section level3">
-					<h3>1.2. Normalization of the intensities</h3>
+					<h3>02. Normalization of the intensities</h3>
 					<p>The intensities are log2 transformed and normalized with DEqMS <span class="citation">(Zhu
 							2022)</span>. Two methods are applied because a
 						double normalization is required, one for peptides and one for proteins.
@@ -90,7 +90,7 @@
 					</p>
 				</div>
 				<div id="imputation-of-the-intensities" class="section level3">
-					<h3>1.3. Imputation of the intensities</h3>
+					<h3>03. Imputation of the intensities</h3>
 					<p>After the normalization the intensities from Mass Spectrometer need
 						to be imputed. The principal method is based on the PhosR package <span class="citation">(Kim et
 							al. 2021)</span> that performs a complex and
@@ -102,18 +102,8 @@
 						generated.
 					</p>
 				</div>
-				<div id="batch-effect-correction" class="section level3">
-					<h3>1.4. Batch Effect correction</h3>
-					<p>If required by the experiment, a batch correction step can be applyed
-						using <a href="https://www.bioconductor.org/packages/release/bioc/html/proBatch.html"
-							style="font-size: 11pt;">proBatch</a> <span class="citation">(Cuklina et
-							al. 2018)</span>. The batches need to be defined in the
-						<strong>Sample_Annotation</strong> file where column <strong>MS_batch</strong> is
-						required.
-					</p>
-				</div>
 				<div id="statistical-differential-analysis" class="section level3">
-					<h3>1.5. Statistical differential analysis</h3>
+					<h3>04. Statistical differential analysis</h3>
 					<p>The workflow continue with the differential analysis. This phase is
 						applied to proteins and peptides, to obtain the significant proteins and
 						peptides. Two slightly different methodologies are applyed since for
@@ -175,8 +165,28 @@
 						plots.
 					</p>
 				</div>
+				<div id="report-creation-and-download-of-the-results" class="section level3">
+					<h3>05. Report creation and download of the results</h3>
+					<p>The results are summarized in a web-page HTML report. Other than
+						this, the experiment is described by a large number of files, a
+						description of each file generated can be found in section <a
+							href="#details-on-the-output-files">4. Details on the output files</a>.
+						All the files are group in a <em>zip</em> file and downloaded.
+					</p>
+				</div>
+				<h2>ADDITIONAL STEPS:</h2>
+				<div id="batch-effect-correction" class="section level3">
+					<h3>B1. Batch Effect correction</h3>
+					<p>If required by the experiment, a batch correction step can be applyed
+						using <a href="https://www.bioconductor.org/packages/release/bioc/html/proBatch.html"
+							style="font-size: 11pt;">proBatch</a> <span class="citation">(Cuklina et
+							al. 2018)</span>. The batches need to be defined in the
+						<strong>Sample_Annotation</strong> file where column <strong>MS_batch</strong> is
+						required.
+					</p>
+				</div>
 				<div id="enrichment-analysis-of-the-differentially-expressed-proteins" class="section level3">
-					<h3>1.6. Enrichment analysis of the Differentially Expressed
+					<h3>E1. Enrichment analysis of the Differentially Expressed
 						Proteins
 					</h3>
 					<div style="display: flex;">
@@ -228,7 +238,7 @@
 						on words to search on the term description, it uses the list of words in
 						column Terms to search.
 					</p>
-					<h4>1.6.1. Enrichment analysis of the whole set of proteins discovered by the experiment</h4>
+					<h4>E1.1. Enrichment analysis of the whole set of proteins discovered by the experiment</h4>
 					<p>In same cases can be usefull have the enrichment of the whole proteome discovered by the
 						experiment.
 						For example it can be used as negative control of the differentially expressed proteins. So,
@@ -242,7 +252,7 @@
 				</div>
 				<div id="protein-protein-interaction-network-analysis-of-differentially-expressed-proteins"
 					class="section level3">
-					<h3>1.7. Protein-Protein Interaction network analysis of Differentially
+					<h3>N1. Protein-Protein Interaction network analysis of Differentially
 						Expressed Proteins
 					</h3>
 					<div style="display: flex;">
@@ -264,15 +274,6 @@
 					<p>Since the network can vary a lot on composition, two ggplot layout
 						are used: Fruchterman-Reingold algorithm and the Kamada-Kawai
 						algorithm.
-					</p>
-				</div>
-				<div id="report-creation-and-download-of-the-results" class="section level3">
-					<h3>1.8. Report creation and download of the results</h3>
-					<p>The results are summarized in a web-page HTML report. Other than
-						this, the experiment is described by a large number of files, a
-						description of each file generated can be found in section <a
-							href="#details-on-the-output-files">4. Details on the output files</a>.
-						All the files are group in a <em>zip</em> file and downloaded.
 					</p>
 				</div>
 			</div>

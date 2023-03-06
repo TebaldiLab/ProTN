@@ -13,7 +13,7 @@ ENCODE_Histone_Modifications_2015
 TRRUST_Transcription_Factors_2019
 KEGG_2021_Human
 KEGG_2019_Mouse
-WikiPathways_2021_Human
+WikiPathway_2021_Human
 WikiPathways_2019_Mouse
 BioPlanet_2019
 Reactome_2016
