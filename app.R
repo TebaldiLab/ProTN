@@ -240,6 +240,10 @@ server <- function(input, output, session) {
           uiOutput("help18")
         ),
         fluidRow(
+          radioButtons("pval_fdr_enrich", "Use FDR instead of P.Value for enrichment", c("TRUE", "FALSE"), inline = TRUE, selected = TRUE),
+          # uiOutput("help10")
+        ),
+        fluidRow(
           textInput("pvalue_enrich", "P.Value thr for enrichment", value = "0.05"),
           uiOutput("help16")
         ),
@@ -261,8 +265,8 @@ server <- function(input, output, session) {
           column(
             width = 4,
               fluidRow(
-                textInput("signal_DEPs", "Signal log2 expr thr", value = "-inf"),
-                uiOutput("help7")
+                radioButtons("pval_fdr", "Use FDR instead of P.Value", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
+                # uiOutput("help10")
               ),
               fluidRow(
                 textInput("FC_DEPs", "Log2 FC thr", value = "0.75"),
@@ -271,6 +275,10 @@ server <- function(input, output, session) {
               fluidRow(
                 textInput("pvalue_DEPs", "P.Value thr", value = "0.05"),
                 uiOutput("help9")
+              ),
+              fluidRow(
+                textInput("signal_DEPs", "Signal log2 expr thr", value = "-inf"),
+                uiOutput("help7")
               )
           ),
           column(
@@ -629,6 +637,7 @@ server <- function(input, output, session) {
               file_input = input$input_file$datapath,
               file_prot = input$prot_file$datapath,
               file_pep = input$pep_file$datapath,
+              pval_fdr = if(is.null(input$pval_fdr)){FALSE}else{input$pval_fdr},
               signal_thr = if(is.null(input$signal_DEPs)){"inf"}else{input$signal_DEPs},
               fc_thr = if(is.null(input$FC_DEPs)){"0.75"}else{input$FC_DEPs},
               pval_thr = if(is.null(input$pvalue_DEPs)){"0.05"}else{input$pvalue_DEPs},
@@ -638,6 +647,7 @@ server <- function(input, output, session) {
               run_enrich = if(is.null(input$enrichR)){FALSE}else{input$enrichR},
               run_enrich_universe = if(is.null(input$enrichR_universe)){FALSE}else{input$enrichR_universe},
               run_STRING = if(is.null(input$STRING)){FALSE}else{input$STRING},
+              pval_fdr_enrich = if(is.null(input$pval_fdr_enrich)){TRUE}else{input$pval_fdr_enrich},
               pval_enrich_thr = if(is.null(input$pvalue_enrich)){"0.05"}else{input$pvalue_enrich},
               overlap_size_enrich_thr = if(is.null(input$os_enrich)){as.integer(5)}else{input$os_enrich},
               enrich_filter_term = input$terms_enrich,

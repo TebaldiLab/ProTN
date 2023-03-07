@@ -847,7 +847,7 @@ mf <- function(x,sep){
 ### Function for the limma analysis and DEqMS spectraCountBayes  ----
 
 
-limmafnc<-function(type = "PROT",c_anno,dat_gene,psm_count_table,contro_list,expr_avgse_df,signal_thr,fc_thr, pval_thr){
+limmafnc<-function(type = "PROT",c_anno,dat_gene,psm_count_table,contro_list,expr_avgse_df,signal_thr,fc_thr, pval_thr, pval_fdr){
    # make design table
    design = model.matrix(~0+c_anno$condition) 
    colnames(design) = levels(as.factor(c_anno$condition))
@@ -888,7 +888,7 @@ limmafnc<-function(type = "PROT",c_anno,dat_gene,psm_count_table,contro_list,exp
    
    signal_col="log2_expr"
    fc_col="log2_FC"
-   pval_col="p_val"
+   if(pval_fdr){pval_col="p_adj"}else{pval_col="p_val"}
    
    for(comp in colnames(fit3$coefficients)){
        if(type == "PROT"){
@@ -954,7 +954,7 @@ limmafnc<-function(type = "PROT",c_anno,dat_gene,psm_count_table,contro_list,exp
 ### Function for the enrichment of the protein in the dataset. It use the function enrichment_enrichr ----
 
 
-enrichRfnc<-function(in_df, dbs=NULL){
+enrichRfnc<-function(in_df, pval_fdr_enrich, pval_enrich_thr, overlap_size_enrich_thr, dbs=NULL){
    DEGs_lists<-NULL
    
    for(comp_c in unique(in_df$comp)){
@@ -978,7 +978,7 @@ enrichRfnc<-function(in_df, dbs=NULL){
    enr_df<-NULL
    enr_df<-do.call(rbind, mclapply(names(DEGs_lists), enrfcn, mc.cores = ncores))
 
-   enr_df$"P<0.05"<-ifelse(enr_df$fdr<0.05,"T","F") %>% factor(levels=c("T","F"))
+   enr_df$"P<0.05"<-ifelse(if(pval_fdr_enrich){(enr_df$fdr<pval_enrich_thr) & (enr_df$overlap_size>=overlap_size_enrich_thr)}else{(enr_df$p_value<pval_enrich_thr) & (enr_df$overlap_size>=overlap_size_enrich_thr)},"T","F") %>% factor(levels=c("T","F"))
    enr_df$log2_OR<-log2(enr_df$odds_ratio)
    return(enr_df)
 }
@@ -986,7 +986,7 @@ enrichRfnc<-function(in_df, dbs=NULL){
 ### Function for the enrichment of the protein of an universe. It use the function enrichment_enrichr ----
 
 
-enrichRfnc_universe<-function(in_df, dbs=NULL){
+enrichRfnc_universe<-function(in_df, pval_fdr_enrich, pval_enrich_thr, overlap_size_enrich_thr, dbs=NULL){
   enr_df <- tryCatch({
     DEGs_lists<-NULL
     DEGs_lists[["Universe_all"]]<-in_df
@@ -1006,7 +1006,7 @@ enrichRfnc_universe<-function(in_df, dbs=NULL){
     enr_df<-NULL
     enr_df<-do.call(rbind, mclapply(names(DEGs_lists), enrfcn, mc.cores = ncores))
 
-    enr_df$"P<0.05"<-ifelse(enr_df$fdr<0.05,"T","F") %>% factor(levels=c("T","F"))
+    enr_df$"P<0.05"<-ifelse(if(pval_fdr_enrich){(enr_df$fdr<pval_enrich_thr) & (enr_df$overlap_size>=overlap_size_enrich_thr)}else{(enr_df$p_value<pval_enrich_thr) & (enr_df$overlap_size>=overlap_size_enrich_thr)},"T","F") %>% factor(levels=c("T","F"))
     enr_df$log2_OR<-log2(enr_df$odds_ratio)
     enr_df <- enr_df[-which(enr_df$`P<0.05` == "F"),]
     enr_df

@@ -17,6 +17,7 @@ params:
   file_input: NA
   file_prot: NA
   file_pep: NA
+  pval_fdr: NA
   signal_thr: "inf"
   fc_thr: "0.75"
   pval_thr: "0.05"
@@ -26,6 +27,7 @@ params:
   run_enrich: NA
   run_enrich_universe: NA
   run_STRING: NA
+  pval_fdr_enrich: NA
   pval_enrich_thr: "0.05"
   overlap_size_enrich_thr: 5
   enrich_filter_term: NA
@@ -219,7 +221,10 @@ prot_boxplot<-na.omit(strsplit(params$prot_boxplot, split = "\\;|\\,|\\ |\\; |\\
 boxplot_prot_exe <- FALSE
 if(length(prot_boxplot)>0){ boxplot_prot_exe<-TRUE }
 #Read enrich parameter
-doNextChunk_STRING <- doNextChunk <- run_enrich <- run_STRING <- run_enrich_universe <- FALSE
+doNextChunk_STRING <- doNextChunk <- run_enrich <- run_STRING <- run_enrich_universe <- pval_fdr <- FALSE
+pval_fdr_enrich <- TRUE
+pval_fdr <- as.logical(params$pval_fdr)
+pval_fdr_enrich <- as.logical(params$pval_fdr_enrich)
 run_enrich <- as.logical(params$run_enrich)
 run_enrich_universe <- as.logical(params$run_enrich_universe)
 run_STRING <- as.logical(params$run_STRING)
@@ -1368,7 +1373,7 @@ shiny::setProgress(0.58, detail = "Differential Analysis in progress...")
 message("Differentiation analysis in progress...")
 #Execution of differentiation analysis using DEqMS for proteins
 psm_count_table = as.data.frame(table(dat_psm$symbol))
-deps_df <- limmafnc("PROT",c_anno,dat_gene,psm_count_table,formule_contrast,expr_avgse_df,signal_thr,fc_thr, pval_thr)
+deps_df <- limmafnc("PROT",c_anno,dat_gene,psm_count_table,formule_contrast,expr_avgse_df,signal_thr,fc_thr, pval_thr, pval_fdr)
 deps_l_df<-deps_df$degs_l_df
 deps_w_df<-deps_df$degs_w_df
 toPrint<-deps_w_df
@@ -1376,7 +1381,7 @@ colnames(toPrint)[1]<-"GeneSymbol"
 
 #Execution of differentiation analysis using DEqMS for proteins
 psm_count_table<-as.data.frame(table(rownames(dat_pep)))
-deps_pep_df <- limmafnc("PEP",c_anno,dat_pep,psm_count_table,formule_contrast,expr_avgse_pep_df,signal_thr,fc_thr, pval_thr)
+deps_pep_df <- limmafnc("PEP",c_anno,dat_pep,psm_count_table,formule_contrast,expr_avgse_pep_df,signal_thr,fc_thr, pval_thr, pval_fdr)
 deps_pep_l_df<-deps_pep_df$degs_l_df
 deps_pep_w_df<-deps_pep_df$degs_w_df
 toPrint_pep<-deps_pep_w_df
@@ -1526,7 +1531,7 @@ if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
     labels_up <- (input_df %>% filter(class == '+'))$id
     labels_down <- (input_df %>% filter(class == '-'))$id
 
-    cmd<-ggplot(data=input_df, aes(x=log2_FC, y=-log10(p_val), col=class, label=id)) +
+    cmd<-ggplot(data=input_df, aes(x=log2_FC, y=-log10(if(pval_fdr){p_adj}else{p_val}), col=class, label=id)) +
       geom_point(pch=20,cex=2) +
       geom_hline(yintercept=-log10(pval_thr), col="black") +
       geom_vline(xintercept=c(-fc_thr, fc_thr), col="black") +
@@ -1534,9 +1539,10 @@ if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
       geom_label_repel(data = input_df %>% filter(id %in% labels_up), label.padding = unit(0.1, "lines"), color="black",xlim = c(1.5, NA)) +
       geom_label_repel(data = input_df %>% filter(id %in% labels_down), label.padding = unit(0.1, "lines"), color="black",xlim = c(NA, -1.5)) +
       ggtitle(paste0("Volcano Plot of ",comp)) +
+      ylab(if(pval_fdr){"-log10(fdr)"}else{"-log10(p_val"}) +
       scale_color_manual(values=c(color_constrast[comp,"color_constrast"], color_constrast[comp,"color_constrast_dark"], "grey70")) +
       scale_x_continuous(limits = c(min(-max(abs(input_df$log2_FC)),-3), max(max(abs(input_df$log2_FC)),3))) +
-      scale_y_continuous(limits = c(0, max(max(abs(-log10(input_df$p_val))),4))) +
+      scale_y_continuous(limits = c(0, max(max(abs(-log10(if(pval_fdr){input_df$p_adj}else{input_df$p_val}))),4))) +
       theme_bw(base_size = bs, base_family = bf)
 
     cat("##### ",comp," \n")
@@ -1564,7 +1570,7 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
     labels_up <- (input_df %>% filter(class == '+'))$id
     labels_down <- (input_df %>% filter(class == '-'))$id
 
-    cmd<-ggplot(data=input_df, aes(x=log2_FC, y=-log10(p_val), col=class, label=id)) +
+    cmd<-ggplot(data=input_df, aes(x=log2_FC, y=-log10(if(pval_fdr){p_adj}else{p_val}), col=class, label=id)) +
       geom_point(pch=20,cex=2) +
       geom_hline(yintercept=-log10(pval_thr), col="black") +
       geom_vline(xintercept=c(-fc_thr, fc_thr), col="black") +
@@ -1574,9 +1580,10 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
       geom_label_repel(data = input_df %>% filter(id %in% labels_down, class == '-'),
                        label.padding = unit(0.1, "lines"), color="black",xlim = c(NA, -1.5)) +
       ggtitle(paste0("Volcano Plot of ",comp)) +
+      ylab(if(pval_fdr){"-log10(fdr)"}else{"-log10(p_val"}) +
       scale_color_manual(values=c(color_constrast[comp,"color_constrast"], color_constrast[comp,"color_constrast_dark"], "grey70")) +
       scale_x_continuous(limits = c(min(-max(abs(input_df$log2_FC)),-3), max(max(abs(input_df$log2_FC)),3))) +
-      scale_y_continuous(limits = c(0, max(max(abs(-log10(input_df$p_val))),4))) +
+      scale_y_continuous(limits = c(0, max(max(abs(-log10(if(pval_fdr){input_df$p_adj}else{input_df$p_val}))),4))) +
       theme_bw(base_size = bs, base_family = bf)
 
     cat("##### ",comp," \n")
@@ -1594,8 +1601,7 @@ if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   cat("Following are visualized the MDS of the significative differentially expressed proteins/peptides. Each sample has its own color described in the Sample_Annotation file, if it was not defined it is used the default palette coloring by condition. \n")
   cat("Two MDS are created, one based on the normalized protein intensities, tab **Proteins**. The second on the normalized peptide intensities, tab **Peptides** \n")
   cat(" \n \n")  #Select only genes that are differentiated and print PCA of samples
-  deps_vec_all<- deps_l_df %>% dplyr::filter(class!="=") %>%
-  pull(id) %>% unique() %>% sort()
+  deps_vec_all<- deps_l_df %>% dplyr::filter(class!="=") %>% pull(id) %>% unique() %>% sort()
 
   # sample_data<-t(dat_gene[toupper(deps_vec_all),])
   sample_data<-t(dat_gene[(deps_vec_all),])
@@ -1636,8 +1642,7 @@ if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
 cat(" \n \n")
 if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   #Select only genes that are differentiated and print PCA of samples
-  deps_vec_all<- deps_pep_l_df %>% dplyr::filter(class!="=") %>%
-  pull(id) %>% unique() %>% sort()
+  deps_vec_all<- deps_pep_l_df %>% dplyr::filter(class!="=") %>% pull(id) %>% unique() %>% sort()
 
   # sample_data<-t(dat_gene[toupper(deps_vec_all),])
   sample_data<-t(dat_pep[(deps_vec_all),])
@@ -1680,8 +1685,7 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   cat("#### 3.2.2. Multi-dimensional reduction analysis of samples based on up-/down-regulated peptides \n")
   cat("The below figure is the MDS analysis on the significative differentially expressed peptides. \n \n")
   #Select only genes that are differentiated and print PCA of samples
-  deps_vec_all<- deps_pep_l_df %>% dplyr::filter(class!="=") %>%
-  pull(id) %>% unique() %>% sort()
+  deps_vec_all<- deps_pep_l_df %>% dplyr::filter(class!="=") %>% pull(id) %>% unique() %>% sort()
 
   # sample_data<-t(dat_gene[toupper(deps_vec_all),])
   sample_data<-t(dat_pep[(deps_vec_all),])
@@ -1728,8 +1732,7 @@ shiny::setProgress(0.70, detail = "Perform PCA...")
   cat("Two PCA are created, one based on the normalized protein intensities, tab **Proteins**. The second on the normalized peptide intensities, tab **Peptides** \n")
   cat(" \n \n")
 
-  deps_vec_all<- deps_l_df %>% dplyr::filter(class!="=") %>%
-  pull(id) %>% unique() %>% sort()
+  deps_vec_all<- deps_l_df %>% dplyr::filter(class!="=") %>% pull(id) %>% unique() %>% sort()
 
   # sample_data<-t(dat_gene[toupper(deps_vec_all),])
   sample_data<-t(dat_gene[(deps_vec_all),])
@@ -1829,11 +1832,11 @@ shiny::setProgress(0.75, detail = "Enrichment in progress whole Universe in back
 message("Enrichment in progress whole Universe in background... \n Can require several minutes...")
 #Perform enriched analysis with EnrichR
 p = callr::r_bg(
-    func = function(g) {
+    func = function(g, pval_fdr_enrich, pval_enrich_thr) {
       source("functions_2021.R")
-      enrichRfnc_universe(g)
+      enrichRfnc_universe(g, pval_fdr_enrich, pval_enrich_thr, overlap_size_enrich_thr)
     },
-    args = list(unique(psm_anno_df$symbol)),
+    args = list(unique(psm_anno_df$symbol), pval_fdr_enrich, pval_enrich_thr),
     stdout = "|",
     stderr = "|",
     error = getOption("callr.error", "error")
@@ -1851,11 +1854,12 @@ def_val_height=  knitr::opts_chunk$get("fig.height")
 message("Enrichment step with EnrichR in proress...")
 doNextChunk <- tryCatch({
   #Perform enriched analysis with EnrichR
-  enr_df<-enrichRfnc(deps_l_df)
+  enr_df<-enrichRfnc(deps_l_df, pval_fdr_enrich, pval_enrich_thr, overlap_size_enrich_thr)
   #Save in RData for possible further analysis
   save(enr_df, file=paste0(dirOutput,"DEPs_enrichment_data.RData"))
 
-  writexl::write_xlsx((enr_df %>% dplyr::filter(fdr<=pval_enrich_thr,overlap_size>=overlap_size_enrich_thr)),
+  writexl::write_xlsx((enr_df %>% dplyr::filter(`P<0.05` == "T",
+                                                overlap_size>=overlap_size_enrich_thr)),
                       path = paste0(dirOutput,"DEPs_enrichment_table.xlsx"))
 
   dir.create(file.path(dirOutput,"enrich/"), showWarnings = FALSE)
@@ -1888,7 +1892,7 @@ if(length(enrich_filter_DBs) > 0){
     dplyr::filter(anno_class %in% annos,
                   overlap_size>=overlap_size_enrich_thr,
                   anno_size<=10000,
-                  fdr<pval_enrich_thr,
+                  `P<0.05` == "T",
                   !str_ends(input_name,"_all")) %>%
     dplyr::arrange(-overlap_size) %>% dplyr::group_by(input_name,anno_class) %>% slice_head(n=5) %>%
     ungroup() %>% dplyr::select(anno_class,anno_name)
@@ -1945,7 +1949,7 @@ if(length(enrich_filter_DBs) > 0){
     dplyr::filter(anno_class %in% annos,
                   overlap_size>=overlap_size_enrich_thr,
                   anno_size<=10000,
-                  fdr<pval_enrich_thr,
+                  `P<0.05` == "T",
                   str_ends(input_name,"_all")) %>%
     dplyr::arrange(-overlap_size) %>% dplyr::group_by(input_name,anno_class) %>% slice_head(n=5) %>%
     ungroup() %>% dplyr::select(anno_class,anno_name)
@@ -2003,7 +2007,7 @@ if(length(enrich_filter_term) > 0){
 
   #For each patter we want, search in each DEPs name to find it
   for(word in lookup_words){
-    matches <- enr_df %>% dplyr::filter(fdr<pval_enrich_thr,
+    matches <- enr_df %>% dplyr::filter(`P<0.05` == "T",
                                         overlap_size>=overlap_size_enrich_thr,
                                         !str_ends(input_name,"_all")) %>% dplyr::select(anno_class,anno_name)
     matches <- matches[grepl(paste0("\\b",word,"\\b"),matches$anno_name,ignore.case=TRUE),]
@@ -2064,7 +2068,7 @@ if(length(enrich_filter_term) > 0){
   enr_sele_names<-NULL
   #For each pattern search in DEPs name
   for(word in lookup_words){
-    matches <- enr_df %>% dplyr::filter(fdr<pval_enrich_thr,
+    matches <- enr_df %>% dplyr::filter(`P<0.05` == "T",
                                         overlap_size>=overlap_size_enrich_thr,
                                         str_ends(input_name,"_all")) %>% dplyr::select(anno_class,anno_name)
     matches <- matches[grepl(paste0("\\b",word,"\\b"),matches$anno_name,ignore.case=TRUE),]
@@ -2130,7 +2134,8 @@ if(p$is_alive() | is.null(p$get_result())){
   #Save in RData for possible further analysis
   save(enr_df_universe, file=paste0(dirOutput,"DEPs_enrichment_data_universe.RData"))
 
-  writexl::write_xlsx((enr_df_universe %>% dplyr::filter(fdr<=pval_enrich_thr,overlap_size>=overlap_size_enrich_thr)),
+  writexl::write_xlsx((enr_df_universe %>% dplyr::filter(`P<0.05` == "T",
+                                                         overlap_size>=overlap_size_enrich_thr)),
                       path = paste0(dirOutput,"DEPs_enrichment_table_universe.xlsx"))
 
   dir.create(file.path(dirOutput,"enrich/"), showWarnings = FALSE)
@@ -2155,7 +2160,7 @@ if(length(enrich_filter_DBs) > 0){
     dplyr::filter(anno_class %in% annos,
                   overlap_size>=overlap_size_enrich_thr,
                   anno_size<=10000,
-                  fdr<pval_enrich_thr,
+                  `P<0.05` == "T",
                   !str_ends(input_name,"_all")) %>%
     dplyr::arrange(-overlap_size) %>% dplyr::group_by(input_name,anno_class) %>% slice_head(n=5) %>%
     ungroup() %>% dplyr::select(anno_class,anno_name)
@@ -2212,7 +2217,7 @@ if(length(enrich_filter_DBs) > 0){
     dplyr::filter(anno_class %in% annos,
                   overlap_size>=overlap_size_enrich_thr,
                   anno_size<=10000,
-                  fdr<pval_enrich_thr,
+                  `P<0.05` == "T",
                   str_ends(input_name,"_all")) %>%
     dplyr::arrange(-overlap_size) %>% dplyr::group_by(input_name,anno_class) %>% slice_head(n=5) %>%
     ungroup() %>% dplyr::select(anno_class,anno_name)
@@ -2271,7 +2276,7 @@ if(length(enrich_filter_term) > 0){
 
   #For each patter we want, search in each DEPs name to find it
   for(word in lookup_words){
-    matches <- enr_df %>% dplyr::filter(fdr<pval_enrich_thr,
+    matches <- enr_df %>% dplyr::filter(`P<0.05` == "T",
                                         overlap_size>=overlap_size_enrich_thr,
                                         !str_ends(input_name,"_all")) %>% dplyr::select(anno_class,anno_name)
     matches <- matches[grepl(paste0("\\b",word,"\\b"),matches$anno_name,ignore.case=TRUE),]
@@ -2332,7 +2337,7 @@ if(length(enrich_filter_term) > 0){
   enr_sele_names<-NULL
   #For each pattern search in DEPs name
   for(word in lookup_words){
-    matches <- enr_df %>% dplyr::filter(fdr<pval_enrich_thr,
+    matches <- enr_df %>% dplyr::filter(`P<0.05` == "T",
                                         overlap_size>=overlap_size_enrich_thr,
                                         str_ends(input_name,"_all")) %>% dplyr::select(anno_class,anno_name)
     matches <- matches[grepl(paste0("\\b",word,"\\b"),matches$anno_name,ignore.case=TRUE),]
