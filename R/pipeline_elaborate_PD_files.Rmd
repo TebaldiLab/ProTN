@@ -1832,11 +1832,11 @@ shiny::setProgress(0.75, detail = "Enrichment in progress whole Universe in back
 message("Enrichment in progress whole Universe in background... \n Can require several minutes...")
 #Perform enriched analysis with EnrichR
 p = callr::r_bg(
-    func = function(g, pval_fdr_enrich, pval_enrich_thr) {
+    func = function(g, pval_fdr_enrich, pval_enrich_thr,overlap_size_enrich_thr) {
       source("functions_2021.R")
       enrichRfnc_universe(g, pval_fdr_enrich, pval_enrich_thr, overlap_size_enrich_thr)
     },
-    args = list(unique(psm_anno_df$symbol), pval_fdr_enrich, pval_enrich_thr),
+    args = list(unique(psm_anno_df$symbol), pval_fdr_enrich, pval_enrich_thr,overlap_size_enrich_thr),
     stdout = "|",
     stderr = "|",
     error = getOption("callr.error", "error")
