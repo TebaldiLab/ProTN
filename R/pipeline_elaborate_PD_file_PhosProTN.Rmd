@@ -21,6 +21,7 @@ params:
   file_prot_phos: NA
   file_pep_phos: NA
   file_psm_phos: NA
+  phospho_thr: "75"
   signal_thr: "inf"
   fc_thr: "0.75"
   pval_thr: "0.05"
@@ -178,6 +179,11 @@ readMQ_files <- params$readMQ_files
 # filenames_prot<-list(params$file_input_prot, params$file_pep_prot, params$file_prot_prot)
 # filenames_phos<-list(params$file_input_phos, params$file_pep_phos, params$file_prot_phos)
 #Read input parameters for Limma
+phospho_thr=suppressWarnings(parse_double(params$phospho_thr))
+if(is.na(phospho_thr)){
+  message("Warning: parse error for Phosphorilation accuracy percentage threshold. Set default paramenter to 75%\n")
+  phospho_thr <- 75
+}
 signal_thr=suppressWarnings(parse_double(params$signal_thr))
 if(is.na(signal_thr)){signal_thr<- -Inf}
 fc_thr=suppressWarnings(parse_double(params$fc_thr))
@@ -343,6 +349,8 @@ cat(" \n \n")
 #Print summary of filter and contrast design
 cat("**Threshold used during the analysis:** ")
 cat(" \n \n")
+cat(paste0("- Phosphorilation accuracy percentage threshold: phos_% > ",phospho_thr,"% "))
+cat(" \n")
 cat(paste0("- Log2 Fold Change (FC) threshold: FC > ",fc_thr,", FC < -",fc_thr," "))
 cat(" \n")
 cat(paste0("- P-Value threshold: p.val < ",pval_thr," "))
@@ -453,7 +461,7 @@ read_input_files<-function(type, filenames){
     pattern_sub <- lapply(str_extract_all(input_files$PEP$`Modifications in Master Proteins`, "\\(\\d+\\.\\d+|\\(\\d+"), 
                           function(x){(unlist(str_remove_all(unlist(x), "\\(")))})
     replacement <- lapply(str_extract_all(input_files$PEP$`Modifications in Master Proteins`, "\\(\\d+\\.\\d+|\\(\\d+"), 
-                          function(x){as.integer(as.double(unlist(str_remove_all(unlist(x), "\\("))) > 75)})
+                          function(x){as.integer(as.double(unlist(str_remove_all(unlist(x), "\\("))) > phospho_thr)})
     input_files$PEP$modif <- lapply(1:length(input_files$PEP$`Modifications in Master Proteins`), 
                                     function(x){
                                       stri_replace_all_regex(input_files$PEP$`Modifications in Master Proteins`[x], 
@@ -535,7 +543,7 @@ read_input_files<-function(type, filenames){
                                                          (is.na(input_files[["PSM"]]$`Precursor Abundance`))),]
     input_files[["PSM"]] <- input_files[["PSM"]][unlist(lapply(str_extract_all(input_files[["PSM"]]$`ptmRS: Best Site Probabilities`,
                                                                                "\\: \\d+\\.\\d+\\b|\\: \\d+\\b"),
-                                                               function(x){any(as.double(unlist(str_remove_all(unlist(x), "\\: "))) > 75)})),]
+                                                               function(x){any(as.double(unlist(str_remove_all(unlist(x), "\\: "))) > phospho_thr)})),]
 
     #Mantain only the first UNIPROT code
     input_files$PSM$`Master Protein Accessions`<-lapply(input_files$PSM$`Master Protein Accessions`,
@@ -545,7 +553,7 @@ read_input_files<-function(type, filenames){
     pattern_sub <- lapply(str_extract_all(input_files$PSM$`ptmRS: Best Site Probabilities`, "\\: \\d+\\.\\d+\\b|\\: \\d+\\b"),
                           function(x){(unlist(str_remove_all(unlist(x), "\\: ")))})
     replacement <- lapply(str_extract_all(input_files$PSM$`ptmRS: Best Site Probabilities`, "\\: \\d+\\.\\d+\\b|\\: \\d+\\b"),
-                          function(x){as.integer(as.double(unlist(str_remove_all(unlist(x), "\\: "))) > 75)})
+                          function(x){as.integer(as.double(unlist(str_remove_all(unlist(x), "\\: "))) > phospho_thr)})
     input_files$PSM$modif <- lapply(1:length(input_files$PSM$`ptmRS: Best Site Probabilities`),
                                        function(x){
                                          stri_replace_all_regex(input_files$PSM$`ptmRS: Best Site Probabilities`[x],
@@ -830,11 +838,11 @@ read_input_files<-function(type, filenames){
     input_files$PEP <- input_files$PEP[grepl(x = input_files$PEP$Modifications, pattern = "Phospho|phospho"),]
     #Remove phosphorylation with low score
     input_files$PEP <- input_files$PEP[unlist(lapply(str_extract_all(input_files$PEP$`Phospho (STY) Probabilities`, "1|(0\\.\\d+)"),
-                                                     function(x){any(as.double(unlist(x)) > 0.75)})),]
+                                                     function(x){any(as.double(unlist(x)) > (phospho_thr/100))})),]
     #Modify sequence to detect only the phosphorilated sites
     pattern <- str_extract_all(input_files$PEP$`Phospho (STY) Probabilities`, "1|(0\\.\\d+)")
     replacement <- lapply(str_extract_all(input_files$PEP$`Phospho (STY) Probabilities`, "1|(0\\.\\d+)"), 
-                          function(x){as.integer(as.double(unlist(x)) > 0.75)})
+                          function(x){as.integer(as.double(unlist(x)) > (phospho_thr/100))})
     input_files$PEP$Sequence <- lapply(1:length(input_files$PEP$`Phospho (STY) Probabilities`), 
                                        function(x){
                                          stri_replace_all_regex(input_files$PEP$`Phospho (STY) Probabilities`[x], 
@@ -1904,8 +1912,6 @@ The conditions from the phospho-proteomics are represented by an **_p** at the e
 ```{r diff_analysis,  warning=F, message=F, echo=F}
 shiny::setProgress(0.58, detail = "Differential Analysis in progress...")
 message("Differentiation analysis in progress...")
-
-save(list = ls(), file = "tmp.RData")
 
 c_anno_phos$sample <- str_c(c_anno_phos$sample, "_p")
 c_anno_prot$sample <- str_c(c_anno_prot$sample, "_i")
@@ -3140,8 +3146,7 @@ shiny::setProgress(0.90, detail = "Network figures generated...")
 ```
 
 
-```{r kinase_tree_CORAL, echo=F, message=T, warning=F, eval=(run_kinaseTree & run_enrich), results='asis'}
-# save(list = ls(), file = "/home/gabriele/Desktop/UNITN/Proteomics_internship/ProTN/R/tmp.RData")
+```{r kinase_tree_CORAL, echo=F, message=T, warning=F, eval=run_kinaseTree, results='asis'}
 
 shiny::setProgress(0.90, detail = "Kinase identification and Kinase draw in progress... \n Can require several minutes...")
 cat(" \n \n")
@@ -3156,6 +3161,8 @@ cat("\n \n Results inside folder: *KinaseTree*")
 
 dir.create(file.path(dirOutput,"kinaseTree/"), showWarnings = FALSE)
 dirOutput_kinase=paste0(dirOutput,"kinaseTree/")
+
+if(!run_enrich){deps_pep_l_df$id<- psm_peptide_table[deps_pep_l_df$id, "GeneName"]}
 
 kinase_act_phosr_wrapper <- function(comparison) {
   oldwd<-getwd()

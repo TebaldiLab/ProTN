@@ -236,16 +236,16 @@ server <- function(input, output, session) {
           uiOutput("help15")
         ),
         fluidRow(
+          textInput("terms_enrich", "Terms to search"),
+          uiOutput("help18")
+        ),
+        fluidRow(
           textInput("pvalue_enrich", "P.Value thr for enrichment", value = "0.05"),
           uiOutput("help16")
         ),
         fluidRow(
           sliderInput("os_enrich", "Overlap size thr for enrichment", 1, 30, step = 1, value = 5),
           uiOutput("help17")
-        ),
-        fluidRow(
-          textInput("terms_enrich", "Terms to search"),
-          uiOutput("help18")
         )
       )
     }
@@ -261,7 +261,7 @@ server <- function(input, output, session) {
           column(
             width = 4,
               fluidRow(
-                textInput("signal_DEPs", "Signal log2 expr thr", value = "inf"),
+                textInput("signal_DEPs", "Signal log2 expr thr", value = "-inf"),
                 uiOutput("help7")
               ),
               fluidRow(
@@ -310,15 +310,15 @@ server <- function(input, output, session) {
           # uiOutput("help14")
         ),
         fluidRow(
-          radioButtons("kinaseTree_phos", "Draw the kinase trees", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
-          # uiOutput("help14")
-        ),
-        fluidRow(
           selectizeInput("DB_enrich_phos", "DB to analyse",
                          choices = read_delim("R/dbs_enrichR.txt", delim = "\n", col_names = FALSE)[[1]],
                          selected = NULL, multiple = TRUE
           ),
           # uiOutput("help15")
+        ),
+        fluidRow(
+          textInput("terms_enrich_phos", "Terms to search"),
+          # uiOutput("help18")
         ),
         fluidRow(
           textInput("pvalue_enrich_phos", "P.Value thr for enrichment", value = "0.05"),
@@ -327,10 +327,6 @@ server <- function(input, output, session) {
         fluidRow(
           sliderInput("os_enrich_phos", "Overlap size thr for enrichment", 1, 30, step = 1, value = 5),
           # uiOutput("help17")
-        ),
-        fluidRow(
-          textInput("terms_enrich_phos", "Terms to search"),
-          # uiOutput("help18")
         )
       )
     }
@@ -346,7 +342,11 @@ server <- function(input, output, session) {
           column(
             width = 4,
             fluidRow(
-              textInput("signal_DEPs_phos", "Signal log2 expr thr", value = "inf"),
+              textInput("phospho_phos", "Phosphorilation accuracy percentage thr (%)", value = "75"),
+              # uiOutput("help9")
+            ),
+            fluidRow(
+              textInput("signal_DEPs_phos", "Signal log2 expr thr", value = "-inf"),
               # uiOutput("help7")
             ),
             fluidRow(
@@ -374,6 +374,10 @@ server <- function(input, output, session) {
             ),
             fluidRow(
               radioButtons("enrichR_phos", "Execute enrichment", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
+              # uiOutput("help14")
+            ),
+            fluidRow(
+              radioButtons("kinaseTree_phos", "Draw the kinase trees", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
               # uiOutput("help14")
             )
           ),
@@ -590,7 +594,7 @@ server <- function(input, output, session) {
 
   # EXECUTE ProTN
   output$report <- downloadHandler(
-    filename = "results.zip",
+    filename = "results_ProTN.zip",
     content = function(file) {
       tryCatch(
         {
@@ -672,7 +676,7 @@ server <- function(input, output, session) {
 
   # EXECUTE PhosProTN
   output$report_phos <- downloadHandler(
-    filename = "results.zip",
+    filename = "results_PhosProTN.zip",
     content = function(file) {
       tryCatch(
         {
@@ -711,6 +715,7 @@ server <- function(input, output, session) {
               file_prot_phos = if(input$sw_analyzer_phos == "ProteomeDiscoverer"){input$prot_file_phos$datapath}else{NA},
               file_pep_phos = input$pep_file_phos$datapath,
               file_psm_phos = if(input$sw_analyzer_phos == "ProteomeDiscoverer"){input$psm_file_phos$datapath}else{NA},
+              phospho_thr = if(is.null(input$phospho_phos)){"75"}else{input$phospho_phos},
               signal_thr = if(is.null(input$signal_DEPs_phos)){"inf"}else{input$signal_DEPs_phos},
               fc_thr = if(is.null(input$FC_DEPs_phos)){"0.75"}else{input$FC_DEPs_phos},
               pval_thr = if(is.null(input$pvalue_DEPs_phos)){"0.05"}else{input$pvalue_DEPs_phos},
