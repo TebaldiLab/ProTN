@@ -186,7 +186,7 @@ p {
 }
 
 #logo_protn {
-  content: url("images/logo_scritta_black.svg");
+  content: url("images/logo_scritta_black.png");
   max-height: -webkit-fill-available;
   vertical-align: bottom;
 }

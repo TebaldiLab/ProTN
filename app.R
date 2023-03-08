@@ -46,7 +46,7 @@ ui <- tagList(
     ),
     body=dashboardBody(
       
-      tags$head(tags$link(rel="shortcut icon", href="images/favicon.ico")),
+      tags$head(tags$link(rel="shortcut icon", href="images/logo_black.ico")),
       # tags$head(tags$title("ProTN")),
       useShinyjs(),
       tags$head(tags$script(src="https://kit.fontawesome.com/5d5f342cf8.js")),

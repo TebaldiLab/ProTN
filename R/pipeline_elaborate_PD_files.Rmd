@@ -361,6 +361,7 @@ shiny::setProgress(0.18, detail = "Reading files...")
 The following formulas are the comparison on which is performed the differential analysis.
 
 ```{r print_settings_design, warning=FALSE, echo=F, message=FALSE, results='asis'}
+save(list=ls(),file="tmp.RData")
 cat("**Contrast design formula are:** ")
 cat(" \n")
 kable(formule_contrast, col.names = c("Limma Formula"))
