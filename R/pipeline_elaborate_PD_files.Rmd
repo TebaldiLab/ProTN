@@ -849,7 +849,8 @@ dat_gene<-tryCatch(
   {
     #Imputation with Phospho
     ppe <- PhosphoExperiment(assays = list(Quantification = as.matrix(dat_gene)))
-    grps <- as.factor(c_anno$condition)
+    #Mantieni ordine
+    grps <- as.factor(c_anno[colnames(dat_gene), "condition"])
     ppe <- scImpute(ppe, 0.6, grps)
     ppe <- tImpute(ppe, assay = "imputed")
     dat_gene[is.na(dat_gene)]<-ppe@assays@data@listData$imputed[is.na(dat_gene)]
@@ -880,7 +881,7 @@ dat_pep<-tryCatch(
   {
     #Imputation with Phospho
     ppe <- PhosphoExperiment(assays = list(Quantification = as.matrix(dat_pep)))
-    grps <- as.factor(c_anno$condition)
+    grps <- as.factor(c_anno[colnames(dat_gene), "condition"])
     ppe <- scImpute(ppe, 0.6, grps)
     ppe <- tImpute(ppe, assay = "imputed")
     dat_pep[is.na(dat_pep)]<-ppe@assays@data@listData$imputed[is.na(dat_pep)]
