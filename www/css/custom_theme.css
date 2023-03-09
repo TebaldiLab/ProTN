@@ -185,6 +185,17 @@ p {
   max-width: 30px;
 }
 
+.sidebar-collapse #logo_protn {
+  content: url("images/logo_black.png");
+  max-height: -webkit-fill-available;
+  vertical-align: middle;
+  max-width: 50px;
+}
+
+.sidebar-collapse .logo {
+  padding: 0px;
+}
+
 #logo_protn {
   content: url("images/logo_scritta_black.png");
   max-height: -webkit-fill-available;
