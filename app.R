@@ -329,6 +329,10 @@ server <- function(input, output, session) {
           # uiOutput("help18")
         ),
         fluidRow(
+          radioButtons("pval_fdr_enrich_phos", "Use FDR instead of P.Value for enrichment", c("TRUE", "FALSE"), inline = TRUE, selected = TRUE),
+          # uiOutput("help10")
+        ),
+        fluidRow(
           textInput("pvalue_enrich_phos", "P.Value thr for enrichment", value = "0.05"),
           # uiOutput("help16")
         ),
@@ -349,6 +353,10 @@ server <- function(input, output, session) {
         fluidRow(
           column(
             width = 4,
+            fluidRow(
+              radioButtons("pval_fdr_phos", "Use FDR instead of P.Value", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
+              # uiOutput("help10")
+            ),
             fluidRow(
               textInput("phospho_phos", "Phosphorilation accuracy percentage thr (%)", value = "75"),
               # uiOutput("help9")
@@ -725,6 +733,7 @@ server <- function(input, output, session) {
               file_prot_phos = if(input$sw_analyzer_phos == "ProteomeDiscoverer"){input$prot_file_phos$datapath}else{NA},
               file_pep_phos = input$pep_file_phos$datapath,
               file_psm_phos = if(input$sw_analyzer_phos == "ProteomeDiscoverer"){input$psm_file_phos$datapath}else{NA},
+              pval_fdr = if(is.null(input$pval_fdr_phos)){FALSE}else{input$pval_fdr_phos},
               phospho_thr = if(is.null(input$phospho_phos)){"75"}else{input$phospho_phos},
               signal_thr = if(is.null(input$signal_DEPs_phos)){"inf"}else{input$signal_DEPs_phos},
               fc_thr = if(is.null(input$FC_DEPs_phos)){"0.75"}else{input$FC_DEPs_phos},
@@ -736,6 +745,7 @@ server <- function(input, output, session) {
               run_enrich_universe = if(is.null(input$enrichR_universe_phos)){FALSE}else{input$enrichR_universe_phos},
               run_STRING = if(is.null(input$STRING_phos)){FALSE}else{input$STRING_phos},
               run_kinaseTree = if(is.null(input$kinaseTree_phos)){FALSE}else{input$kinaseTree_phos},
+              pval_fdr_enrich = if(is.null(input$pval_fdr_enrich_phos)){TRUE}else{input$pval_fdr_enrich_phos},
               pval_enrich_thr = if(is.null(input$pvalue_enrich_phos)){"0.05"}else{input$pvalue_enrich_phos},
               overlap_size_enrich_thr = if(is.null(input$os_enrich_phos)){as.integer(5)}else{input$os_enrich_phos},
               enrich_filter_term = input$terms_enrich_phos,

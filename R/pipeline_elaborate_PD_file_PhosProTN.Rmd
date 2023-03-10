@@ -1957,6 +1957,8 @@ contro_list<-c(contro_list,
                )
 names(contro_list) <- make.names(c(str_c(df$p,"_default"), names(formule_contrast)), unique = T)
 
+save(list=ls(), file="tmp.RData")
+
 if(length(contro_list) > 0){
   deps_pep_df <- limmafnc("PEP",c_anno,dat_complete,psm_count_table,contro_list,expr_avgse_complete_df,signal_thr,fc_thr, pval_thr, pval_fdr)
 }
