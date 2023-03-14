@@ -178,7 +178,7 @@ renderSvgPanZoom <- function(comp, kinase_Act, dirOutput_kinase) {
   svginfo$title = paste0("Kinase Tree - Comparison: ", comp)
   
   # Write SVG file
-  writekinasetree(
+  svgoutfile <- writekinasetree(
     svginfo,
     destination = paste0(dirOutput_kinase, comp, "_kinase_Tree_CORAL.svg"),
     font = svginfo$dataframe$text.font[1],
@@ -186,6 +186,7 @@ renderSvgPanZoom <- function(comp, kinase_Act, dirOutput_kinase) {
     groupcolor = "#000000"
   )
   # Render SVG
+  return(paste0(dirOutput_kinase, comp, "_kinase_Tree_CORAL.svg"))
   # svgPanZoom(svgoutfile,viewBox = T,controlIconsEnabled=F)
 }
 

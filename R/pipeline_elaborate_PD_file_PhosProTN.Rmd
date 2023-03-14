@@ -1955,7 +1955,7 @@ contro_list<-c(contro_list,
                      "-",
                      str_c("(", stringi::stri_replace_all_regex(formule_contrast, str_c("\\b",df$p,"\\b"), str_c(df$p, "_i"), vectorize = FALSE), ")"))
                )
-names(contro_list) <- make.names(c(str_c(df$p,"_default"), names(formule_contrast)), unique = T)
+names(contro_list) <- make.names(c(str_c(df$p,"_PhosphoEnr"), names(formule_contrast)), unique = T)
 
 save(list=ls(), file="tmp.RData")
 
@@ -3073,10 +3073,10 @@ for (comp in names(doComp)){
 
     gene_vertices$Community<-(i_comms_df[[comp]])[as.character(gene_vertices$label),"comm_n"] #class=communities
     #Set size bigger for genes in a community
-    gene_vertices$n_size<-1.5 #column that define the size of the dots
-    gene_vertices[which(is.na(gene_vertices$Community)),"n_size"]<-0.75
-
-    gene_vertices$type<-"A" # can be used for shape
+    # gene_vertices$n_size<-1.5 #column that define the size of the dots
+    # gene_vertices[which(is.na(gene_vertices$Community)),"n_size"]<-0.75
+    # 
+    # gene_vertices$type<-"A" # can be used for shape
     #gene_vertices[which(rownames(gene_vertices)%in%sma_genes),"type"]<-"B"
 
     nc<-ggplot(gene_vertices, aes(x=Community, fill=Community)) +
@@ -3095,30 +3095,38 @@ for (comp in names(doComp)){
     ggsave(paste0(dirOutput_net,comp,"_community_number_gene_filtered.pdf"), nc, device=cairo_pdf, width = 4, height = 4, units = c("in"))
 
     # plot with DiagrammeR----
-    net_net <- suppressMessages(fortify(as.edgedf(as.data.frame(net_edges)), gene_vertices))
-    uniqueN(net_net$from_id)
-
-    #BUILD NETWORK
-    node_list_from<-as.data.table(unique(net_net[,c("from_id")]))
-    node_list_to<-as.data.table(unique(net_net[,c("to_id")]))
-    colnames(node_list_from)<-"node"
-    colnames(node_list_to)<-"node"
-    node_list<-as.data.table(rbind((node_list_from),(node_list_to)))
-    node_list<-node_list[!duplicated(node_list$node)]
-    node_list[,id:=seq(1, nrow(node_list))]
-    node_list<-merge(node_list,net_net[,c("from_id","Community","n_size")],by.x="node",by.y="from_id")
-
-    node_list<-unique(node_list)
-
-    colnames(node_list)<-c("name","id","Community","size")
-
-    edge_list<-net_net[,c("from_id","to_id","weight")]
-    colnames(edge_list)<-c("from","to","weight")
-    edge_list<-as.data.table(edge_list)
-    edge_list<-na.omit(edge_list)
-    g <- graph_from_data_frame(edge_list, directed=TRUE, vertices=node_list)
+    # net_net <- suppressMessages(fortify(as.edgedf(as.data.frame(net_edges)), gene_vertices))
+    # uniqueN(net_net$from_id)
+    # 
+    # #BUILD NETWORK
+    # node_list_from<-as.data.table(unique(net_net[,c("from_id")]))
+    # node_list_to<-as.data.table(unique(net_net[,c("to_id")]))
+    # colnames(node_list_from)<-"node"
+    # colnames(node_list_to)<-"node"
+    # node_list<-as.data.table(rbind((node_list_from),(node_list_to)))
+    # node_list<-node_list[!duplicated(node_list$node)]
+    # node_list[,id:=seq(1, nrow(node_list))]
+    # node_list<-merge(node_list,net_net[,c("from_id","Community","n_size")],by.x="node",by.y="from_id")
+    # 
+    # node_list<-unique(node_list)
+    # 
+    # colnames(node_list)<-c("name","id","Community","size")
+    # 
+    # edge_list<-net_net[,c("from_id","to_id","weight")]
+    # colnames(edge_list)<-c("from","to","weight")
+    # edge_list<-as.data.table(edge_list)
+    # edge_list<-na.omit(edge_list)
+    # g <- graph_from_data_frame(edge_list, directed=TRUE, vertices=node_list)
     
-    layouts <- if(length(node_list$name) > 400){c("kk")}else{c("fr","kk")}
+    # layouts <- if(length(node_list$name) > 400){c("kk")}else{c("fr","kk")}
+      
+    tb = tibble(v = c(net_edges$from, net_edges$to))
+    d = as.vector(table(tb$v))
+    nodes = mutate(gene_vertices, Degree = d)
+    
+    g <- graph_from_data_frame(net_edges, directed=TRUE, vertices=nodes)
+    
+    layouts <- if(length(nodes$label) > 400){c("kk")}else{c("fr","kk")}
     p = callr::r_bg(
       func = function(g, scr_thr, bf, comp, colour_vector, bs, dirOutput_net, layouts) {
         source("functions_2021.R")
@@ -3155,10 +3163,9 @@ shiny::setProgress(0.90, detail = "Network figures generated...")
 
 
 ```{r kinase_tree_CORAL, echo=F, message=T, warning=F, eval=run_kinaseTree, results='asis'}
-
 shiny::setProgress(0.90, detail = "Kinase identification and Kinase draw in progress... \n Can require several minutes...")
 cat(" \n \n")
-cat("## 6. Kinase Trees \n")
+cat("## 6. Kinase Trees  {.tabset}  \n")
 cat("In this step PhosProTN study the kinase activity of the differential expressed phosphosite. The identification of the kinase is perfomed by [PhosR](https://github.com/PYangLab/PhosR) package (Kim et al. 2021), which provide a score of their activity based on the comparison formula provided. The activities of the kinases are saved in txt files inside the *KinaseTree* folder. \n \n Other than the numeric results, graphical kinase trees are generated using an adapted version of the webtool [CORAL](http://phanstiel-lab.med.unc.edu/CORAL/) (Metz K.S. et al. 2018). \n \n ")
 cat((paste0("DISCLAIMER CORAL: The kinome tree plots generated by CORAL make use the data generated by",
                 tags$a("Manning et al., Science, 2002",href="http://science.sciencemag.org/content/298/5600/1912.long", target="_blank"),
@@ -3166,6 +3173,7 @@ cat((paste0("DISCLAIMER CORAL: The kinome tree plots generated by CORAL make use
                 tags$a("Cell Signaling Technology",href="https://www.cellsignal.com/contents/science/protein-kinases-introduction/kinases", target="_blank"),
                 ".")))
 cat("\n \n Results inside folder: *KinaseTree*")
+cat(" \n \n ")
 
 dir.create(file.path(dirOutput,"kinaseTree/"), showWarnings = FALSE)
 dirOutput_kinase=paste0(dirOutput,"kinaseTree/")
@@ -3180,14 +3188,24 @@ kinase_act_phosr_wrapper <- function(comparison) {
   library(svgPanZoom)
   source("CORAL/global.R")
   source("server.R")
-  kinase_act_phosr(dirOutput_kinase, formule_CORAL, comparison, dat_pep, deps_pep_l_df, psm_peptide_table, c_anno_phos, df)
+  svg<-kinase_act_phosr(dirOutput_kinase, formule_CORAL, comparison, dat_pep, deps_pep_l_df, psm_peptide_table, c_anno_phos, df)
   setwd(oldwd)
+  svg
 }
 
 ncores <- min(detectCores()-2, length(names(formule_CORAL)))
 res <- NULL
 res <- mclapply(names(formule_CORAL), kinase_act_phosr_wrapper, mc.cores = ncores)
+cat(" \n \n")
+for(i in 1:length(res)){
+  cat(" \n")
+  cat(paste0("### ", stri_split_regex(str = res[[i]], pattern = "\\/|\\_kinase")[[1]][6], " \n \n "))
+  cat(paste0("![](", res[[i]], ")"), "\n")
+  # cat(knitr::include_graphics(res[[i]]))
+  cat(" \n \n")
+}
 
+# svgPanZoom::svgPanZoom(res[1],viewBox = T,controlIconsEnabled=F)
 # #RUN CORAL
 # source("R/CORAL/global.R")
 

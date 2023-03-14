@@ -1,6 +1,10 @@
 
 img.image-thumb {
-  width: 600px;
+  width: 800px;
+}
+
+.mfp-img {
+  background-color: white;
 }
 
 #toc {
