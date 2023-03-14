@@ -1075,20 +1075,24 @@ plot_networks<-function(g, scr_thr, bf, comp, colour_vector, bs, dirOutput_net, 
   name_list<-foreach (l = layouts, .packages = c("ggraph"), .combine = 'c') %dopar% {
     tryCatch({
       l_list<-ggraph(g,layout=l) +
-        geom_edge_link2(aes(edge_width=(0.05+abs(weight-scr_thr)/400)),edge_colour = "grey50",alpha=0.2) +
+        # geom_edge_link2(aes(edge_width=(0.05+abs(weight-scr_thr)/400), alpha = (weight/1000)-0.5),edge_colour = "grey70") +
+        geom_edge_link2(aes(edge_width=weight, alpha = (weight/1000)-0.5),edge_colour = "grey70") +
+        
         # ggtitle(paste0("Network of ",comp),subtitle = paste0("Layout: ",l))+
         scale_edge_width(range = c(0.1,1)) +
-        geom_node_point(aes(fill = Community), shape = 21,size=1.5,pch='.') +
-        geom_node_text(aes(label = name,size=5,color=Community),family = bf, repel = TRUE) +
+        geom_node_point(aes(fill = Community, size = Degree), shape = 21,pch='.') +
+        geom_node_text(aes(label = name, color=Community),family = bf, repel = TRUE, size=bs*0.3, show.legend = FALSE) +
         scale_fill_manual(values = colour_vector[[comp]]) +
         # scale_edge_width_continuous(name=c("Weigth","Size","Community")) +
-        scale_color_brewer(palette ="Dark2") +
+        scale_color_manual(values = colour_vector[[comp]]) +
         theme_bw(base_size = bs, base_family = bf) +
         theme(legend.position = "bottom", panel.grid = element_blank(),
               panel.border = element_blank(), panel.background = element_blank(),
               axis.text = element_blank(), axis.ticks = element_blank(), axis.title = element_blank()) +
-        guides(text=F)
-      l_list$labels$edge_width<-"Weight"
+        guides(text=F, colour = guide_legend(override.aes = list(size=5)), edge_alpha="none")
+      l_list$labels$edge_width<-"STRINGdb score"
+      # l_list$labels$edge_alpha<-"Weight"
+      l_list
       ggsave(paste0(dirOutput_net,comp,"_",l,"_network.pdf"), l_list, device=cairo_pdf, width = 10, height = 6, units = c("in"))
       #
       print(paste0(dirOutput_net,comp,"_",l,"_network.pdf"))
