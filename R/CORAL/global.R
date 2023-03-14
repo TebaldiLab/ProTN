@@ -50,8 +50,9 @@ NAs = which(is.na(orig_svginfo$dataframe$id.HGNC))
 orig_svginfo$dataframe$id.HGNC[NAs] = ""
 
 # add correct header
-# orig_svginfo$header = "<svg viewBox=\"50 -10 800 640\"  preserveAspectRatio=\"xMidYMid meet\"\n
-orig_svginfo$header = "<svg width=\"940\" height=\"940\"\n
+#orig_svginfo$header = "<svg viewBox=\"50 -10 800 640\"  preserveAspectRatio=\"xMidYMid meet\"\n
+#orig_svginfo$header = "<svg width=\"940\" height=\"940\"\n
+orig_svginfo$header = "<svg width=\"850\" height=\"630\"\n
 
 xmlns=\"http://www.w3.org/2000/svg\"\n
 xmlns:xlink=\"http://www.w3.org/1999/xlink\" >\n"
