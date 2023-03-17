@@ -1093,9 +1093,9 @@ plot_networks<-function(g, scr_thr, bf, comp, colour_vector, bs, dirOutput_net, 
       l_list$labels$edge_width<-"STRINGdb score"
       # l_list$labels$edge_alpha<-"Weight"
       l_list
-      ggsave(paste0(dirOutput_net,comp,"_",l,"_network.pdf"), l_list, device=cairo_pdf, width = 10, height = 6, units = c("in"))
+      ggsave(paste0(dirOutput_net,gsub(comp, pattern = "\\/", replacement="vs"),"_",l,"_network.pdf"), l_list, device=cairo_pdf, width = 10, height = 6, units = c("in"))
       #
-      print(paste0(dirOutput_net,comp,"_",l,"_network.pdf"))
+      print(paste0(dirOutput_net,gsub(comp, pattern = "\\/", replacement="vs"),"_",l,"_network.pdf"))
       # name_list<-append(name_list,paste0(dirOutput_net,comp,"_",l,"_network.pdf"))
     }, error=function(cond){print("Error: Error occur during the plot of network.\n")})
   }

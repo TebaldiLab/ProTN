@@ -625,6 +625,12 @@ server <- function(input, output, session) {
             dir.create(file.path(dirOutput_2, dirOutput_1), showWarnings = FALSE)
             dirOutput_Server <- paste(dirOutput_2, dirOutput_1, sep = "")
             message(dirOutput_Server)
+            #Create subfolder for the files
+            dir.create(file.path(dirOutput_Server, "figures"), showWarnings = FALSE)
+            dir.create(file.path(dirOutput_Server, "data"), showWarnings = FALSE)
+            dir.create(file.path(dirOutput_Server, "tables"), showWarnings = FALSE)
+            dir.create(file.path(paste0(dirOutput_Server, "figures"),"Expression"), showWarnings = FALSE)
+            dir.create(file.path(paste0(dirOutput_Server, "figures"),"PCA_MDS"), showWarnings = FALSE)
             # tempReport <- file.path(tempdir(), "R/pipeline_elaborate_PD_files.Rmd")
             # file.copy("pipeline_elaborate_PD_files.Rmd", tempReport, overwrite = TRUE)
 
@@ -664,7 +670,7 @@ server <- function(input, output, session) {
             )
             
               rmarkdown::render("R/pipeline_elaborate_PD_files.Rmd",
-                output_file = "report.html",
+                output_file = "protn_report.html",
                 output_dir = dirOutput_Server,
                 params = params,
                 envir = new.env(parent = globalenv())
@@ -709,6 +715,10 @@ server <- function(input, output, session) {
             dir.create(file.path(dirOutput_2, dirOutput_1), showWarnings = FALSE)
             dirOutput_Server <- paste(dirOutput_2, dirOutput_1, sep = "")
             message(dirOutput_Server)
+            #Create subfolder for the files
+            dir.create(file.path(dirOutput_Server, "figures"), showWarnings = FALSE)
+            dir.create(file.path(dirOutput_Server, "data"), showWarnings = FALSE)
+            dir.create(file.path(dirOutput_Server, "tables"), showWarnings = FALSE)
             # tempReport <- file.path(tempdir(), "R/pipeline_elaborate_PD_files.Rmd")
             # file.copy("pipeline_elaborate_PD_files.Rmd", tempReport, overwrite = TRUE)
             
@@ -807,6 +817,10 @@ server <- function(input, output, session) {
             dir.create(file.path(dirOutput_2, dirOutput_1), showWarnings = FALSE)
             dirOutput_Server <- paste(dirOutput_2, dirOutput_1, sep = "")
             message(dirOutput_Server)
+            #Create subfolder for the files
+            dir.create(file.path(dirOutput_Server, "figures"), showWarnings = FALSE)
+            dir.create(file.path(dirOutput_Server, "data"), showWarnings = FALSE)
+            dir.create(file.path(dirOutput_Server, "tables"), showWarnings = FALSE)
             # tempReport <- file.path(tempdir(), "R/pipeline_elaborate_PD_files.Rmd")
             # file.copy("pipeline_elaborate_PD_files.Rmd", tempReport, overwrite = TRUE)
 

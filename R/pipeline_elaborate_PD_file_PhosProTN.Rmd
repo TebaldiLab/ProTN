@@ -77,10 +77,9 @@ if(length(new.packages)) {
       install.packages("BiocManager")
   suppressMessages(suppressWarnings({BiocManager::install(new.packages)}))
 }
-list.of.packages <- c("geomnet","proBatch", "PhosR")
+list.of.packages <- c("proBatch", "PhosR")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) {
-  suppressMessages(suppressWarnings({devtools::install_github("sctyner/geomnet", dependencies = T)}))
   suppressMessages(suppressWarnings({devtools::install_github("symbioticMe/proBatch", dependencies = T)}))
   suppressMessages(suppressWarnings({devtools::install_github("PYangLab/PhosR", dependencies = T)}))
 }
@@ -117,7 +116,7 @@ options(dplyr.summarise.inform = FALSE)
 
 #Set font and size
 loadfonts(quiet=T)
-bs<-12      # point sizes in ggplot
+bs<-11      # point sizes in ggplot
 bf<-"Arial" # font family in ggplot
 
 # Color definition
@@ -151,6 +150,9 @@ knitr::knit_hooks$set(time_it = local({
 }))
 knitr::opts_chunk$set(time_it = TRUE)
 
+subfold_Fig <- "figures/"
+subfold_Dat <- "data/"
+subfold_Tab <- "tables/"
 
 shiny::setProgress(0.01, detail = "Initialize...")  # set progress to 50%
 ```
@@ -283,67 +285,77 @@ This report summarize the results obtained during the execution of the integrati
 ## Details on the output files
 
 - ```report.html```: complete report of the analysis with all pics and results of the enrichment.
-- ```database_env_R.RData```: RData containing the essential variables for further analysis.
-- ```normalised_intensity_table.xlsx```: excel file with the matrix used in the analysis. In sheet *Proteome Normalized intensity* is written the normalized and imputed version of the original intensities of each protein in each sample of the proteomics analysis. In sheet *Phospho-proteome Normalized intensity* is written the normalized and imputed version of the original intensities of each peptide in each sample of the phospho-proteomics analysis. In sheet *Proteome Normalized group by condition* is written the average and the standard deviation of each condition described in the Sample_annotation file for each protein of the proteomics analysis. Where column *avg* is the average of the replicates, column *se* is the standard error, column *Coef_variant* is the coefficient of variant in %. In sheet *Phospho-proteome Normalized group by condition* is written the average and the standard deviation of each condition described in the Sanple_annotation file for each peptide of the phospho-proteomics analysis. Where column *avg* is the average of the replicates, column *se* is the standard error, column *Coef_variant* is the coefficient of variant in %.
-- ```DEPs_table.xlsx```: summary of the result of Limma. In sheet *DEPs_phosphoProteome* describe the differentially expressed proteins. Column description: *Accession* is the UniprotID of protein, column *Description* is the description of protein, *GeneName* is Gene Symbol, *Annotated Sequence* is the sequence of peptides, *Modifications* is the modification that affect the peptides, *Position in Master Proteins* is the UniprotID with the position on the sequence, *tryptic_cond* is the status of the tryptic for each peptide. For each contrast rule are present 5 columns:
-  - **class**: is "+" if the protein is up-regulated following the input parameters, "-" if the protein is down-regulated, "=" otherwise
-  - **log2_FC**: is the log2 Fold Change of the contrast
-  - **p_val**: is the p. value
-  - **p_adj**: is the adjusted p. value
-  - **log2_expr**: is the signal log2 expression
-
-- ```general_mds_phosphoproteome.pdf```: MDS of the samples of the phosphoproteomic analysis.
-- ```general_mds_proteome.pdf```: MDS of the samples of the proteomic analysis.
-- ```general_pca_pohosphoproteome.pdf```: PCA of the samples of the phosphoproteomic analysis.
-- ```general_pca_proteome.pdf```: PCA of the samples of the proteomic analysis.
+- ```Data``` folder: contains the RData for further analysis:
+  - ```database_env_R.RData```: RData containing the essential variables for further analysis.
+```{r print_descr_enrich, warning=FALSE, echo=F, message=FALSE, eval=run_enrich, results='asis'}
+  cat("  - ```DEPs_enrichment_data.RData```: result of the enrichment made with EnrichR \n")
+```
+```{r print_descr_enrich_uni, warning=FALSE, echo=F, message=FALSE, eval=run_enrich_universe, results='asis'}
+  cat("  - ```DEPs_enrichment_data_universe.RData```: result of the enrichment on the whole universe of the experiment made with EnrichR \n")
+```
+- ```Tables``` folder: contains the excel file resulted by the analysis:
+  - ```normalised_intensity_table.xlsx```: excel file with the matrix used in the analysis. In sheet *Proteome Normalized intensity* is written the normalized and imputed version of the original intensities of each protein in each sample of the proteomics analysis. In sheet *Phospho-proteome Normalized intensity* is written the normalized and imputed version of the original intensities of each peptide in each sample of the phospho-proteomics analysis. In sheet *Proteome Normalized group by condition* is written the average and the standard deviation of each condition described in the Sample_annotation file for each protein of the proteomics analysis. Where column *avg* is the average of the replicates, column *se* is the standard error, column *Coef_variant* is the coefficient of variant in %. In sheet *Phospho-proteome Normalized group by condition* is written the average and the standard deviation of each condition described in the Sanple_annotation file for each peptide of the phospho-proteomics analysis. Where column *avg* is the average of the replicates, column *se* is the standard error, column *Coef_variant* is the coefficient of variant in %.
+  - ```DEPs_table.xlsx```: summary of the result of Limma. In sheet *DEPs_phosphoProteome* describe the differentially expressed proteins. Column description: *Accession* is the UniprotID of protein, column *Description* is the description of protein, *GeneName* is Gene Symbol, *Annotated Sequence* is the sequence of peptides, *Modifications* is the modification that affect the peptides, *Position in Master Proteins* is the UniprotID with the position on the sequence, *tryptic_cond* is the status of the tryptic for each peptide. For each contrast rule are present 5 columns:
+    - **class**: is "+" if the protein is up-regulated following the input parameters, "-" if the protein is down-regulated, "=" otherwise
+    - **log2_FC**: is the log2 Fold Change of the contrast
+    - **p_val**: is the p. value
+    - **p_adj**: is the adjusted p. value
+    - **log2_expr**: is the signal log2 expression
+```{r print_descr_enrich, warning=FALSE, echo=F, message=FALSE, eval=run_enrich, results='asis'}
+  cat("  - ```DEPs_enrichment_table.xlsx```: excel with only the enriched terms with an high significance (Default: adj.P.Value < 0.05, Overlap Size >= 5) \n")
+```
+```{r print_descr_enrich_uni, warning=FALSE, echo=F, message=FALSE, eval=run_enrich_universe, results='asis'}
+  cat("  - ```DEPs_enrichment_table_universe.xlsx```: excel with only the enriched terms with an high significance (Default: adj.P.Value < 0.05, Overlap Size >= 5) \n")
+```
+- ```Figures``` folder: contains the pdf figures resulted by the analysis:
+  - ```general_mds_phosphoproteome.pdf```: MDS of the samples of the phosphoproteomic analysis.
+  - ```general_mds_proteome.pdf```: MDS of the samples of the proteomic analysis.
+  - ```general_pca_pohosphoproteome.pdf```: PCA of the samples of the phosphoproteomic analysis.
+  - ```general_pca_proteome.pdf```: PCA of the samples of the proteomic analysis.
 
 ```{r print_descr_batch, warning=FALSE, echo=F, message=FALSE, eval=batch_corr_exe, results='asis'}
-cat("- ```corrected_mds_phosphoproteomic.pdf```: MDS of the samples by phosphoproteomics after the bacth effect correction \n")
-cat("- ```corrected_mds_proteome.pdf```: MDS of the samples by proteome after the bacth effect correction \n")
+cat("  - ```corrected_mds_phosphoproteomic.pdf```: MDS of the samples by phosphoproteomics after the bacth effect correction \n")
+cat("  - ```corrected_mds_proteome.pdf```: MDS of the samples by proteome after the bacth effect correction \n")
 ```
 
 ```{r print_descr_control, warning=FALSE, echo=F, message=FALSE, eval=prot_boxplot, results='asis'}
-cat("- ```boxplot_control_intensity.pdf```: boxplot for the control of the intensities of selected proteins \n")
+cat("  - ```boxplot_control_intensity.pdf```: boxplot for the control of the intensities of selected proteins \n")
 ```
 
-- ```DEPs_peptides_count_barplot.pdf```: number of DEPs find for each contrast design based on peptides. Dark grey are the down-regulated, light grey are the up-regulated genes.
-- ```DEPs_mds_phosphoproteome.pdf```: MDS of the DEPs discovered.
-- ```DEPs_phosphoproteome_PCA.pdf```: PCA of the DEPs discovered.
+  - ```DEPs_peptides_count_barplot.pdf```: number of DEPs find for each contrast design based on peptides. Dark grey are the down-regulated, light grey are the up-regulated genes.
+  - ```DEPs_mds_phosphoproteome.pdf```: MDS of the DEPs discovered.
+  - ```DEPs_phosphoproteome_PCA.pdf```: PCA of the DEPs discovered.
 
 ```{r print_descr_enrich, warning=FALSE, echo=F, message=FALSE, eval=run_enrich, results='asis'}
-cat("- ```DEPs_enrichment_data.RData```: result of the enrichment made with EnrichR \n")
-cat("- ```DEPs_enrichment_table.xlsx```: excel with only the enriched terms with an high significance (Default: adj.P.Value < 0.05, Overlap Size >= 5) \n")
-cat("- ```enrich``` directory: plots of the enrichment data under the parameters set \n")  
-cat("  - **enrichment_database_filter.pdf**: dot matrix of the enrichment result divided in up- and down-regulated genes. Filtered by the datasets choose in the advanced options. \n")
-cat("  - **enrichment_terms_filter.pdf**: dot matrix of the enrichment result divided in up- and down-regulated genes. Filtered by the terms written in the advanced options. \n")
-cat("  - **enrichment_database_filter_all.pdf**: dot matrix of the enrichment result combining the up- and down- regulated genes in a single list. Filtered by the datasets choose in the advanced options. \n")
-cat("  - **enrichment_terms_filter_all.pdf**: dot matrix of the enrichment result combining the up- and down- regulated genes in a single list. Filtered by the terms written in the
+cat("  - ```enrich``` directory: plots of the enrichment data under the parameters set \n")  
+cat("    - **enrichment_database_filter.pdf**: dot matrix of the enrichment result divided in up- and down-regulated genes. Filtered by the datasets choose in the advanced options. \n")
+cat("    - **enrichment_terms_filter.pdf**: dot matrix of the enrichment result divided in up- and down-regulated genes. Filtered by the terms written in the advanced options. \n")
+cat("    - **enrichment_database_filter_all.pdf**: dot matrix of the enrichment result combining the up- and down- regulated genes in a single list. Filtered by the datasets choose in the advanced options. \n")
+cat("    - **enrichment_terms_filter_all.pdf**: dot matrix of the enrichment result combining the up- and down- regulated genes in a single list. Filtered by the terms written in the
     advanced options. \n")
 
 shiny::setProgress(0.10, detail = "Settings...")
 ```
 
 ```{r print_descr_enrich_uni, warning=FALSE, echo=F, message=FALSE, eval=run_enrich_universe, results='asis'}
-cat("- ```DEPs_enrichment_data_universe.RData```: result of the enrichment on the whole universe of the experiment made with EnrichR \n")
-cat("- ```DEPs_enrichment_table_universe.xlsx```: excel with only the enriched terms with an high significance (Default: adj.P.Value < 0.05, Overlap Size >= 5) \n")
-cat("- ```enrich``` directory: the plots of the enrichment data are in the same folder of the normal enrichment \n")  
-cat("  - **enrichment_database_filter_universe.pdf**: dot matrix of the enrichment result divided in up- and down-regulated genes of the comparisons compared with the universe. Filtered by the datasets choose in the advanced options. \n")
-cat("  - **enrichment_terms_filter_universe.pdf**: dot matrix of the enrichment result divided in up- and down-regulated genes of the comparisons compared with the universe. Filtered by the terms written in the advanced options. \n")
-cat("  - **enrichment_database_filter_all_universe.pdf**: dot matrix of the enrichment result combining the up- and down- regulated genes in a single list, comparisons versus background the proteins discovered by the experiment. Filtered by the datasets choose in the advanced options. \n")
-cat("  - **enrichment_terms_filter_all_universe.pdf**: dot matrix of the enrichment result combining the up- and down- regulated genes in a single list, comparisons versus background the proteins discovered by the experiment. Filtered by the terms written in the
+cat("  - ```enrich``` directory: the plots of the enrichment data are in the same folder of the normal enrichment \n")  
+cat("    - **enrichment_database_filter_universe.pdf**: dot matrix of the enrichment result divided in up- and down-regulated genes of the comparisons compared with the universe. Filtered by the datasets choose in the advanced options. \n")
+cat("    - **enrichment_terms_filter_universe.pdf**: dot matrix of the enrichment result divided in up- and down-regulated genes of the comparisons compared with the universe. Filtered by the terms written in the advanced options. \n")
+cat("    - **enrichment_database_filter_all_universe.pdf**: dot matrix of the enrichment result combining the up- and down- regulated genes in a single list, comparisons versus background the proteins discovered by the experiment. Filtered by the datasets choose in the advanced options. \n")
+cat("    - **enrichment_terms_filter_all_universe.pdf**: dot matrix of the enrichment result combining the up- and down- regulated genes in a single list, comparisons versus background the proteins discovered by the experiment. Filtered by the terms written in the
     advanced options. \n")
 
 shiny::setProgress(0.10, detail = "Settings...")
 ```
 
 ```{r print_descr_STRING, warning=FALSE, echo=F, message=FALSE, eval=run_STRING, results='asis'}
-cat("- ```network``` directory: plots of the up- and down- regulated genes based on STRINGdb. For each contrast design are create 2 files: \n")
-cat("  - **community_number_gene_filtered.pdf**: histogram representing the number of genes in each community discovered after a filter on the genes and on the links. \n")
-cat("  - **network.pdf**: visual representation of the network discovered in two layouts: *fr* and *kk*. \n")
+cat("  - ```network``` directory: plots of the up- and down- regulated genes based on STRINGdb. For each contrast design are create 2 files: \n")
+cat("    - **community_number_gene_filtered.pdf**: histogram representing the number of genes in each community discovered after a filter on the genes and on the links. \n")
+cat("    - **network.pdf**: visual representation of the network discovered in two layouts: *fr* and *kk*. \n")
 ```
 
 ```{r print_descr_KINASE_TREE, warning=FALSE, echo=F, message=FALSE, eval=run_kinaseTree, results='asis'}
-cat("- ```KinaseTree``` directory: Kinase tree generated with CORAL in svg and associated txt file with the activity of each kinase. \n")
+cat("  - ```KinaseTree``` directory: Kinase tree generated with CORAL in svg and associated txt file with the activity of each kinase. \n")
 ```
 
 
@@ -1423,6 +1435,100 @@ remove(ppe,grps)
 shiny::setProgress(0.42, detail = "Done normalization and imputation...")
 ```
 
+```{r batch_correction, warning=F, message=F, echo=F, eval=batch_corr_exe, results='asis'}
+cat("#### 2.4.1. Batch correction {.tabset}  \n")
+cat("A batch effect correction is applied to the datased using the proBatch package. \n")
+cat("Two MDSs are created, one based on the corrected peptide intensities of the phospho-proteomics analysis, tab **Phospho-proteome**. The second on the corrected protein intensities of the proteomics analysis, tab **Proteome** \n")
+cat(" \n \n")
+
+batch_annotation <- c_anno_phos
+batch_annotation$order<-c(1:nrow(batch_annotation))
+
+dat_pep_long <- matrix_to_long(dat_pep) %>% setnames("FullRunName","sample")
+# loess_fit_df_pep <- adjust_batch_trend_df(dat_pep_long, batch_annotation, batch_col="ms_batch", sample_id_col="sample")
+comBat_df_pep <- correct_with_ComBat_df(dat_pep_long, batch_annotation, batch_col="ms_batch", sample_id_col="sample")
+dat_pep = as.data.frame(long_to_matrix(comBat_df_pep, sample_id_col = "sample"))
+
+batch_annotation <- c_anno_prot
+batch_annotation$order<-c(1:nrow(batch_annotation))
+dat_gene_long <- matrix_to_long(dat_gene) %>% setnames("FullRunName","sample")
+# loess_fit_df_gene <- adjust_batch_trend_df(dat_gene_long, batch_annotation, batch_col="ms_batch", sample_id_col="sample")
+comBat_df_gene <- correct_with_ComBat_df(dat_gene_long, batch_annotation, batch_col="ms_batch", sample_id_col="sample")
+dat_gene = as.data.frame(long_to_matrix(comBat_df_gene, sample_id_col = "sample"))
+
+# setnames(c_anno,"FullRunName","sample")
+
+###################
+#Peptides
+# sample_data<-(t(dat_pep))
+# sample_distances <- dist(sample_data, method = "euclidean")
+# 
+# mds_cmdscale <- as.data.frame(cmdscale(as.matrix(sample_distances)))
+# colnames(mds_cmdscale) <- c("MDS_1","MDS_2")
+# mds_cmdscale$sample <- rownames(mds_cmdscale)
+# 
+# mds_cmdscale <- suppressMessages(left_join(mds_cmdscale,c_anno_phos))
+# 
+# #Take correct order of color
+# cc<-mds_cmdscale$color
+# if(is.null(cc)){
+#   cc<-colour_vec[1:length(unique(mds_cmdscale$condition))]
+#   names(cc)<-unique(mds_cmdscale$condition)
+# } else{
+#   names(cc)<-mds_cmdscale$condition
+# }
+# 
+# cmd<-ggplot(mds_cmdscale, aes(MDS_1, MDS_2, colour=condition)) + #plot according to the new coordinates
+#   geom_point(size=1.5,alpha=.9) + #colour=factor(df) to choose colour according to the condition
+#   geom_text_repel(aes(label=sample), size=0.15*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
+#   scale_colour_manual(values=cc[unique(names(cc))]) +
+#   theme_bw(base_size = bs, base_family = bf) +
+#   theme(legend.position = "right", panel.grid.minor=element_blank())
+# 
+# cat("##### Phospho-proteome \n")
+# print(cmd)
+# cat(" \n \n")
+# 
+# suppressMessages(ggsave(paste0(dirOutput,subfold_Fig,"corrected_mds_phosphoproteomics.pdf"), cmd, device=cairo_pdf, width = 4, height = 3, units = c("in")))
+# 
+# remove(sample_data,sample_distances,mds_cmdscale,cmd)
+# 
+# #Proteome
+# sample_data<-(t(dat_gene))
+# sample_distances <- dist(sample_data, method = "euclidean")
+# 
+# mds_cmdscale <- as.data.frame(cmdscale(as.matrix(sample_distances)))
+# colnames(mds_cmdscale) <- c("MDS_1","MDS_2")
+# mds_cmdscale$sample <- rownames(mds_cmdscale)
+# 
+# mds_cmdscale <- suppressMessages(left_join(mds_cmdscale,c_anno_prot))
+# 
+# #Take correct order of color
+# cc<-mds_cmdscale$color
+# if(is.null(cc)){
+#   cc<-colour_vec[1:length(unique(mds_cmdscale$condition))]
+#   names(cc)<-unique(mds_cmdscale$condition)
+# } else{
+#   names(cc)<-mds_cmdscale$condition
+# }
+# 
+# cmd<-ggplot(mds_cmdscale, aes(MDS_1, MDS_2, colour=condition)) + #plot according to the new coordinates
+#   geom_point(size=1.5,alpha=.9) + #colour=factor(df) to choose colour according to the condition
+#   geom_text_repel(aes(label=sample), size=0.15*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
+#   scale_colour_manual(values=cc[unique(names(cc))]) +
+#   theme_bw(base_size = bs, base_family = bf) +
+#   theme(legend.position = "right", panel.grid.minor=element_blank())
+# 
+# cat("##### Proteome \n")
+# print(cmd)
+# cat(" \n \n")
+# 
+# suppressMessages(ggsave(paste0(dirOutput,subfold_Fig,"corrected_mds_proteome.pdf"), cmd, device=cairo_pdf, width = (3+(0.13*nrow(mds_cmdscale))), height = (3+(0.07*nrow(mds_cmdscale))), units = c("in")))
+# 
+# remove(sample_data,sample_distances,mds_cmdscale,cmd)
+
+shiny::setProgress(0.53, detail = "Perfom Batch effect correction...")
+```
 
 ```{r sig_tables, message=F, warning=F, echo=F, results='hide'}
 
@@ -1505,7 +1611,7 @@ df_to_save<-list("README"=readme_sheet,
                                                                             toPrint, by=c("rowname" = "id"))[,-c(1)],
                  "Proteome Normalized group by condition"=df_to_save$`Proteome Normalized intensity group by condition`)
 
-writexl::write_xlsx(df_to_save,paste0(dirOutput,"normalised_intensity_table.xlsx"))
+writexl::write_xlsx(df_to_save,paste0(dirOutput,subfold_Tab,"normalised_intensity_table.xlsx"))
 remove(expr_mat,expr_l_df,expr_cond_df,toPrint)
 
 shiny::setProgress(0.45, detail =  "Save normalized data...")
@@ -1603,7 +1709,7 @@ cat("##### Phospho-proteome \n")
 print(cmd)
 cat(" \n \n")
 
-suppressMessages(ggsave(paste0(dirOutput,"general_mds_phosphoproteome.pdf"), cmd, device=cairo_pdf, width = (3+(0.13*nrow(mds_cmdscale))), height = (3+(0.07*nrow(mds_cmdscale))), units = c("in")))
+suppressMessages(ggsave(paste0(dirOutput,subfold_Fig,"general_mds_phosphoproteome.pdf"), cmd, device=cairo_pdf, width = (3+(0.13*nrow(mds_cmdscale))), height = (3+(0.07*nrow(mds_cmdscale))), units = c("in")))
 
 #PROTEOMICS
 sample_data<-(t(dat_gene))
@@ -1636,7 +1742,7 @@ cat("##### Proteome \n")
 print(cmd)
 cat(" \n \n")
 
-suppressMessages(ggsave(paste0(dirOutput,"general_mds_proteome.pdf"), cmd, device=cairo_pdf, width = (3+(0.13*nrow(mds_cmdscale))), height = (3+(0.07*nrow(mds_cmdscale))), units = c("in")))
+suppressMessages(ggsave(paste0(dirOutput,subfold_Fig,"general_mds_proteome.pdf"), cmd, device=cairo_pdf, width = (3+(0.13*nrow(mds_cmdscale))), height = (3+(0.07*nrow(mds_cmdscale))), units = c("in")))
 
 remove(sample_data,sample_distances,mds_cmdscale,cmd)
 
@@ -1686,7 +1792,7 @@ cat("##### Phospho-proteome \n")
 print(p1)
 cat(" \n \n")
 
-suppressMessages(ggsave(paste0(dirOutput,"general_PCA_phosphoproteome.pdf"), p1, device=cairo_pdf, width = (3+(0.13*nrow(pc))), height = (3+(0.07*nrow(pc))), units = c("in")))
+suppressMessages(ggsave(paste0(dirOutput,subfold_Fig,"general_PCA_phosphoproteome.pdf"), p1, device=cairo_pdf, width = (3+(0.13*nrow(pc))), height = (3+(0.07*nrow(pc))), units = c("in")))
 
 remove(sample_data,sample_distances,mds_cmdscale,p1)
 
@@ -1727,107 +1833,13 @@ cat("##### Proteome \n")
 print(p1)
 cat(" \n \n")
 
-suppressMessages(ggsave(paste0(dirOutput,"general_PCA_proteome.pdf"), p1, device=cairo_pdf, width = (3+(0.13*nrow(pc))), height = (3+(0.07*nrow(pc))), units = c("in")))
+suppressMessages(ggsave(paste0(dirOutput,subfold_Fig,"general_PCA_proteome.pdf"), p1, device=cairo_pdf, width = (3+(0.13*nrow(pc))), height = (3+(0.07*nrow(pc))), units = c("in")))
 
 remove(sample_data,sample_distances,mds_cmdscale,cmd)
 
 shiny::setProgress(0.51, detail = "Calculate PCA...")
 ```
 
-```{r batch_correction, warning=F, message=F, echo=F, eval=batch_corr_exe, results='asis'}
-cat("#### 2.8. Batch correction {.tabset}  \n")
-cat("A batch effect correction is applied to the datased using the proBatch package. \n")
-cat("Two MDSs are created, one based on the corrected peptide intensities of the phospho-proteomics analysis, tab **Phospho-proteome**. The second on the corrected protein intensities of the proteomics analysis, tab **Proteome** \n")
-cat(" \n \n")
-
-batch_annotation <- c_anno_phos
-batch_annotation$order<-c(1:nrow(batch_annotation))
-
-dat_pep_long <- matrix_to_long(dat_pep) %>% setnames("FullRunName","sample")
-# loess_fit_df_pep <- adjust_batch_trend_df(dat_pep_long, batch_annotation, batch_col="ms_batch", sample_id_col="sample")
-comBat_df_pep <- correct_with_ComBat_df(dat_pep_long, batch_annotation, batch_col="ms_batch", sample_id_col="sample")
-dat_pep = long_to_matrix(comBat_df_pep, sample_id_col = "sample")
-
-batch_annotation <- c_anno_prot
-batch_annotation$order<-c(1:nrow(batch_annotation))
-dat_gene_long <- matrix_to_long(dat_gene) %>% setnames("FullRunName","sample")
-# loess_fit_df_gene <- adjust_batch_trend_df(dat_gene_long, batch_annotation, batch_col="ms_batch", sample_id_col="sample")
-comBat_df_gene <- correct_with_ComBat_df(dat_gene_long, batch_annotation, batch_col="ms_batch", sample_id_col="sample")
-dat_gene = long_to_matrix(comBat_df_gene, sample_id_col = "sample")
-
-# setnames(c_anno,"FullRunName","sample")
-
-###################
-#Peptides
-sample_data<-(t(dat_pep))
-sample_distances <- dist(sample_data, method = "euclidean")
-
-mds_cmdscale <- as.data.frame(cmdscale(as.matrix(sample_distances)))
-colnames(mds_cmdscale) <- c("MDS_1","MDS_2")
-mds_cmdscale$sample <- rownames(mds_cmdscale)
-
-mds_cmdscale <- suppressMessages(left_join(mds_cmdscale,c_anno_phos))
-
-#Take correct order of color
-cc<-mds_cmdscale$color
-if(is.null(cc)){
-  cc<-colour_vec[1:length(unique(mds_cmdscale$condition))]
-  names(cc)<-unique(mds_cmdscale$condition)
-} else{
-  names(cc)<-mds_cmdscale$condition
-}
-
-cmd<-ggplot(mds_cmdscale, aes(MDS_1, MDS_2, colour=condition)) + #plot according to the new coordinates
-  geom_point(size=1.5,alpha=.9) + #colour=factor(df) to choose colour according to the condition
-  geom_text_repel(aes(label=sample), size=0.15*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
-  scale_colour_manual(values=cc[unique(names(cc))]) +
-  theme_bw(base_size = bs, base_family = bf) +
-  theme(legend.position = "right", panel.grid.minor=element_blank())
-
-cat("##### Phospho-proteome \n")
-print(cmd)
-cat(" \n \n")
-
-suppressMessages(ggsave(paste0(dirOutput,"corrected_mds_phosphoproteomics.pdf"), cmd, device=cairo_pdf, width = 4, height = 3, units = c("in")))
-
-remove(sample_data,sample_distances,mds_cmdscale,cmd)
-
-#Proteome
-sample_data<-(t(dat_gene))
-sample_distances <- dist(sample_data, method = "euclidean")
-
-mds_cmdscale <- as.data.frame(cmdscale(as.matrix(sample_distances)))
-colnames(mds_cmdscale) <- c("MDS_1","MDS_2")
-mds_cmdscale$sample <- rownames(mds_cmdscale)
-
-mds_cmdscale <- suppressMessages(left_join(mds_cmdscale,c_anno_prot))
-
-#Take correct order of color
-cc<-mds_cmdscale$color
-if(is.null(cc)){
-  cc<-colour_vec[1:length(unique(mds_cmdscale$condition))]
-  names(cc)<-unique(mds_cmdscale$condition)
-} else{
-  names(cc)<-mds_cmdscale$condition
-}
-
-cmd<-ggplot(mds_cmdscale, aes(MDS_1, MDS_2, colour=condition)) + #plot according to the new coordinates
-  geom_point(size=1.5,alpha=.9) + #colour=factor(df) to choose colour according to the condition
-  geom_text_repel(aes(label=sample), size=0.15*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
-  scale_colour_manual(values=cc[unique(names(cc))]) +
-  theme_bw(base_size = bs, base_family = bf) +
-  theme(legend.position = "right", panel.grid.minor=element_blank())
-
-cat("##### Proteome \n")
-print(cmd)
-cat(" \n \n")
-
-suppressMessages(ggsave(paste0(dirOutput,"corrected_mds_proteome.pdf"), cmd, device=cairo_pdf, width = (3+(0.13*nrow(mds_cmdscale))), height = (3+(0.07*nrow(mds_cmdscale))), units = c("in")))
-
-remove(sample_data,sample_distances,mds_cmdscale,cmd)
-
-shiny::setProgress(0.53, detail = "Perfom Batch effect correction...")
-```
 
 ```{r boxplot_proteins, warning=F, message=F, echo=F, eval=boxplot_prot_exe, results='asis'}
 prot_find<-unique(c(intersect(prot_boxplot,psm_peptide_table$GeneName),
@@ -1874,12 +1886,12 @@ if(length(prot_find)>0){
     geom_crossbar(aes(ymin=avg,ymax=avg),position = "dodge",width=.8,alpha=.9,fatten=1.5)+
     geom_errorbar(aes(ymin=(avg-se), ymax=(avg+se)), width=.4,position=position_dodge(),show.legend=F,alpha=.8)+
     geom_quasirandom(data=prot_intensity_long, aes(Condition,Intensity), alpha=.7,width=.1,shape=16,size=0.11*bs)+
-    scale_fill_manual(name="Condition",values=cc) +
-    scale_colour_manual(name="Condition",values=cc)+
+    scale_fill_manual(name="Condition",values=cc[sort(unique(prot_intensity_long$Condition))]) +
+    scale_colour_manual(name="Condition",values=cc[sort(unique(prot_intensity_long$Condition))])+
     # scale_y_continuous(limits=c(0,NA),expand = expand_scale(mult = c(.1, .25)))+
     theme_bw(base_size = bs, base_family = bf) +
     theme(axis.title.x=element_blank()) +
-    theme(axis.text.x = element_text(angle = 30, hjust = 1, colour=cc))+
+    theme(axis.text.x = element_text(angle = 30, hjust = 1, colour=cc[sort(unique(prot_intensity_long$Condition))]))+
     theme(panel.grid.major.x=element_blank(),
           panel.grid.minor.y=element_blank())+
     theme(legend.text = element_text(size = 0.7*bs),
@@ -1892,11 +1904,11 @@ if(length(prot_find)>0){
     theme(panel.border=element_rect(colour=c("grey40"),size=0.03*bs))+
     theme(strip.background=element_rect(fill="grey40",colour="grey40",size=0.03*bs))+
     theme(plot.title = element_text(hjust = 0.5))+
-    facet_wrap(~Protein, scales = "free",ncol = 4)+
+    facet_wrap(~Protein, scales = "free",ncol = if(length(prot_find)>4){round(length(prot_find)/1.9)}else{4})+
     labs(y="Abundance")
   print(g)
 
-  suppressMessages(ggsave(paste0(dirOutput,"boxplot_control_intensity.pdf"), g, device=cairo_pdf, 
+  suppressMessages(ggsave(paste0(dirOutput,subfold_Fig,"boxplot_control_intensity.pdf"), g, device=cairo_pdf, 
                           width = ((if(length(prot_find)<4){((length(prot_find)-1/(length(prot_find)))^1.2)*0.9}else{(4*1.2)*0.9}))+(0.75*length(unique(prot_avg_se_long$Condition))), 
                           height = 4*(if(length(prot_find)>=4){(length(prot_find) %/% 4)+1}else{1}), units = c("in")))
 
@@ -1990,7 +2002,7 @@ readme_sheet <- data.frame("INFO"=c(NA,
 #Export table with SE e MEAN
 df_to_save<-list("README"=readme_sheet,
                  "DEPs_PhosphoProteome"=inner_join(rownames_to_column(psm_peptide_table), toPrint_pep, by=c("rowname" = "id"))[,-c(1)])
-writexl::write_xlsx(df_to_save,paste0(dirOutput,"DEPs_table.xlsx"))
+writexl::write_xlsx(df_to_save,paste0(dirOutput,subfold_Tab,"DEPs_table.xlsx"))
 
 formule_contrast <- contro_list
 
@@ -2076,7 +2088,7 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   cat(" \n \n")
   knitr::opts_chunk$set(fig.height = oldheig)
 
-  suppressMessages(ggsave(paste0(dirOutput,"DEPs_peptides_count_barplot.pdf"), pDEPs, device=cairo_pdf,
+  suppressMessages(ggsave(paste0(dirOutput,subfold_Fig,"DEPs_peptides_count_barplot.pdf"), pDEPs, device=cairo_pdf,
                           height = max(min(20,length(heig)*0.75),2), units = c("in")))
   remove(pDEPs,cmd,mds_cmdscale)
 }else{
@@ -2214,7 +2226,7 @@ if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
 
   print(cmd)
 
-  ggsave(paste0(dirOutput,"DEPs_proteins_mds.pdf"), cmd, device=cairo_pdf, width = (3+(0.13*nrow(mds_cmdscale))), height = (3+(0.07*nrow(mds_cmdscale))), units = c("in"))
+  ggsave(paste0(dirOutput,subfold_Fig,"DEPs_proteins_mds.pdf"), cmd, device=cairo_pdf, width = (3+(0.13*nrow(mds_cmdscale))), height = (3+(0.07*nrow(mds_cmdscale))), units = c("in"))
 
   shiny::setProgress(0.67, detail = "Perform MDS...")
 
@@ -2258,7 +2270,7 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
 
   print(cmd)
 
-  ggsave(paste0(dirOutput,"DEPs_mds_phosphoproteome.pdf"), cmd, device=cairo_pdf, width = (3+(0.13*nrow(mds_cmdscale))), height = (3+(0.07*nrow(mds_cmdscale))), units = c("in"))
+  ggsave(paste0(dirOutput,subfold_Fig,"DEPs_mds_phosphoproteome.pdf"), cmd, device=cairo_pdf, width = (3+(0.13*nrow(mds_cmdscale))), height = (3+(0.07*nrow(mds_cmdscale))), units = c("in"))
 
 shiny::setProgress(0.69, detail = "Perform MDS...")
 }
@@ -2363,7 +2375,7 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   print(p1)
   cat(" \n \n")
 
-  suppressMessages(ggsave(paste0(dirOutput,"DEPs_phosphoproteome_PCA.pdf"), p1, device=cairo_pdf, width = (3+(0.13*nrow(pc))), height = (3+(0.07*nrow(pc))), units = c("in")))
+  suppressMessages(ggsave(paste0(dirOutput,subfold_Fig,"DEPs_phosphoproteome_PCA.pdf"), p1, device=cairo_pdf, width = (3+(0.13*nrow(pc))), height = (3+(0.07*nrow(pc))), units = c("in")))
 
   remove(sample_data,sample_distances,mds_cmdscale,p1)
 }
@@ -2402,13 +2414,13 @@ doNextChunk <- tryCatch({
   #Perform enriched analysis with EnrichR
   enr_df<-enrichRfnc(deps_pep_l_df[which(deps_pep_l_df$comp %in% names(formule_CORAL)),], pval_fdr_enrich, pval_enrich_thr, overlap_size_enrich_thr)
   #Save in RData for possible further analysis
-  save(enr_df, file=paste0(dirOutput,"DEPs_enrichment_data.RData"))
+  save(enr_df, file=paste0(dirOutput,subfold_Dat,"DEPs_enrichment_data.RData"))
 
   writexl::write_xlsx((enr_df %>% dplyr::filter(`P<0.05` == "T",overlap_size>=overlap_size_enrich_thr)),
-                      path = paste0(dirOutput,"DEPs_enrichment_table.xlsx"))
+                      path = paste0(dirOutput,subfold_Tab,"DEPs_enrichment_table.xlsx"))
 
-  dir.create(file.path(dirOutput,"enrich/"), showWarnings = FALSE)
-  dirOutput_enr=paste0(dirOutput,"enrich/")
+  dir.create(file.path(dirOutput,subfold_Fig,"enrich/"), showWarnings = FALSE)
+  dirOutput_enr=paste0(dirOutput,subfold_Fig,"enrich/")
   TRUE
 },
 error=function(cond){
@@ -2676,13 +2688,13 @@ if(p$is_alive() | is.null(p$get_result())){
   enr_df_universe<-p$get_result()
   p$kill()
   #Save in RData for possible further analysis
-  save(enr_df_universe, file=paste0(dirOutput,"DEPs_enrichment_data_universe.RData"))
+  save(enr_df_universe, file=paste0(dirOutput,subfold_Dat,"DEPs_enrichment_data_universe.RData"))
 
   writexl::write_xlsx((enr_df_universe %>% dplyr::filter(`P<0.05` == "T",overlap_size>=overlap_size_enrich_thr)),
-                      path = paste0(dirOutput,"DEPs_enrichment_table_universe.xlsx"))
+                      path = paste0(dirOutput,subfold_Tab,"DEPs_enrichment_table_universe.xlsx"))
 
-  dir.create(file.path(dirOutput,"enrich/"), showWarnings = FALSE)
-  dirOutput_enr=paste0(dirOutput,"enrich/")
+  dir.create(file.path(dirOutput,subfold_Fig,"enrich/"), showWarnings = FALSE)
+  dirOutput_enr=paste0(dirOutput,subfold_Fig,"enrich/")
   message("Enrichment whole universe DONE.")
 }
 shiny::setProgress(0.75, detail = "Done Enrichment of universe...")
@@ -2954,8 +2966,8 @@ if(length(doComp)==0 | all(doComp==F)){
   print("WARNING: Not possible to continue with the STRING network evaluation. No protein up- or down-regulated.\n")
 }else{
   doNextChunk_STRING<-TRUE
-  dir.create(file.path(dirOutput,"network/"), showWarnings = FALSE)
-  dirOutput_net=paste0(dirOutput,"network/")
+  dir.create(file.path(dirOutput,subfold_Fig,"network/"), showWarnings = FALSE)
+  dirOutput_net=paste0(dirOutput,subfold_Fig,"network/")
 }
 
 shiny::setProgress(0.84, detail = "Network analysis done... \n Can require several minutes...")
@@ -3175,8 +3187,8 @@ cat((paste0("DISCLAIMER CORAL: The kinome tree plots generated by CORAL make use
 cat("\n \n Results inside folder: *KinaseTree*")
 cat(" \n \n ")
 
-dir.create(file.path(dirOutput,"kinaseTree/"), showWarnings = FALSE)
-dirOutput_kinase=paste0(dirOutput,"kinaseTree/")
+dir.create(file.path(dirOutput,subfold_Fig,"kinaseTree/"), showWarnings = FALSE)
+dirOutput_kinase=paste0(dirOutput,subfold_Fig,"kinaseTree/")
 
 if(!run_enrich){deps_pep_l_df$id<- psm_peptide_table[deps_pep_l_df$id, "GeneName"]}
 
@@ -3199,7 +3211,7 @@ res <- mclapply(names(formule_CORAL), kinase_act_phosr_wrapper, mc.cores = ncore
 cat(" \n \n")
 for(i in 1:length(res)){
   cat(" \n")
-  cat(paste0("### ", stri_split_regex(str = res[[i]], pattern = "\\/|\\_kinase")[[1]][6], " \n \n "))
+  cat(paste0("### ", stri_split_regex(str = res[[i]], pattern = "\\/|\\_kinase")[[1]][7], " \n \n "))
   cat(paste0("![](", res[[i]], ")"), "\n")
   # cat(knitr::include_graphics(res[[i]]))
   cat(" \n \n")
@@ -3229,7 +3241,7 @@ save(c_anno_phos,
      bf,
      bs,
      fc_thr, pval_thr, pval_enrich_thr, overlap_size_enrich_thr,
-     file = paste0(dirOutput,"database_env_R.RData"))
+     file = paste0(dirOutput,subfold_Dat,"database_env_R.RData"))
 
 remove(list = ls()[-1])
 gc()
