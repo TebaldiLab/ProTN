@@ -1038,85 +1038,113 @@ shiny::setProgress(0.53, detail = "Perfom Batch effect correction...")
 
 ```{r sig_tables, message=F, warning=F, echo=F, results='hide'}
 #Save proteins table
-# expr_mat<-as.data.table(dat_gene)
-# expr_mat$gene <- rownames(dat_gene)
-# 
-# expr_l_df <- melt(expr_mat)
-# colnames(expr_l_df) <- c("id","sample","expr")
-# expr_l_df <- expr_l_df[c_anno, on = "sample"]
-# 
-# expr_cond_df <- expr_l_df[ , .(N = .N, avg = mean(expr), sd=sd(expr), CV=sd(expr)/mean(expr), se = sd(expr)/sqrt(.N)), by = c("condition","id")]
-# 
-# expr_avg_df <- dcast(expr_cond_df[,c("id","condition","avg")], id ~ condition)
-# colnames(expr_avg_df)[-1]<-paste0(colnames(expr_avg_df)[-1],"_avg")
-# expr_se_df <- dcast(expr_cond_df[,c("id","condition","se")], id ~ condition)
-# colnames(expr_se_df)[-1]<-paste0(colnames(expr_se_df)[-1],"_se")
-# expr_cv_df <- dcast(expr_cond_df[,c("id","condition","CV")], id ~ condition)
-# colnames(expr_cv_df)[-1]<-paste0(colnames(expr_cv_df)[-1],"_Coef_Variant_(%)")
-# 
-# expr_avgse_df <- Reduce(merge,list(expr_avg_df,expr_se_df,expr_cv_df))
-# 
-# toPrint<-expr_avgse_df
-# colnames(toPrint)[1]<-"symbol"
-expr_mat<-(dat_gene)
-expr_l_df <- expr_mat %>% mutate(id=rownames(expr_mat)) %>% pivot_longer(-id, names_to = "sample", values_to = "expr")
-expr_l_df <- suppressMessages(left_join(expr_l_df,c_anno))
+expr_mat<-as.data.table(dat_gene)
+expr_mat$gene <- rownames(dat_gene)
 
-#Add Standard Deviation column and average
-expr_cond_df<-expr_l_df %>% dplyr::group_by(condition,id) %>%
-            dplyr::summarise(N=n(),avg=mean(expr),sd=sd(expr),CV=sd(expr)/mean(expr)) %>% ungroup() %>% mutate("se"=sd/sqrt(N))
+expr_l_df <- melt(expr_mat)
+colnames(expr_l_df) <- c("id","sample","expr")
+expr_l_df <- expr_l_df[c_anno, on = "sample"]
 
-expr_avg_df <- expr_cond_df %>% dplyr::select(id,condition,avg) %>% pivot_wider(names_from = condition, values_from = avg)
+expr_cond_df <- expr_l_df[ , .(N = .N, avg = mean(expr), sd=sd(expr), CV=sd(expr)/mean(expr), se = sd(expr)/sqrt(.N)), by = c("condition","id")]
+
+expr_avg_df <- dcast(expr_cond_df[,c("id","condition","avg")], id ~ condition)
 colnames(expr_avg_df)[-1]<-paste0(colnames(expr_avg_df)[-1],"_avg")
-
-expr_se_df <- expr_cond_df %>% dplyr::select(id,condition,se) %>% pivot_wider(names_from = condition, values_from = se)
+expr_se_df <- dcast(expr_cond_df[,c("id","condition","se")], id ~ condition)
 colnames(expr_se_df)[-1]<-paste0(colnames(expr_se_df)[-1],"_se")
-
-expr_cv_df <- expr_cond_df %>% dplyr::select(id,condition,CV) %>% pivot_wider(names_from = condition, values_from = CV)
+expr_cv_df <- dcast(expr_cond_df[,c("id","condition","CV")], id ~ condition)
 colnames(expr_cv_df)[-1]<-paste0(colnames(expr_cv_df)[-1],"_Coef_Variant_(%)")
 
-expr_avgse_df<- suppressMessages(left_join(left_join(expr_avg_df,expr_se_df),expr_cv_df))
-rownames(expr_avgse_df) <- expr_avgse_df$id
+expr_avgse_df <- Reduce(merge,list(expr_avg_df,expr_se_df,expr_cv_df))
+
 toPrint<-expr_avgse_df
 colnames(toPrint)[1]<-"symbol"
 
-#TODO HEREEEEEEEEEEEEEEEEE
-n_pep_prot <- psm_anno_df %>% dplyr::group_by(symbol, .drop=FALSE) %>% dplyr::summarise("Num. Peptides"=n_distinct(row)) %>% ungroup()
-n_pep_prot <- left_join(psm_peptide_table, n_pep_prot, by = c("GeneName" = "symbol"))
-colnames(n_pep_prot)[3]<-"symbol"
-toPrint_datGene<-dat_gene
+n_pep_prot <- merge.data.table(as.data.table(psm_peptide_table), as.data.table(psm_anno_df)[ , .(Num.Peptide = .N), by = symbol], by.x = "GeneName", by.y = "symbol")
+colnames(n_pep_prot)[1]<-"symbol"
+toPrint_datGene<-as.data.table(dat_gene)
 toPrint_datGene$symbol<-rownames(dat_gene)
 
+df_to_save<-list("protein_per_sample"=merge.data.table(n_pep_prot,toPrint_datGene),
+                 "protein_per_condition"=merge.data.table(n_pep_prot,toPrint))
+# expr_mat<-(dat_gene)
+# expr_l_df <- expr_mat %>% mutate(id=rownames(expr_mat)) %>% pivot_longer(-id, names_to = "sample", values_to = "expr")
+# expr_l_df <- suppressMessages(left_join(expr_l_df,c_anno))
+# 
+# #Add Standard Deviation column and average
+# expr_cond_df<-expr_l_df %>% dplyr::group_by(condition,id) %>%
+#             dplyr::summarise(N=n(),avg=mean(expr),sd=sd(expr),CV=sd(expr)/mean(expr)) %>% ungroup() %>% mutate("se"=sd/sqrt(N))
+# 
+# expr_avg_df <- expr_cond_df %>% dplyr::select(id,condition,avg) %>% pivot_wider(names_from = condition, values_from = avg)
+# colnames(expr_avg_df)[-1]<-paste0(colnames(expr_avg_df)[-1],"_avg")
+# 
+# expr_se_df <- expr_cond_df %>% dplyr::select(id,condition,se) %>% pivot_wider(names_from = condition, values_from = se)
+# colnames(expr_se_df)[-1]<-paste0(colnames(expr_se_df)[-1],"_se")
+# 
+# expr_cv_df <- expr_cond_df %>% dplyr::select(id,condition,CV) %>% pivot_wider(names_from = condition, values_from = CV)
+# colnames(expr_cv_df)[-1]<-paste0(colnames(expr_cv_df)[-1],"_Coef_Variant_(%)")
+# 
+# expr_avgse_df<- suppressMessages(left_join(left_join(expr_avg_df,expr_se_df),expr_cv_df))
+# rownames(expr_avgse_df) <- expr_avgse_df$id
+# toPrint<-expr_avgse_df
+# colnames(toPrint)[1]<-"symbol"
+# 
+# n_pep_prot <- psm_anno_df %>% dplyr::group_by(symbol, .drop=FALSE) %>% dplyr::summarise("Num. Peptides"=n_distinct(row)) %>% ungroup()
+# n_pep_prot <- left_join(psm_peptide_table, n_pep_prot, by = c("GeneName" = "symbol"))
+# colnames(n_pep_prot)[3]<-"symbol"
+# toPrint_datGene<-dat_gene
+# toPrint_datGene$symbol<-rownames(dat_gene)
+
 #Export table with SE e MEAN
-df_to_save<-list("protein_per_sample"=left_join(n_pep_prot,toPrint_datGene),
-                 "protein_per_condition"=left_join(n_pep_prot,toPrint))
+# df_to_save<-list("protein_per_sample"=merge.data.table(n_pep_prot,toPrint_datGene),
+#                  "protein_per_condition"=merge.data.table(n_pep_prot,toPrint))
 # writexl::write_xlsx(df_to_save,paste0(dirOutput,"normalised_intensities.xlsx"))
 # remove(expr_mat,expr_l_df,expr_cond_df,expr_se_df,expr_avg_df,toPrint)
 
 
 #Save peptides table
-expr_mat<-dat_pep
+expr_mat<-as.data.table(dat_pep)
+expr_mat$gene <- rownames(dat_pep)
 
-expr_l_df <- expr_mat %>% mutate(id=rownames(expr_mat)) %>% pivot_longer(-id, names_to = "sample", values_to = "expr")
-expr_l_df <- suppressMessages(left_join(expr_l_df,c_anno))
+expr_l_df <- melt(expr_mat)
+colnames(expr_l_df) <- c("id","sample","expr")
+expr_l_df <- expr_l_df[c_anno, on = "sample"]
 
-#Add Standard Deviation column and average
-expr_cond_df<-expr_l_df %>% dplyr::group_by(condition,id) %>%
-            dplyr::summarise(N=n(),avg=mean(expr),sd=sd(expr),CV=sd(expr)/mean(expr)) %>% ungroup() %>% mutate("se"=sd/sqrt(N))
+expr_cond_df <- expr_l_df[ , .(N = .N, avg = mean(expr), sd=sd(expr), CV=sd(expr)/mean(expr), se = sd(expr)/sqrt(.N)), by = c("condition","id")]
 
-expr_avg_pet_df <- expr_cond_df %>% dplyr::select(id,condition,avg) %>% pivot_wider(names_from = condition, values_from = avg)
+expr_avg_pet_df <- dcast(expr_cond_df[,c("id","condition","avg")], id ~ condition)
 colnames(expr_avg_pet_df)[-1]<-paste0(colnames(expr_avg_pet_df)[-1],"_avg")
-
-expr_se_pet_df <- expr_cond_df %>% dplyr::select(id,condition,se) %>% pivot_wider(names_from = condition, values_from = se)
+expr_se_pet_df <- dcast(expr_cond_df[,c("id","condition","se")], id ~ condition)
 colnames(expr_se_pet_df)[-1]<-paste0(colnames(expr_se_pet_df)[-1],"_se")
-
-expr_cv_pep_df <- expr_cond_df %>% dplyr::select(id,condition,CV) %>% pivot_wider(names_from = condition, values_from = CV)
+expr_cv_pep_df <- dcast(expr_cond_df[,c("id","condition","CV")], id ~ condition)
 colnames(expr_cv_pep_df)[-1]<-paste0(colnames(expr_cv_pep_df)[-1],"_Coef_Variant_(%)")
 
-expr_avgse_pep_df<- suppressMessages(left_join(left_join(expr_avg_pet_df,expr_se_pet_df)
-                                               ,expr_cv_pep_df))
-rownames(expr_avgse_pep_df) <- expr_avgse_pep_df$id
+expr_avgse_pep_df <- Reduce(merge,list(expr_avg_pet_df,expr_se_pet_df,expr_cv_pep_df))
+
 toPrint<-expr_avgse_pep_df
+# colnames(toPrint)[1]<-"symbol"
+
+# expr_mat<-dat_pep
+
+# expr_l_df <- expr_mat %>% mutate(id=rownames(expr_mat)) %>% pivot_longer(-id, names_to = "sample", values_to = "expr")
+# expr_l_df <- suppressMessages(left_join(expr_l_df,c_anno))
+
+#Add Standard Deviation column and average
+# expr_cond_df<-expr_l_df %>% dplyr::group_by(condition,id) %>%
+#             dplyr::summarise(N=n(),avg=mean(expr),sd=sd(expr),CV=sd(expr)/mean(expr)) %>% ungroup() %>% mutate("se"=sd/sqrt(N))
+# 
+# expr_avg_pet_df <- expr_cond_df %>% dplyr::select(id,condition,avg) %>% pivot_wider(names_from = condition, values_from = avg)
+# colnames(expr_avg_pet_df)[-1]<-paste0(colnames(expr_avg_pet_df)[-1],"_avg")
+# 
+# expr_se_pet_df <- expr_cond_df %>% dplyr::select(id,condition,se) %>% pivot_wider(names_from = condition, values_from = se)
+# colnames(expr_se_pet_df)[-1]<-paste0(colnames(expr_se_pet_df)[-1],"_se")
+# 
+# expr_cv_pep_df <- expr_cond_df %>% dplyr::select(id,condition,CV) %>% pivot_wider(names_from = condition, values_from = CV)
+# colnames(expr_cv_pep_df)[-1]<-paste0(colnames(expr_cv_pep_df)[-1],"_Coef_Variant_(%)")
+# 
+# expr_avgse_pep_df<- suppressMessages(left_join(left_join(expr_avg_pet_df,expr_se_pet_df)
+#                                                ,expr_cv_pep_df))
+# rownames(expr_avgse_pep_df) <- expr_avgse_pep_df$id
+# toPrint<-expr_avgse_pep_df
 
 #Prepare the README
 readme_sheet <- data.frame("INFO"=c(   NA,
@@ -1133,8 +1161,7 @@ df_to_save<-list("README"=readme_sheet,
                  "protein_per_sample"=df_to_save$`protein_per_sample`,
                  "peptide_per_sample"=merge(psm_peptide_table, dat_pep, by=0)[,-c(1)],
                  "protein_per_condition"=df_to_save$`protein_per_condition`,
-                 "peptide_per_condition"=left_join(rownames_to_column(psm_peptide_table), 
-                                                                              toPrint, by=c("rowname" = "id"))[,-c(1)])
+                 "peptide_per_condition"=merge.data.table(as.data.table(rownames_to_column(psm_peptide_table)), toPrint, by.x = "rowname", by.y = "id")[,-c(1)])
 
 writexl::write_xlsx(df_to_save,paste0(dirOutput,subfold_Tab,"normalised_intensities.xlsx"))
 remove(expr_mat,expr_l_df,expr_cond_df,expr_se_pet_df,expr_avg_pet_df,toPrint)
@@ -1428,7 +1455,7 @@ shiny::setProgress(0.58, detail = "Differential Analysis in progress...")
 message("Differentiation analysis in progress...")
 #Execution of differentiation analysis using DEqMS for proteins
 psm_count_table = as.data.frame(table(dat_psm$symbol))
-deps_df <- limmafnc("PROT",c_anno,dat_gene,psm_count_table,formule_contrast,expr_avgse_df,signal_thr,fc_thr, pval_thr, pval_fdr)
+deps_df <- limmafnc("PROT",c_anno,dat_gene,psm_count_table,formule_contrast,as.data.frame(expr_avgse_df),signal_thr,fc_thr, pval_thr, pval_fdr)
 deps_l_df<-deps_df$degs_l_df
 deps_w_df<-deps_df$degs_w_df
 toPrint<-deps_w_df
@@ -1436,7 +1463,7 @@ colnames(toPrint)[1]<-"GeneSymbol"
 
 #Execution of differentiation analysis using DEqMS for proteins
 psm_count_table<-as.data.frame(table(rownames(dat_pep)))
-deps_pep_df <- limmafnc("PEP",c_anno,dat_pep,psm_count_table,formule_contrast,expr_avgse_pep_df,signal_thr,fc_thr, pval_thr, pval_fdr)
+deps_pep_df <- limmafnc("PEP",c_anno,dat_pep,psm_count_table,formule_contrast,as.data.frame(expr_avgse_pep_df),signal_thr,fc_thr, pval_thr, pval_fdr)
 deps_pep_l_df<-deps_pep_df$degs_l_df
 deps_pep_w_df<-deps_pep_df$degs_w_df
 toPrint_pep<-deps_pep_w_df
@@ -2633,7 +2660,7 @@ shiny::setProgress(0.98, detail = "Network figures generated...")
 
 
 ```{r save_df, echo=F, message=F, warning=F, results='hide'}
-# save(list = ls(), file="tmp.RData")
+save(list = ls(), file="tmp.RData")
 
 save(c_anno,
      dat_gene,
