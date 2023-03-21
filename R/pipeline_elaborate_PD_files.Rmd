@@ -335,7 +335,7 @@ cat("    - **selected_protein_plot.pdf**: plot displaying the abundances of sele
     - **DE_protein_barplot.pdf**: number of differentially expressed proteins found in each contrast.
     - **DE_peptide_barplot.pdf**: number of differentially expressed peptides found in each contrast.
 
-```{r print_descr_enrich_fig, warning=FALSE, echo=F, message=FALSE, eval=run_enrich, results='asis'}
+```{r print_descr_enrich_fig_global, warning=FALSE, echo=F, message=FALSE, eval=run_enrich, results='asis'}
 cat("  - ```Enrichment``` directory: Directory containing figures from functional annotation enrichment analysi \n")  
 ```
 ```{r print_descr_enrich_fig, warning=FALSE, echo=F, message=FALSE, eval=run_enrich&(!run_enrich_universe), results='asis'}
@@ -363,7 +363,7 @@ cat("    - **ppi_network.pdf**: network representation in two layouts: Fruchterm
 ```
 
 
-## 0.2 Summary of input parameters and thresholds
+## Summary of input parameters and thresholds
 
 ```{r print_settings, warning=FALSE, echo=F, message=FALSE, results='asis'}
 cat(" \n \n")
@@ -375,32 +375,34 @@ if(readPD_files){
   cat("**Source files:** MaxQuant")
   cat(" \n")
 }
+cat(" \n \n")
 if(batch_corr_exe){
-  cat("**Pipeline**")
+  cat("**Pipeline** \n ")
   cat(" \n")
   cat("- Execution of batch effect correction.")
 }
+cat(" \n \n ")
+cat("**Differential expression** \n ")
 cat(" \n")
-cat("**Differential expression**")
-cat(" \n")
-cat(paste0("- Fold Change threshold: log2_FC > ",fc_thr," (+), log2_FC < -",fc_thr," (-)"))
+cat(paste0("- Fold Change threshold: log2_FC > ",fc_thr," (+), log2_FC < -",fc_thr," (-) "))
 cat(" \n")
 cat(paste0("- Statistica significance threshold: p.val < ",pval_thr," "))
 cat(" \n")
 if(signal_thr != -Inf){cat(paste0("- Signal log2 intesity threshold: signal > ",signal_thr," "))}
-cat(" \n")
+cat(" \n \n ")
 if(run_enrich){
-  cat("**Enrichment analysis**")
+  cat("**Enrichment analysis** \n ")
   cat(" \n")
   cat(paste0("- Statistical significance threshold: p.val < ",pval_enrich_thr," "))
   cat(" \n")
   cat(paste0("- Overlap size threshold for enrichment analysis: OverlapSize > ",overlap_size_enrich_thr," "))
   cat(" \n")
   if(run_enrich_universe){cat("- Execution of the enrichmentalso on all detected proteins.")}
+  cat(" \n \n ")
 }
-cat(" \n")
+cat(" \n \n ")
 if(run_STRING){
-  cat("**Network analysis**")
+  cat("**Network analysis** \n ")
   cat(" \n")
   cat("- Execution of PPI network analysis with STRINGdb.")
 }
@@ -653,6 +655,8 @@ if(readPD_files){
                              "modifications"=psm_sig_raw$Modifications)
   psm_anno_raw$id<-paste(psm_anno_raw$symbol,psm_anno_raw$sequence,psm_anno_raw$modifications,sep="_")
 }
+
+
 rownames(psm_sig_raw)<-rownames(psm_anno_raw)<-paste(psm_anno_raw$symbol,seq(1:nrow(psm_anno_raw)),sep="_")
 psm_anno_raw$old_id<-rownames(psm_anno_raw)
 
@@ -699,20 +703,26 @@ psm_long_df <- psm_sig_prot_raw %>% mutate(id=as.factor(rownames(psm_sig_prot_ra
 psm_long_df <- psm_long_df %>% pivot_longer(-id, names_to = "sample", values_to = "counts")
 psm_long_df <- suppressMessages(left_join(psm_long_df,c_anno))
 
+
 psm_filter_df <- psm_long_df %>% dplyr::group_by(id,condition, .drop=FALSE) %>% dplyr::summarise("min_c"=sum(is.na(counts))) %>% ungroup()
 
 psm_filter_df <- psm_filter_df %>% dplyr::group_by(id,.drop=FALSE) %>% dplyr::summarise("passes_c"= sum(min_c <= sig_thr)) %>% ungroup()
 
 filter_id <- as.character(psm_filter_df %>% dplyr::filter(passes_c > 0) %>% pull(id))
-
 psm_sig_prot_df <-psm_sig_prot_raw[filter_id,]
 psm_anno_df <- psm_anno_raw[filter_id,]
-# psm_table_info <- psm_table_info[filter_id,]
 
 #Log2
 psm_log_prot_df <- psm_sig_prot_df
 psm_log_prot_df <- psm_sig_prot_df %>% log2()
 
+
+#Filter proteins with only 1 peptides
+filter_df_single_pep<-psm_anno_df %>% dplyr::group_by(symbol) %>% dplyr::summarise(N=n()) %>% ungroup() %>% filter(N > 1)
+filter_df_single_pep <- left_join(filter_df_single_pep, psm_anno_df) %>% pull(id)
+psm_sig_prot_df <-psm_sig_prot_df[intersect(rownames(psm_sig_prot_df), filter_df_single_pep),]
+psm_anno_df <- psm_anno_df[intersect(rownames(psm_anno_df), filter_df_single_pep),]
+# psm_table_info <- psm_table_info[filter_id,]
 #Clean old variables
 remove(psm_anno_raw,psm_sig_prot_raw,psm_long_df,psm_filter_df,filter_id,sig_thr)
 
@@ -730,6 +740,8 @@ filter_id <- as.character(psm_filter_df %>% dplyr::filter(passes_c > 0) %>% pull
 
 psm_sig_pet_df <-psm_sig_pet_raw[filter_id,]
 psm_peptide_table<-psm_peptide_table[filter_id,]
+
+
 
 #Determine column tryptic
 peptides_df <- psm_peptide_table[,c("Accession", "Annotated Sequence")]
@@ -765,6 +777,13 @@ psm_peptide_table$tryptic_cond <- peptides_df$tryptic_cond
 #Log2
 psm_log_pet_df <- psm_sig_pet_df
 psm_log_pet_df <- psm_sig_pet_df %>% log2()
+
+#Filter proteins with only 1 peptides
+filter_df_single_pep<-psm_anno_df %>% dplyr::group_by(symbol) %>% dplyr::summarise(N=n()) %>% ungroup() %>% filter(N > 1)
+filter_df_single_pep <- left_join(filter_df_single_pep, psm_anno_df) %>% pull(symbol)
+filter_df_single_pep <- rownames(psm_peptide_table[which(psm_peptide_table$GeneName %in% filter_df_single_pep),])
+psm_sig_pet_df <-psm_sig_pet_df[intersect(rownames(psm_sig_pet_df), filter_df_single_pep),]
+psm_peptide_table <- psm_peptide_table[intersect(rownames(psm_peptide_table), filter_df_single_pep),]
 
 remove(psm_sig_pet_raw,psm_sig_raw,psm_long_df,psm_filter_df,filter_id,sig_thr)
 
@@ -864,7 +883,37 @@ shiny::setProgress(0.34, detail = "Doing normalizations...")
 
 **Protein** normalized abundancies were calculated with the medianSweeping function from the Bioconductor package [DEqMS](<https://www.bioconductor.org/packages/release/bioc/html/DEqMS.html>).
 
+```{r pep_in_proteins, echo=F, message=F, warning=F, eval=F}
+
+numeric_df <- as.data.table(table(psm_anno_df$symbol))
+numeric_df[which(numeric_df$N > 30), "N"] <- 30
+numeric_df <- numeric_df[order(numeric_df$N) , .(NPeptides = .N), by = c("N")]
+numeric_df$N <- (as.factor(numeric_df$N))
+
+# numeric_df$numeric_values<-colSums(is.na(psm_sig_prot_df))
+# numeric_df$numeric_percentage<- 100-(numeric_df$numeric_values/nrow(psm_sig_prot_df)*100)
+# setnames(numeric_df,"numeric_percentage","% of available abundancies")
+hs<-ggplot(data=numeric_df, aes(x=N,y=NPeptides, color = NPeptides, fill = NPeptides))+
+  # geom_hline(yintercept = 0, lty=2)+
+  # coord_flip()+
+  geom_bar(stat="identity",width=.7,alpha=.8)+
+  theme_bw()+
+  theme(legend.position = "none")+
+  labs(x = "Number peptides in protein", y = "Count protein") +
+  # scale_fill_manual(values="dodgerblue2") +
+  # scale_colour_manual(values="dodgerblue2") +
+  theme(panel.grid.minor = element_blank(),panel.grid.major.y = element_blank(),panel.grid.major.x = element_blank())
+
+hs
+
+remove(hs,numeric_df)
+
+shiny::setProgress(0.34, detail = "Doing normalizations...")
+```
+
+
 **Imputation** is performed on peptide and protein abundancies with the Bioconductor package [PhosR](https://www.sciencedirect.com/science/article/pii/S221112472100084X). Round imputation is performed in absence of replicates. 
+
 The principal imputation method is based on the PhosR package. It is a package for comprehensive analysis of phosphoproteomic data, but it hase two core components: data processing, which has many useful function to manage the raw data, and downstream analysis for the phospho-proteomic analysis.
 PhosR is always applied but in some cases, it does not work like when there is only 1 sample in a specific condition. In this rare case, it uses a simpler round imputation. It calculates the mean and the standard deviation of the matrix and it generates the imputed values based on the gaussian function derived.
 
@@ -964,9 +1013,8 @@ shiny::setProgress(0.42, detail = "Done normalization and imputation...")
 ```
 
 ```{r batch_correction, warning=F, message=F, echo=F, eval=batch_corr_exe, results='asis'}
-cat("#### 2.3.1. Batch correction {.tabset}  \n")
+cat("#### 1.3.1. Batch correction {.tabset}  \n")
 cat("A batch effect correction is applied to the datased using the proBatch package. \n")
-cat("Two MDSs are created, one based on the corrected protein abundances, tab **Proteins**. The second on the corrected peptide abundances, tab **Peptides** \n")
 cat(" \n \n")
 
 batch_annotation <- c_anno
@@ -1189,7 +1237,7 @@ remove(expr_mat,expr_l_df,expr_cond_df,expr_se_pet_df,expr_avg_pet_df,toPrint)
 shiny::setProgress(0.45, detail =  "Save normalized data...")
 ```
 
-#### 1.4. Distributions of normalized abundancies
+#### 1.4. Distributions of normalized abundancies {.tabset} 
 Violin plot showing sample distributions of log2 normalized and imputed abundancies.
 
 ```{r norm_distributions, message=F, warning=F, echo=F}
@@ -1211,7 +1259,31 @@ hs<-ggplot(data=pg_long_df, aes(x=factor(sample, levels=unique(psm_long_df$sampl
   scale_colour_manual(values=setNames(as.list(c_anno$color), c_anno$sample)) +
   theme(panel.grid.minor = element_blank(),panel.grid.major.y = element_blank())
 
-hs
+cat("##### Proteins \n")
+print(hs)
+cat(" \n \n")
+
+pg_long_df <- dat_pep[,c_anno[order(c_anno$condition),"sample"]] %>% mutate(id=as.factor(rownames(dat_pep[,c_anno[order(c_anno$condition),"sample"]]))) %>% pivot_longer(-id, names_to = "sample", values_to = "log2 normalized abundance")
+pg_long_df <- suppressMessages(left_join(pg_long_df,c_anno))
+
+
+hs<-ggplot(data=pg_long_df, aes(x=factor(sample, levels=unique(psm_long_df$sample)),y=`log2 normalized abundance`,fill=sample,colour=sample))+
+  # ggtitle("Normalized samples")+
+  #geom_hline(yintercept = 0, lty=2)+
+  coord_flip()+
+  geom_violin(alpha=0.5,scale="width",trim = F,colour=NA)+
+  geom_boxplot(alpha=1,fill="white",width=0.2,outlier.shape = NA, notch = F)+
+  theme_bw()+
+  theme(legend.position = "none",axis.title.y = element_blank())+
+  # labs(x = "Log2 Intensity") +
+  scale_fill_manual(values=setNames(as.list(c_anno$color), c_anno$sample)) +
+  scale_colour_manual(values=setNames(as.list(c_anno$color), c_anno$sample)) +
+  theme(panel.grid.minor = element_blank(),panel.grid.major.y = element_blank())
+
+cat("##### Peptides \n")
+print(hs)
+cat(" \n \n")
+
 
 remove(hs, pg_long_df)
 
@@ -1470,9 +1542,9 @@ Differentially expressed proteins are identified with the DEqMS package. This pa
 cat(" \n \n")
 #Print summary of filter and contrast design
 
-cat("**Thresholds used:**")
+cat("**Thresholds used:** \n ")
 cat(" \n")
-cat(paste0("- Fold Change threshold: log2_FC > ",fc_thr," (+), log2_FC < -",fc_thr," (-)"))
+cat(paste0("- Fold Change threshold: log2_FC > ",fc_thr," (+), log2_FC < -",fc_thr," (-) "))
 cat(" \n")
 cat(paste0("- Statistica significance threshold: p.val < ",pval_thr," "))
 cat(" \n")
@@ -1669,10 +1741,11 @@ cat(" \n \n")
 if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   cat("#### 2.3. Volcano plots  \n")
   cat("Differentially expressed proteins/peptides are displayes according to the thresholds set in the input. \n \n ")
-  cat("   - + up-regulated protein/peptìde \n \n ")
-  cat("   - - down-regulated protein/peptìde \n \n ")
-  cat("   - = invariant protein/peptìde \n \n ")
+  cat(" - + up-regulated protein/peptìde \n ")
+  cat(" - - down-regulated protein/peptìde \n ")
+  cat(" - = invariant protein/peptìde \n \n ")
   cat("Top enriched proteins/peptides are labeled. \n")
+  cat(" \n \n")
   
   cat("#### 2.3.1. Volcano plots of Proteins {.tabset}  \n")
   cat(" \n \n")
@@ -2256,11 +2329,12 @@ if(p$is_alive() | is.null(p$get_result())){
   run_enrich_universe <- FALSE
 } else{
   enr_df_universe<-p$get_result()
+  save(list=ls(),file="tmp.RData")
   p$kill()
   #Save in RData for possible further analysis
   save(enr_df_universe, file=paste0(dirOutput,subfold_Dat,"enrichment_allproteins.RData"))
 
-  writexl::write_xlsx((enr_df_universe %>% dplyr::filter(Significtive == "TRUE",
+  writexl::write_xlsx((enr_df_universe %>% dplyr::filter(Significative == "TRUE",
                                                          overlap_size>=overlap_size_enrich_thr)),
                       path = paste0(dirOutput,subfold_Tab,"enrichment_allproteins.xlsx"))
 
@@ -2286,7 +2360,7 @@ if(length(enrich_filter_DBs) > 0){
     dplyr::filter(anno_class %in% annos,
                   overlap_size>=overlap_size_enrich_thr,
                   anno_size<=10000,
-                  Significtive == "TRUE",
+                  Significative == "TRUE",
                   str_ends(input_name,"_all")) %>%
     dplyr::arrange(-overlap_size) %>% dplyr::group_by(input_name,anno_class) %>% slice_head(n=5) %>%
     ungroup() %>% dplyr::select(anno_class,anno_name)
@@ -2345,7 +2419,7 @@ if(length(enrich_filter_DBs) > 0){
     dplyr::filter(anno_class %in% annos,
                   overlap_size>=overlap_size_enrich_thr,
                   anno_size<=10000,
-                  Significtive == "TRUE",
+                  Significative == "TRUE",
                   !str_ends(input_name,"_all")) %>%
     dplyr::arrange(-overlap_size) %>% dplyr::group_by(input_name,anno_class) %>% slice_head(n=5) %>%
     ungroup() %>% dplyr::select(anno_class,anno_name)
@@ -2407,7 +2481,7 @@ if(length(enrich_filter_term) > 0){
   enr_sele_names<-NULL
   #For each pattern search in DEPs name
   for(word in lookup_words){
-    matches <- enr_df %>% dplyr::filter(Significtive == "TRUE",
+    matches <- enr_df %>% dplyr::filter(Significative == "TRUE",
                                         overlap_size>=overlap_size_enrich_thr,
                                         str_ends(input_name,"_all")) %>% dplyr::select(anno_class,anno_name)
     matches <- matches[grepl(paste0("\\b",word,"\\b"),matches$anno_name,ignore.case=TRUE),]
@@ -2472,7 +2546,7 @@ if(length(enrich_filter_term) > 0){
 
   #For each patter we want, search in each DEPs name to find it
   for(word in lookup_words){
-    matches <- enr_df %>% dplyr::filter(Significtive == "TRUE",
+    matches <- enr_df %>% dplyr::filter(Significative == "TRUE",
                                         overlap_size>=overlap_size_enrich_thr,
                                         !str_ends(input_name,"_all")) %>% dplyr::select(anno_class,anno_name)
     matches <- matches[grepl(paste0("\\b",word,"\\b"),matches$anno_name,ignore.case=TRUE),]

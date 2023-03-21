@@ -526,7 +526,7 @@ deps_b2b_lollipop <- function(input_df, # input dataframe
                                     shift_mult = 1, # space left for middle labels (by default, if left to 1, equal to the space dedicated to the lollipop on each side)
                                     break_vec=seq(0,1500,250) # specification of x breaks
 ){
-  
+  bf<-"Arial"
   plot_df <- input_df %>% dplyr::select(bb_col=all_of(bb_col),
                                         x_col=all_of(x_col),
                                         y_col=all_of(y_col),
