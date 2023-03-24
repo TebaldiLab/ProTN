@@ -407,6 +407,12 @@ transient <- plot_df$y_col %>% str_sub(1,(char_max-2)) %>% str_c("..") # abbrevi
 plot_df$y_col<- ifelse(str_length(plot_df$y_col)>char_max,transient,plot_df$y_col) # replacement
 rm(transient)
 
+# creation of labels, abbreviating text 
+plot_df$x_col<- plot_df %>% pull(x_col) %>% str_trim() # Clean text
+transient <- plot_df$x_col %>% str_sub(1,(char_max-2)) %>% str_c("..") # abbreviated option
+plot_df$x_col<- ifelse(str_length(plot_df$x_col)>char_max,transient,plot_df$x_col) # replacement
+rm(transient)
+
 # factorize bb_col
 if(!is.factor(plot_df$bb_col)){
 plot_df$bb_col<-factor(plot_df$bb_col)
@@ -511,10 +517,10 @@ deps_b2b_lollipop <- function(input_df, # input dataframe
                                     shape_col="class", # column for shape, optional
                                     shape_vec=c(25,24), # shape vector, optional
                                     
-                                    color_col="class", # column for color, optional
+                                    color_col="id", # column for color, optional
                                     color_vec=c("grey60","grey40"), # color vector, optional
                                     
-                                    fill_col="class", # column for fill color, optional
+                                    fill_col="id", # column for fill color, optional
                                     fill_vec=c("grey60","grey40"), # fill vector, optional
                                     
                                     text_col="N", # column for fill color, optional
@@ -585,9 +591,9 @@ deps_b2b_lollipop <- function(input_df, # input dataframe
   if("size_col" %in% colnames(plot_df)){
     lp <- lp + 
       geom_point(data = plot_df[plot_df$bb_col==f_left,],
-                 aes(x = -shift-x_col,size=size_col))+
+                 aes(x = -shift-x_col,size=size_col), position = position_nudge(y = -0.06))+
       geom_point(data = plot_df[plot_df$bb_col==f_right,],
-                 aes(x = shift+x_col,size=size_col))+
+                 aes(x = shift+x_col,size=size_col), position = position_nudge(y = 0.06))+
       scale_size(name=size_col,range = size_vec)
   } else {
     lp <- lp + 
@@ -597,12 +603,13 @@ deps_b2b_lollipop <- function(input_df, # input dataframe
                  aes(x = shift+x_col),size=2)
   }
   
+  
   if("text_col" %in% colnames(plot_df)){
     lp <- lp + geom_text(data = plot_df[plot_df$bb_col==f_left,],
-                         aes(x = -shift, label=text_col, hjust=(-0.05)),
+                         aes(x = -shift-x_col, label=text_col, vjust=(-0.25)),
                          fontface="italic", size=4, show_guide = F) +
       geom_text(data = plot_df[plot_df$bb_col==f_right,],
-                aes(x = shift, label=text_col, hjust=(1.1)),
+                aes(x = shift+x_col, label=text_col, vjust=(1.2)),
                 fontface="italic", size=4, show_guide = F) 
     # scale_x_continuous(limits =c((-shift-max(plot_df$x_col)),(shift+max(plot_df$x_col))),
     #                    breaks = c(rev(-break_vec)-shift, break_vec+shift),
@@ -615,7 +622,7 @@ deps_b2b_lollipop <- function(input_df, # input dataframe
   }
   
   if("color_col" %in% colnames(plot_df)){
-    lp <- lp + aes(colour=color_col) + scale_color_manual(name=color_col, values= color_vec) # drop = FALSE
+    lp <- lp + aes(colour=color_col) + scale_color_manual(name=color_col,values= color_vec) # drop = FALSE
   }
   
   if("fill_col" %in% colnames(plot_df)){
@@ -625,8 +632,8 @@ deps_b2b_lollipop <- function(input_df, # input dataframe
   # lp <- lp + ggforce::facet_col(vars(facet_col), scales = "free_y", space = "free") +
       # theme(strip.text = element_text(margin = margin(1,1,1,1), face="bold"))
 
-  lp <- lp + geom_text(aes(x=shift, label=c("Up-regulated", rep("",nrow(plot_df)-1)), hjust=(-0.05), vjust=(-2), fontface=2),family=bf,size=4)
-  lp <- lp + geom_text(aes(x=-shift, label=c("Down-regulated", rep("",nrow(plot_df)-1)), hjust=(1.1), vjust=(-2), fontface=2),family=bf,size=4)
+  lp <- lp + geom_text(aes(x=shift, label=c("Up-regulated", rep("",nrow(plot_df)-1)), hjust=(-0.05), vjust=(-2), fontface=2, color="black"),family=bf,size=4)
+  lp <- lp + geom_text(aes(x=-shift, label=c("Down-regulated", rep("",nrow(plot_df)-1)), hjust=(1.1), vjust=(-2), fontface=2, color="black"),family=bf,size=4)
   return(lp)
   
 }
@@ -713,7 +720,17 @@ enrichment_dotmatrix <- function(input_df, # input dataframe
    }
    
    if("fill_col" %in% colnames(plot_df)){
-      lp <- lp + aes(fill=fill_col) + scale_fill_manual(name=fill_col, values= fill_vec) # drop = FALSE
+     # if(shape_col == "input_name"){
+     # cc<-color_vec
+     # names(cc)<-paste0(names(cc),"-TRUE")
+     # cc_1 <- rep("white", length(color_vec))
+     # names(cc_1) <- paste0(names(color_vec),"-FALSE")
+     # #
+     # lp <- lp + aes(fill=interaction(plot_df$x_col,plot_df$fill_col,sep="-",lex.order=TRUE)) + scale_fill_manual(name=fill_col,
+     # values= c(cc, cc_1))
+     # } else{
+     lp <- lp + aes(fill=fill_col) + scale_fill_manual(name="Significative", values= fill_vec) # drop = FALSE
+     # }
    }
    
    if("facet_col" %in% colnames(plot_df)){
@@ -1102,19 +1119,37 @@ enrichRfnc<-function(in_df, pval_fdr_enrich, pval_enrich_thr, overlap_size_enric
       
    }
    
-   enrfcn <- function(a) {
-     source("functions_2021.R")
-        frg<-DEGs_lists[[a]]
-        if(length(frg)>0){
-           enrichment_enrichr(frg, input_name=a, dbs_vec = dbs)
-        }
-        # clu_n <- enrichment_enrichr(frg, input_name=a, dbs_vec = dbs)
-        # enr_df<-rbind(enr_df,clu_n)
-   }
    ncores <- min(detectCores()-2, length(unique(in_df$comp))*3)
    enr_df<-NULL
-   enr_df<-do.call(rbind, mclapply(names(DEGs_lists), enrfcn, mc.cores = ncores))
-
+   
+   
+   if(.Platform$OS.type == "unix") { 
+     enrfcn <- function(a) {
+       source("functions_2021.R")
+       frg<-DEGs_lists[[a]]
+       if(length(frg)>0){
+         enrichment_enrichr(frg, input_name=a, dbs_vec = dbs)
+       }
+       # clu_n <- enrichment_enrichr(frg, input_name=a, dbs_vec = dbs)
+       # enr_df<-rbind(enr_df,clu_n)
+     }
+     enr_df<-do.call(rbind, mclapply(names(DEGs_lists), enrfcn, mc.cores = ncores))
+   } else {
+     cluster_ext <- makeCluster(ncores, type = "SOCK")
+     registerDoParallel(cl = cluster_ext)
+     
+     enr_df<-foreach(a = names(DEGs_lists),.combine='rbind',.packages = c("dplyr","enrichR","tidyr","stringr")) %dopar% {
+       source("functions_2021.R")
+       frg<-DEGs_lists[[a]]
+       if(length(frg)>0){
+         enrichment_enrichr(frg, input_name=a, dbs_vec = dbs)
+       }
+       # clu_n <- enrichment_enrichr(frg, input_name=a, dbs_vec = dbs)
+       # enr_df<-rbind(enr_df,clu_n)
+     }
+     stopCluster(cluster_ext)
+   }
+   
    enr_df$"Significative"<-ifelse(if(pval_fdr_enrich){(enr_df$fdr<pval_enrich_thr) & (enr_df$overlap_size>=overlap_size_enrich_thr)}else{(enr_df$p_value<pval_enrich_thr) & (enr_df$overlap_size>=overlap_size_enrich_thr)},"TRUE","FALSE") %>% factor(levels=c("TRUE","FALSE"))
    enr_df$log2_OR<-log2(enr_df$odds_ratio)
    return(enr_df)
