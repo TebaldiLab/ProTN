@@ -42,7 +42,7 @@
 					</p>
 				</div>
 				<div id="normalization-of-the-intensities" class="section level3">
-					<h3>02. Normalization of the intensities</h3>
+					<h3>02. Normalization and imputation of the intensities</h3>
 					<p>The intensities are log2 transformed and normalized with DEqMS <span class="citation">(Zhu
 							2022)</span>. Two methods are applied because a
 						double normalization is required, one for the phospho-proteomic and one for proteomic.
@@ -56,9 +56,6 @@
 						peptides, but also it summarizes the peptide intensities into protein
 						relative abundance by the median sweeping method.
 					</p>
-				</div>
-				<div id="imputation-of-the-intensities" class="section level3">
-					<h3>03. Imputation of the intensities</h3>
 					<p>After the normalization the intensities from Mass Spectrometer need
 						to be imputed. The principal method is based on the PhosR package <span class="citation">(Kim et
 							al. 2021)</span> that performs a complex and
@@ -68,7 +65,7 @@
 					</p>
 				</div>
 				<div id="statistical-differential-analysis" class="section level3">
-					<h3>04. Statistical differential analysis</h3>
+					<h3>03. Statistical differential analysis</h3>
 					<p>The workflow continue with the differential analysis. This phase is
 						applied to the peptides of the phospho-proteomic with background the proteins of the proteomic,
 						to obtain the significant phosphosite. The workflow uses the Limma package
@@ -129,7 +126,7 @@
 					</p>
 				</div>
 				<div id="report-creation-and-download-of-the-results" class="section level3">
-					<h3>05. Report creation and download of the results</h3>
+					<h3>04. Report creation and download of the results</h3>
 					<p>The results are summarized in a web-page HTML report. Other than
 						this, the experiment is described by a large number of files, a
 						description of each file generated can be found in section <a
