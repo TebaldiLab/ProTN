@@ -236,6 +236,10 @@ server <- function(input, output, session) {
           uiOutput("help15")
         ),
         fluidRow(
+          radioButtons("enrichR_DB", "Execute enrichment only on selected database", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
+          # uiOutput("help14")
+        ),
+        fluidRow(
           textInput("terms_enrich", "Terms to search"),
           uiOutput("help18")
         ),
@@ -666,6 +670,7 @@ server <- function(input, output, session) {
               overlap_size_enrich_thr = if(is.null(input$os_enrich)){as.integer(5)}else{input$os_enrich},
               enrich_filter_term = input$terms_enrich,
               enrich_filter_DBs = input$DB_enrich,
+              enrichR_DB = if(is.null(input$enrichR)){FALSE}else{input$enrichR_DB},
               dirOutput = dirOutput_Server
             )
             
