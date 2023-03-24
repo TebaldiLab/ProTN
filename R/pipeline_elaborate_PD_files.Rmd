@@ -2070,7 +2070,7 @@ doNextChunk <- tryCatch({
   #Perform enriched analysis with EnrichR
   enr_df<-enrichRfnc(deps_l_df, pval_fdr_enrich, pval_enrich_thr, overlap_size_enrich_thr, dbs)
   #Save in RData for possible further analysis
-  enrich_df<-enr_df[which(enr_df$Significative == "TRUE" & enr_df$overlap_size>=overlap_size_enrich_thr),]
+  enrich_df<-enr_df[which(enr_df$Significant == "TRUE" & enr_df$overlap_size>=overlap_size_enrich_thr),]
   save(enrich_df, file=paste0(dirOutput,subfold_Dat,"enrichment_DE.RData"))
   
   writexl::write_xlsx(enrich_df,
@@ -2087,7 +2087,6 @@ error=function(cond){
 })
 message("Enrichment DONE.")
 shiny::setProgress(0.77, detail = "Done Enrichment...")
-
 ```
 
 
@@ -2106,7 +2105,7 @@ if(length(enrich_filter_DBs) > 0){
     dplyr::filter(anno_class %in% annos,
                   overlap_size>=overlap_size_enrich_thr,
                   anno_size<=10000,
-                  Significative == "TRUE",
+                  Significant == "TRUE",
                   str_ends(input_name,"_all")) %>%
     dplyr::arrange(-overlap_size) %>% dplyr::group_by(input_name,anno_class) %>% slice_head(n=5) %>%
     ungroup() %>% dplyr::select(anno_class,anno_name)
@@ -2133,8 +2132,8 @@ if(length(enrich_filter_DBs) > 0){
                            color_col="input_name",
                            color_vec=col_vec,
                            shape_vec=c(16,21),
-                          shape_col = "Significative",
-                          fill_col = "Significative",
+                          shape_col = "Significant",
+                          fill_col = "Significant",
                            char_max=60) +guides(color=F, shape = guide_legend(override.aes = list(size=4)))
 
   tryCatch({
@@ -2165,7 +2164,7 @@ if(length(enrich_filter_DBs) > 0){
     dplyr::filter(anno_class %in% annos,
                   overlap_size>=overlap_size_enrich_thr,
                   anno_size<=10000,
-                  Significative == "TRUE",
+                  Significant == "TRUE",
                   !str_ends(input_name,"_all")) %>%
     dplyr::arrange(-overlap_size) %>% dplyr::group_by(input_name,anno_class) %>% slice_head(n=5) %>%
     ungroup() %>% dplyr::select(anno_class,anno_name)
@@ -2174,8 +2173,7 @@ if(length(enrich_filter_DBs) > 0){
 
   #Select the results divided in up and down
   enr_sele_df <- enr_sele_df %>% dplyr::filter(!str_ends(input_name,"_all"))
-  enr_sele_df$Direction <- stri_extract_last_regex(str = enr_sele_df$input_name, pattern = "_up$|_down$|_all$")
-  enr_sele_df$Direction <- str_c(enr_sele_df$Significative, enr_sele_df$Direction)
+  enr_sele_df$Group <- str_to_upper(str_remove_all(stri_extract_last_regex(str = enr_sele_df$input_name, pattern = "_up$|_down$|_all$"),"_"))
   knitr::opts_chunk$set(fig.height = max(min(20,length(unique(enr_sele_df$anno_name))*0.5),3))
 }
 ```
@@ -2194,12 +2192,12 @@ if(length(enrich_filter_DBs) > 0){
                            size_col="log2_OR",
                            color_col="input_name",
                            color_vec = col_vec,
-                           shape_vec=c("FALSE_down"=6,"FALSE_up"=2,"TRUE_down"=25,"TRUE_up"=17,"TRUE_all"=16, "FALSE_all"=1),
-                           shape_col = "Direction",
-                           fill_col = "Significative",
-                           fill_vec=c("grey25","white"),
+                           shape_vec=c("DOWN"=25,"UP"=24,"ALL"=21),
+                           shape_col = "Group",
+                          fill_col = "Significant",
                            # color_vec=color_base[sort(rep(c(1:length(color_base)),2))],
-                           char_max=60) +guides(color=F, shape=guide_legend(override.aes = list(size=4)), fill=F)
+                           char_max=60) + guides(color=F, shape = guide_legend(override.aes = list(shape = c(16,21),size=4), title = "Significant"), fill=F)
+  
   
   tryCatch({
     print(el +guides(color=F))
@@ -2231,7 +2229,7 @@ if(length(enrich_filter_term) > 0){
   enr_sele_names<-NULL
   #For each pattern search in DEPs name
   for(word in lookup_words){
-    matches <- enr_df %>% dplyr::filter(Significative == "TRUE",
+    matches <- enr_df %>% dplyr::filter(Significant == "TRUE",
                                         overlap_size>=overlap_size_enrich_thr,
                                         str_ends(input_name,"_all")) %>% dplyr::select(anno_class,anno_name)
     matches <- matches[grepl(paste0("\\b",word,"\\b"),matches$anno_name,ignore.case=TRUE),]
@@ -2260,8 +2258,8 @@ if(length(enrich_filter_term) > 0){
                          color_col="input_name",
                          color_vec=col_vec,
                          shape_vec=c(16,21),
-                         shape_col = "Significative",
-                         fill_col = "Significative",
+                         shape_col = "Significant",
+                          fill_col = "Significant",
                          char_max=60) + guides(color=F, shape = guide_legend(override.aes = list(size=4)))
 
   tryCatch({
@@ -2296,7 +2294,7 @@ if(length(enrich_filter_term) > 0){
 
   #For each patter we want, search in each DEPs name to find it
   for(word in lookup_words){
-    matches <- enr_df %>% dplyr::filter(Significative == "TRUE",
+    matches <- enr_df %>% dplyr::filter(Significant == "TRUE",
                                         overlap_size>=overlap_size_enrich_thr,
                                         !str_ends(input_name,"_all")) %>% dplyr::select(anno_class,anno_name)
     matches <- matches[grepl(paste0("\\b",word,"\\b"),matches$anno_name,ignore.case=TRUE),]
@@ -2307,8 +2305,8 @@ if(length(enrich_filter_term) > 0){
   # write_tsv(enr_sele_df ,file=paste(dirOutput,dirOutput_ev,"enrich_myc_v1_all.txt",sep=""))
 
   enr_sele_df <- enr_sele_df %>% dplyr::filter(!str_ends(input_name,"_all"))
-  enr_sele_df$Direction <- stri_extract_last_regex(str = enr_sele_df$input_name, pattern = "_up$|_down$|_all$")
-  enr_sele_df$Direction <- str_c(enr_sele_df$Significative, enr_sele_df$Direction)
+  enr_sele_df$Group <- str_to_upper(str_remove_all(stri_extract_last_regex(str = enr_sele_df$input_name, pattern = "_up$|_down$|_all$"),"_"))
+  # enr_sele_df$Group <- str_c(enr_sele_df$Significant, enr_sele_df$Group)
   knitr::opts_chunk$set(fig.height = max(min(20,length(unique(enr_sele_df$anno_name))*0.5),3))
 }
 ```
@@ -2326,10 +2324,10 @@ if(length(enrich_filter_term) > 0){
                          size_col="log2_OR",
                          color_col="input_name",
                          color_vec = col_vec,
-                           shape_vec=c("FALSE_down"=6,"FALSE_up"=2,"TRUE_down"=25,"TRUE_up"=17,"TRUE_all"=16, "FALSE_all"=1),
-                           shape_col = "Direction",
-                           fill_col = "Significative",
-                         char_max=60) + guides(color=F, shape=guide_legend(override.aes = list(size=4)), fill=F)
+                           shape_vec=c("DOWN"=25,"UP"=24,"ALL"=21),
+                           shape_col = "Group",
+                           fill_col = "Significant",
+                         char_max=60)  + guides(color=F, shape = guide_legend(override.aes = list(shape = c(16,21),size=4), title = "Significant"), fill=F)
   tryCatch({
     print(el)
 
@@ -2366,7 +2364,7 @@ if(p$is_alive() | is.null(p$get_result())){
   enr_df_universe<-p$get_result()
   p$kill()
   #Save in RData for possible further analysis
-  enrich_all_df <- enr_df_universe %>% dplyr::filter(Significative == "TRUE", overlap_size>=overlap_size_enrich_thr)
+  enrich_all_df <- enr_df_universe %>% dplyr::filter(Significant == "TRUE", overlap_size>=overlap_size_enrich_thr)
   save(enrich_all_df, file=paste0(dirOutput,subfold_Dat,"enrichment_allproteins.RData"))
   
   writexl::write_xlsx(enrich_all_df,
@@ -2378,7 +2376,6 @@ if(p$is_alive() | is.null(p$get_result())){
   message("Enrichment whole universe DONE.")
 }
 shiny::setProgress(0.75, detail = "Done Enrichment of universe...")
-save(list = ls(),file="tmp.RData")
 ```
 
 ```{r enrichment_plots_all_vsUniverse, echo=F, message=F, warning=F, eval = (doNextChunk&run_enrich_universe), results='asis'}
@@ -2395,7 +2392,7 @@ if(length(enrich_filter_DBs) > 0){
     dplyr::filter(anno_class %in% annos,
                   overlap_size>=overlap_size_enrich_thr,
                   anno_size<=10000,
-                  Significative == "TRUE",
+                  Significant == "TRUE",
                   str_ends(input_name,"_all")) %>%
     dplyr::arrange(-overlap_size) %>% dplyr::group_by(input_name,anno_class) %>% slice_head(n=5) %>%
     ungroup() %>% dplyr::select(anno_class,anno_name)
@@ -2424,8 +2421,8 @@ if(length(enrich_filter_DBs) > 0){
                            color_col="input_name",
                            color_vec=col_vec,
                            shape_vec=c(16,21),
-                         shape_col = "Significative",
-                         fill_col = "Significative",
+                         shape_col = "Significant",
+                         fill_col = "Significant",
                            char_max=60) +guides(color=F, shape = guide_legend(override.aes = list(size=4)))
 
   tryCatch({
@@ -2455,7 +2452,7 @@ if(length(enrich_filter_DBs) > 0){
     dplyr::filter(anno_class %in% annos,
                   overlap_size>=overlap_size_enrich_thr,
                   anno_size<=10000,
-                  Significative == "TRUE",
+                  Significant == "TRUE",
                   !str_ends(input_name,"_all")) %>%
     dplyr::arrange(-overlap_size) %>% dplyr::group_by(input_name,anno_class) %>% slice_head(n=5) %>%
     ungroup() %>% dplyr::select(anno_class,anno_name)
@@ -2466,8 +2463,7 @@ if(length(enrich_filter_DBs) > 0){
 
   #Select the results divided in up and down
   enr_sele_df <- enr_sele_df %>% dplyr::filter(!str_ends(input_name,"_all") | str_ends(input_name,"Universe_all"))
-  enr_sele_df$Direction <- stri_extract_last_regex(str = enr_sele_df$input_name, pattern = "_up$|_down$|_all$")
-  enr_sele_df$Direction <- str_c(enr_sele_df$Significative, enr_sele_df$Direction)
+  enr_sele_df$Group <- str_to_upper(str_remove_all(stri_extract_last_regex(str = enr_sele_df$input_name, pattern = "_up$|_down$|_all$"),"_"))
   knitr::opts_chunk$set(fig.height = max(min(20,length(unique(enr_sele_df$anno_name))*0.5),3))
 }
 ```
@@ -2485,11 +2481,11 @@ if(length(enrich_filter_DBs) > 0){
                            size_col="log2_OR",
                            color_col="input_name",
                            color_vec = col_vec,
-                           shape_vec=c("FALSE_down"=6,"FALSE_up"=2,"TRUE_down"=25,"TRUE_up"=17,"TRUE_all"=16, "FALSE_all"=1),
-                           shape_col = "Direction",
-                           fill_col = "Significative",
+                           shape_vec=c("DOWN"=25,"UP"=24,"ALL"=21),
+                           shape_col = "Group",
+                           fill_col = "Significant",
                            # color_vec=color_base[sort(rep(c(1:length(color_base)),2))],
-                           char_max=60) +guides(color=F, shape=guide_legend(override.aes = list(size=4)), fill=F)
+                           char_max=60)  + guides(color=F, shape = guide_legend(override.aes = list(shape = if("Universe_all" %in% enr_sele_df$input_name){c(17,24,16)}else{c(17,24)},size=4), title = "Significant"), fill=F)
 
   tryCatch({
     print(el)
@@ -2520,7 +2516,7 @@ if(length(enrich_filter_term) > 0){
   enr_sele_names<-NULL
   #For each pattern search in DEPs name
   for(word in lookup_words){
-    matches <- enr_df %>% dplyr::filter(Significative == "TRUE",
+    matches <- enr_df %>% dplyr::filter(Significant == "TRUE",
                                         overlap_size>=overlap_size_enrich_thr,
                                         str_ends(input_name,"_all")) %>% dplyr::select(anno_class,anno_name)
     matches <- matches[grepl(paste0("\\b",word,"\\b"),matches$anno_name,ignore.case=TRUE),]
@@ -2551,8 +2547,8 @@ if(length(enrich_filter_term) > 0){
                          color_col="input_name",
                          color_vec=col_vec,
                          shape_vec=c(16,21),
-                         shape_col = "Significative",
-                         fill_col = "Significative",
+                         shape_col = "Significant",
+                         fill_col = "Significant",
                          char_max=60) + guides(color=F, shape = guide_legend(override.aes = list(size=4)))
 
   tryCatch({
@@ -2586,7 +2582,7 @@ if(length(enrich_filter_term) > 0){
 
   #For each patter we want, search in each DEPs name to find it
   for(word in lookup_words){
-    matches <- enr_df %>% dplyr::filter(Significative == "TRUE",
+    matches <- enr_df %>% dplyr::filter(Significant == "TRUE",
                                         overlap_size>=overlap_size_enrich_thr,
                                         !str_ends(input_name,"_all")) %>% dplyr::select(anno_class,anno_name)
     matches <- matches[grepl(paste0("\\b",word,"\\b"),matches$anno_name,ignore.case=TRUE),]
@@ -2599,8 +2595,7 @@ if(length(enrich_filter_term) > 0){
   # write_tsv(enr_sele_df ,file=paste(dirOutput,dirOutput_ev,"enrich_myc_v1_all.txt",sep=""))
 
   enr_sele_df <- enr_sele_df %>% dplyr::filter(!str_ends(input_name,"_all") | str_ends(input_name,"Universe_all"))
-  enr_sele_df$Direction <- stri_extract_last_regex(str = enr_sele_df$input_name, pattern = "_up$|_down$|_all$")
-  enr_sele_df$Direction <- str_c(enr_sele_df$Significative, enr_sele_df$Direction)
+  enr_sele_df$Group <- str_to_upper(str_remove_all(stri_extract_last_regex(str = enr_sele_df$input_name, pattern = "_up$|_down$|_all$"),"_"))
   knitr::opts_chunk$set(fig.height = max(min(20,length(unique(enr_sele_df$anno_name))*0.5),3))
 }
 ```
@@ -2617,11 +2612,11 @@ if(length(enrich_filter_term) > 0){
                          size_col="log2_OR",
                          color_col="input_name",
                          color_vec = col_vec,
-                         shape_vec=c("FALSE_down"=6,"FALSE_up"=2,"TRUE_down"=25,"TRUE_up"=17,"TRUE_all"=16, "FALSE_all"=1),
-                          shape_col = "Direction",
-                           fill_col = "Significative",
+                           shape_vec=c("DOWN"=25,"UP"=24,"ALL"=21),
+                          shape_col = "Group",
+                           fill_col = "Significant",
                            # color_vec=color_base[sort(rep(c(1:length(color_base)),2))],
-                           char_max=60) +guides(color=F, shape=guide_legend(override.aes = list(size=4)), fill=F)
+                           char_max=60)  + guides(color=F, shape = guide_legend(override.aes = list(shape = if("Universe_all" %in% enr_sele_df$input_name){c(17,24,16)}else{c(17,24)},size=4), title = "Significant"), fill=F)
   tryCatch({
     print(el)
 

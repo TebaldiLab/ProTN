@@ -670,7 +670,8 @@ enrichment_dotmatrix <- function(input_df, # input dataframe
 #library(ggthemes)
 #library(extrafont)
 #loadfonts()
-   
+  input_df$color<-ifelse(input_df$Significant==TRUE, color_vec[input_df$input_name], "white")
+  
    # select and rename relevant columns for the plot   
    plot_df <- input_df %>% dplyr::select(x_col=all_of(x_col),
                                          y_col=all_of(y_col),
@@ -678,7 +679,8 @@ enrichment_dotmatrix <- function(input_df, # input dataframe
                                          shape_col=any_of(shape_col),
                                          color_col=any_of(color_col),
                                          fill_col=any_of(fill_col),
-                                         facet_col=any_of(facet_col))
+                                         facet_col=any_of(facet_col),
+                                         color=any_of("color"))
    
    # creation of labels, abbreviating text 
    plot_df$y_col<- plot_df %>% pull(y_col) %>% str_trim() # Clean text
@@ -712,25 +714,17 @@ enrichment_dotmatrix <- function(input_df, # input dataframe
    }
    
    if("shape_col" %in% colnames(plot_df)){
-      lp <- lp + aes(shape=shape_col) + scale_shape_manual(name=shape_col, values= shape_vec) # drop = FALSE
+      lp <- lp + aes(shape=shape_col) + scale_shape_manual(name=shape_col, values= shape_vec, labels=if("UP" %in% plot_df$shape_col){c("TRUE","FALSE","")}else{unique(plot_df$shape_col)}) # drop = FALSE
    }
    
    if("color_col" %in% colnames(plot_df)){
-      lp <- lp + aes(colour=color_col) + scale_color_manual(name=color_col, values= color_vec) # drop = FALSE
+      lp <- lp + aes(colour=color_col) + scale_color_manual(name=color_col, values= color_vec) + guides(color=F) # drop = FALSE
    }
    
    if("fill_col" %in% colnames(plot_df)){
-     # if(shape_col == "input_name"){
-     # cc<-color_vec
-     # names(cc)<-paste0(names(cc),"-TRUE")
-     # cc_1 <- rep("white", length(color_vec))
-     # names(cc_1) <- paste0(names(color_vec),"-FALSE")
-     # #
-     # lp <- lp + aes(fill=interaction(plot_df$x_col,plot_df$fill_col,sep="-",lex.order=TRUE)) + scale_fill_manual(name=fill_col,
-     # values= c(cc, cc_1))
-     # } else{
-     lp <- lp + aes(fill=fill_col) + scale_fill_manual(name="Significative", values= fill_vec) # drop = FALSE
-     # }
+     cc<-plot_df$color
+     names(cc)<-interaction(plot_df$x_col,plot_df$y_col,sep="-",lex.order=TRUE)
+     lp <- lp + aes(fill=interaction(x_col,y_col,sep="-",lex.order=TRUE)) + scale_fill_manual(name="Significant", values= cc) + guides(fill=F) # drop = FALSE
    }
    
    if("facet_col" %in% colnames(plot_df)){
@@ -1150,7 +1144,7 @@ enrichRfnc<-function(in_df, pval_fdr_enrich, pval_enrich_thr, overlap_size_enric
      stopCluster(cluster_ext)
    }
    
-   enr_df$"Significative"<-ifelse(if(pval_fdr_enrich){(enr_df$fdr<pval_enrich_thr) & (enr_df$overlap_size>=overlap_size_enrich_thr)}else{(enr_df$p_value<pval_enrich_thr) & (enr_df$overlap_size>=overlap_size_enrich_thr)},"TRUE","FALSE") %>% factor(levels=c("TRUE","FALSE"))
+   enr_df$"Significant"<-ifelse(if(pval_fdr_enrich){(enr_df$fdr<pval_enrich_thr) & (enr_df$overlap_size>=overlap_size_enrich_thr)}else{(enr_df$p_value<pval_enrich_thr) & (enr_df$overlap_size>=overlap_size_enrich_thr)},"TRUE","FALSE") %>% factor(levels=c("TRUE","FALSE"))
    enr_df$log2_OR<-log2(enr_df$odds_ratio)
    return(enr_df)
 }
@@ -1177,9 +1171,9 @@ enrichRfnc_universe<-function(in_df, pval_fdr_enrich, pval_enrich_thr, overlap_s
 
     # enr_df<-do.call(rbind, mclapply(names(DEGs_lists), enrfcn, mc.cores = ncores))
 
-    enr_df$"Significative"<-ifelse(if(pval_fdr_enrich){(enr_df$fdr<pval_enrich_thr) & (enr_df$overlap_size>=overlap_size_enrich_thr)}else{(enr_df$p_value<pval_enrich_thr) & (enr_df$overlap_size>=overlap_size_enrich_thr)},"TRUE","FALSE") %>% factor(levels=c("TRUE","FALSE"))
+    enr_df$"Significant"<-ifelse(if(pval_fdr_enrich){(enr_df$fdr<pval_enrich_thr) & (enr_df$overlap_size>=overlap_size_enrich_thr)}else{(enr_df$p_value<pval_enrich_thr) & (enr_df$overlap_size>=overlap_size_enrich_thr)},"TRUE","FALSE") %>% factor(levels=c("TRUE","FALSE"))
     enr_df$log2_OR<-log2(enr_df$odds_ratio)
-    enr_df <- enr_df[-which(enr_df$Significative == "FALSE"),]
+    enr_df <- enr_df[-which(enr_df$Significant == "FALSE"),]
     enr_df
   },
   error=function(cond){

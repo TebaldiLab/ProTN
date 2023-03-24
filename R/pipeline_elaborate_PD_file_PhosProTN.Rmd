@@ -287,10 +287,10 @@ This report summarize the results obtained during the execution of the integrati
 - ```report.html```: complete report of the analysis with all pics and results of the enrichment.
 - ```Data``` folder: contains the RData for further analysis:
   - ```database_env_R.RData```: RData containing the essential variables for further analysis.
-```{r print_descr_enrich, warning=FALSE, echo=F, message=FALSE, eval=run_enrich, results='asis'}
+```{r print_descr_enrich3, warning=FALSE, echo=F, message=FALSE, eval=run_enrich, results='asis'}
   cat("  - ```DEPs_enrichment_data.RData```: result of the enrichment made with EnrichR \n")
 ```
-```{r print_descr_enrich_uni, warning=FALSE, echo=F, message=FALSE, eval=run_enrich_universe, results='asis'}
+```{r print_descr_enrich_uni3, warning=FALSE, echo=F, message=FALSE, eval=run_enrich_universe, results='asis'}
   cat("  - ```DEPs_enrichment_data_universe.RData```: result of the enrichment on the whole universe of the experiment made with EnrichR \n")
 ```
 - ```Tables``` folder: contains the excel file resulted by the analysis:
@@ -301,10 +301,10 @@ This report summarize the results obtained during the execution of the integrati
     - **p_val**: is the p. value
     - **p_adj**: is the adjusted p. value
     - **log2_expr**: is the signal log2 expression
-```{r print_descr_enrich, warning=FALSE, echo=F, message=FALSE, eval=run_enrich, results='asis'}
+```{r print_descr_enrich2, warning=FALSE, echo=F, message=FALSE, eval=run_enrich, results='asis'}
   cat("  - ```DEPs_enrichment_table.xlsx```: excel with only the enriched terms with an high significance (Default: adj.P.Value < 0.05, Overlap Size >= 5) \n")
 ```
-```{r print_descr_enrich_uni, warning=FALSE, echo=F, message=FALSE, eval=run_enrich_universe, results='asis'}
+```{r print_descr_enrich_uni2, warning=FALSE, echo=F, message=FALSE, eval=run_enrich_universe, results='asis'}
   cat("  - ```DEPs_enrichment_table_universe.xlsx```: excel with only the enriched terms with an high significance (Default: adj.P.Value < 0.05, Overlap Size >= 5) \n")
 ```
 - ```Figures``` folder: contains the pdf figures resulted by the analysis:
