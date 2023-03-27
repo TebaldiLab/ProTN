@@ -329,6 +329,10 @@ server <- function(input, output, session) {
           # uiOutput("help15")
         ),
         fluidRow(
+          radioButtons("enrichR_DB_phos", "Execute enrichment only on selected database", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
+          # uiOutput("help14")
+        ),
+        fluidRow(
           textInput("terms_enrich_phos", "Terms to search"),
           # uiOutput("help18")
         ),
@@ -724,6 +728,8 @@ server <- function(input, output, session) {
             dir.create(file.path(dirOutput_Server, "figures"), showWarnings = FALSE)
             dir.create(file.path(dirOutput_Server, "data"), showWarnings = FALSE)
             dir.create(file.path(dirOutput_Server, "tables"), showWarnings = FALSE)
+            dir.create(file.path(paste0(dirOutput_Server, "figures"),"Expression"), showWarnings = FALSE)
+            dir.create(file.path(paste0(dirOutput_Server, "figures"),"PCA_MDS"), showWarnings = FALSE)
             # tempReport <- file.path(tempdir(), "R/pipeline_elaborate_PD_files.Rmd")
             # file.copy("pipeline_elaborate_PD_files.Rmd", tempReport, overwrite = TRUE)
             
@@ -765,6 +771,7 @@ server <- function(input, output, session) {
               overlap_size_enrich_thr = if(is.null(input$os_enrich_phos)){as.integer(5)}else{input$os_enrich_phos},
               enrich_filter_term = input$terms_enrich_phos,
               enrich_filter_DBs = input$DB_enrich_phos,
+              enrichR_DB = if(is.null(input$enrichR_phos)){FALSE}else{input$enrichR_DB_phos},
               dirOutput = dirOutput_Server
             )
             
@@ -773,7 +780,7 @@ server <- function(input, output, session) {
             # child of the global environment (this isolates the code in the document
             # from the code in this app).
             rmarkdown::render("R/pipeline_elaborate_PD_file_PhosProTN.Rmd",
-                              output_file = "report.html",
+                              output_file = "phosprotn_report.html",
                               output_dir = dirOutput_Server,
                               params = params,
                               envir = new.env(parent = globalenv())
