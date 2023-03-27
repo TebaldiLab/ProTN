@@ -591,9 +591,9 @@ deps_b2b_lollipop <- function(input_df, # input dataframe
   if("size_col" %in% colnames(plot_df)){
     lp <- lp + 
       geom_point(data = plot_df[plot_df$bb_col==f_left,],
-                 aes(x = -shift-x_col,size=size_col), position = position_nudge(y = -0.06))+
+                 aes(x = -shift-x_col, size = 5), position = position_nudge(y = -0.06))+
       geom_point(data = plot_df[plot_df$bb_col==f_right,],
-                 aes(x = shift+x_col,size=size_col), position = position_nudge(y = 0.06))+
+                 aes(x = shift+x_col, size = 5), position = position_nudge(y = 0.06))+
       scale_size(name=size_col,range = size_vec)
   } else {
     lp <- lp + 
