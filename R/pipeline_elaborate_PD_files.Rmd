@@ -17,6 +17,7 @@ params:
   file_input: NA
   file_prot: NA
   file_pep: NA
+  filt_absent_value: "1"
   pval_fdr: NA
   signal_thr: "inf"
   fc_thr: "0.75"
@@ -184,6 +185,11 @@ readMQ_files <- params$readMQ_files
 #Read input directory
 # dir_file_input<-input_settings$...2[2]
 filenames<-list(params$file_input, params$file_pep, params$file_prot)
+filt_absent_value=suppressWarnings(parse_double(params$filt_absent_value))
+if(is.na(filt_absent_value)){
+  message("Warning: parse error for the number of acceptable missing condition. Set default paramenter to 0\n")
+  filt_absent_value <- 0
+}
 #Read input parameters for Limma
 signal_thr=suppressWarnings(parse_double(params$signal_thr))
 if(is.na(signal_thr)){signal_thr<- -Inf}
@@ -712,7 +718,7 @@ n_pep_pre_FILT <- length(psm_peptide_table$Accession)
 #Preprocess Protein intensities
 psm_sig_prot_raw[psm_sig_prot_raw == 0] <- NA # transform 0s into NAs
 
-sig_thr<-0 # NA threshold
+sig_thr<-filt_absent_value # NA threshold
 
 psm_long_df <- psm_sig_prot_raw %>% mutate(id=as.factor(rownames(psm_sig_prot_raw)))
 psm_long_df <- psm_long_df %>% pivot_longer(-id, names_to = "sample", values_to = "counts")
@@ -743,7 +749,7 @@ remove(psm_anno_raw,psm_sig_prot_raw,psm_long_df,psm_filter_df,filter_id,sig_thr
 
 #Preprocess peptide intensities
 psm_sig_pet_raw[psm_sig_pet_raw == 0] <- NA # transform 0s into NAs
-sig_thr<-0 # NA threshold
+sig_thr<-filt_absent_value # NA threshold
 
 psm_long_df <- psm_sig_pet_raw %>% mutate(id=as.factor(rownames(psm_sig_pet_raw)))
 psm_long_df <- psm_long_df %>% pivot_longer(-id, names_to = "sample", values_to = "counts")
@@ -1305,10 +1311,39 @@ cat(" \n \n")
 remove(hs, pg_long_df)
 
 shiny::setProgress(0.47, detail =  "Calculate post-norm distribution...")
+
+
+```
+
+```{r check_number_sample, warning=FALSE, echo=F, message=FALSE}
+#TODO: better control
+design = model.matrix(~0+c_anno$condition) 
+colnames(design) = levels(as.factor(c_anno$condition))
+rownames(design)<-c_anno$sample
+filt_contro_list <- list()
+for (i in 1:length(formule_contrast)) {
+ if(all(str_extract_all(formule_contrast[i], "\\[a-zA-Z]+")[[1]] %in% colnames(design))){
+   filt_contro_list<-c(filt_contro_list,i)
+ }
+}
+contro_list<-formule_contrast[unlist(filt_contro_list)]
+if(length(contro_list) == 0){ stop("Error: No valid contrast design given. Check the match between the spell of Condition and contrast design.")}
+contrast =  limma::makeContrasts(contrasts=contro_list,levels=design)
+colnames(contrast)<-names(contro_list)
+   
+unique_cond <- colSums(design) == 1
+unique_cond <- sort(names(unique_cond[unique_cond]))
+res<-lapply(colnames(contrast), function(i){all(sort(names((contrast[,i] != 0)[contrast[,i] != 0])) %in% unique_cond)}) %>% unlist()
+formule_contrast<- contro_list[!res]
+
+eval_single_Cond <- if(all(res)){FALSE}else{TRUE}
+if(!eval_single_Cond | length(formule_contrast) > 0){
+  cat("*WARNING*: Some comparisons cannot be done since have only two samples. The comparison are removed.")
+}
 ```
 
 
-```{r mds_counts, warning=F, message=F, echo=F, results='asis'}
+```{r mds_counts, warning=F, message=F, echo=F, results='asis', eval=eval_single_Cond}
 cat(" \n \n")
 cat("#### 1.5. Multi-dimensional scaling {.tabset}  \n")
 cat("Multidimensional scaling (MDS) takes a set of dissimilarities and returns a set of points such that the distances between the points are approximately equal to the dissimilarities. Classical multidimensional scaling is also known as principal coordinates analysis. \n \n ")
@@ -1389,7 +1424,7 @@ remove(sample_data,sample_distances,mds_cmdscale,cmd)
 shiny::setProgress(0.49, detail = "Calculate MDS...")
 ```
 
-```{r pca_norm, warning=F, message=F, echo=F, results='asis'}
+```{r pca_norm, warning=F, message=F, echo=F, results='asis', eval=eval_single_Cond}
 cat(" \n \n")
 cat("#### 1.6. Principal Component Analysis {.tabset}  \n")
 cat("Principal component analysis (PCA) is performed on normalized Protein and Peptide abundances. \n \n ")
@@ -1555,7 +1590,17 @@ shiny::setProgress(0.56, detail = "Control boxplot proteins...")
 
 Differentially expressed peptides are identified using the Limma Bioconductor package.
 
-```{r print_settings_diff_analysis, warning=FALSE, echo=F, message=FALSE, results='asis'}
+```{r print_error_diff_analysis, warning=FALSE, echo=F, message=FALSE, results='asis', eval=!(eval_single_Cond)}
+cat(" \n \n")
+#Print summary of filter and contrast design
+
+cat("**WARNING:** differential analysis not executed since are identified only 1 sample for the two condition \n ")
+cat(" \n")
+run_enrich <- run_enrich_universe <- run_STRING <- FALSE
+```
+
+
+```{r print_settings_diff_analysis, warning=FALSE, echo=F, message=FALSE, results='asis', eval=eval_single_Cond}
 cat(" \n \n")
 #Print summary of filter and contrast design
 
@@ -1574,7 +1619,7 @@ cat(" \n")
 ### 2.1. Differential expression contrasts
 The following table contains the names and the formulas of the contrasts considered for differential expression analysis.
 
-```{r print_settings_design, warning=FALSE, echo=F, message=FALSE, results='asis'}
+```{r print_settings_design, warning=FALSE, echo=F, message=FALSE, results='asis', eval=eval_single_Cond}
 cat("**Contrast design formula are:** ")
 cat(" \n")
 kable(data.frame("Name"=names(formule_contrast), "Formula"=formule_contrast, "Color"=color_constrast[names(formule_contrast), "color_constrast"]), row.names = F)
@@ -1582,8 +1627,7 @@ cat(" \n")
 
 ```
 
-```{r diff_analysis,  warning=F, message=F, echo=F}
-
+```{r diff_analysis,  warning=F, message=F, echo=F, eval=eval_single_Cond}
 shiny::setProgress(0.58, detail = "Differential Analysis in progress...")
 message("Differentiation analysis in progress...")
 #Execution of differentiation analysis using DEqMS for proteins
@@ -1646,7 +1690,7 @@ message("Differentation analysis DONE.")
 
 In the plot are represented graphically the number of DEPs for each contrast. Tab **Proteins** for the differentially expressed proteins, **Peptides** for the number of the differentially expressed peptides.
 
-```{r number_deps, warning=FALSE, echo=FALSE, results='asis'}
+```{r number_deps, warning=FALSE, echo=FALSE, results='asis', eval=eval_single_Cond}
 
 # Plot DEPs barplot (as a double barplot)
 #####
@@ -1773,7 +1817,7 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
 shiny::setProgress(0.60, detail = "Count DEPs...")
 ```
 
-```{r volcano_protein, fig.height=6, fig.width=6, warning=FALSE, echo=FALSE, results='asis'}
+```{r volcano_protein, fig.height=6, fig.width=6, warning=FALSE, echo=FALSE, results='asis', eval=eval_single_Cond}
 cat(" \n \n")
 if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   cat("#### 2.3. Volcano plots  \n")
@@ -1816,7 +1860,7 @@ shiny::setProgress(0.63, detail = "Perform volcano plot...")
 
 ```
 
-```{r volcano_pep, fig.height=6, fig.width=6, warning=FALSE, echo=FALSE, results='asis'}
+```{r volcano_pep, fig.height=6, fig.width=6, warning=FALSE, echo=FALSE, results='asis', eval=eval_single_Cond}
 cat(" \n \n")
 if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
 
@@ -1855,7 +1899,7 @@ shiny::setProgress(0.65, detail = "Perform volcano plot...")
 }
 ```
 
-```{r MDS_prot_deps, warning=F, message=F, echo=F, eval=T, results='asis'}
+```{r MDS_prot_deps, warning=F, message=F, echo=F, results='asis', eval=eval_single_Cond}
 if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   cat("#### 2.4. MDS based on differentially expressed proteins and peptides {.tabset}  \n " )
   cat("Multidimensional scaling (MDS) are performed on normalized abundances of differentially expressed Proteins and Peptides. \n")
@@ -1941,7 +1985,7 @@ shiny::setProgress(0.69, detail = "Perform MDS...")
 ```
 
 
-```{r pca_deps, warning=F, message=F, echo=F, results='asis'}
+```{r pca_deps, warning=F, message=F, echo=F, results='asis', eval=eval_single_Cond}
 if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){  
 
 shiny::setProgress(0.70, detail = "Perform PCA...")
@@ -2883,7 +2927,18 @@ shiny::setProgress(0.98, detail = "Network figures generated...")
 ```
 
 ```{r save_df, echo=F, message=F, warning=F, results='hide'}
-
+save(list = ls(), file="tmp.RData")
+if(!(eval_single_Cond)){
+save(c_anno,
+     dat_gene,
+     dat_pep,
+     psm_peptide_table,
+     expr_avgse_df,
+     expr_avgse_pep_df,
+     formule_contrast,
+     colour_vec,
+     file = paste0(dirOutput,subfold_Dat,"protn_env.RData"))
+}else{
 save(c_anno,
      dat_gene,
      dat_pep,
@@ -2895,7 +2950,7 @@ save(c_anno,
      formule_contrast,
      colour_vec,
      file = paste0(dirOutput,subfold_Dat,"protn_env.RData"))
-
+}
 remove(list = ls()[-1])
 gc()
 

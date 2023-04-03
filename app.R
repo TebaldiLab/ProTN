@@ -268,6 +268,10 @@ server <- function(input, output, session) {
         fluidRow(
           column(
             width = 4,
+            fluidRow(
+              textInput("filt_absent_value", "Threshold of acceptable missing values for condition", value = "0"),
+              # uiOutput("help8")
+            ),
               fluidRow(
                 radioButtons("pval_fdr", "Use FDR instead of P.Value", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
                 # uiOutput("help10")
@@ -659,6 +663,7 @@ server <- function(input, output, session) {
               file_input = input$input_file$datapath,
               file_prot = input$prot_file$datapath,
               file_pep = input$pep_file$datapath,
+              filt_absent_value = if(is.null(input$filt_absent_value)){"0"}else{input$filt_absent_value},
               pval_fdr = if(is.null(input$pval_fdr)){FALSE}else{input$pval_fdr},
               signal_thr = if(is.null(input$signal_DEPs)){"inf"}else{input$signal_DEPs},
               fc_thr = if(is.null(input$FC_DEPs)){"0.75"}else{input$FC_DEPs},
