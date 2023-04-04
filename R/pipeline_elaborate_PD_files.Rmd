@@ -1791,7 +1791,10 @@ if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
     # labels_up <- (input_df %>% filter(class == '+'))$id
     # labels_down <- (input_df %>% filter(class == '-'))$id
 
-    cmd<-ggplot(data=input_df, aes(x=log2_FC, y=if(pval_fdr){p_adj}else{p_val}, col=class, label=id)) +
+    cmd<-ggplot(data=input_df, aes(x=log2_FC, y=if(pval_fdr){p_adj}else{p_val}, col=class, text = paste('</br>Gene: ', id,
+                      '</br>Class: ', class,
+                      '</br>Log2_FC: ', log2_FC,
+                      '</br>',if(pval_fdr){"P_adj"}else{"P_val"},': ',if(pval_fdr){p_adj}else{p_val}))) +
       geom_point(pch=20,cex=2) +
       geom_hline(yintercept=-log10(pval_thr), col="black") +
       geom_vline(xintercept=c(-fc_thr, fc_thr), col="black") +
@@ -1826,7 +1829,7 @@ if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
       )
     }
     # cat("##### ",comp," \n")
-    plotlist[[comp]] = ggplotly(cmd)
+    plotlist[[comp]] = ggplotly(cmd, tooltip = c("text"))
   }
   
   
@@ -1856,7 +1859,10 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
     # labels_up <- (input_df %>% filter(class == '+'))$id
     # labels_down <- (input_df %>% filter(class == '-'))$id
 
-    cmd<-ggplot(data=input_df, aes(x=log2_FC, y=-log10(if(pval_fdr){p_adj}else{p_val}), col=class, label=id)) +
+    cmd<-ggplot(data=input_df, aes(x=log2_FC, y=if(pval_fdr){p_adj}else{p_val}, col=class, text = paste('</br>Gene: ', id,
+                      '</br>Class: ', class,
+                      '</br>Log2_FC: ', log2_FC,
+                      '</br>',if(pval_fdr){"P_adj"}else{"P_val"},': ',if(pval_fdr){p_adj}else{p_val}))) +
       geom_point(pch=20,cex=2) +
       geom_hline(yintercept=-log10(pval_thr), col="black") +
       geom_vline(xintercept=c(-fc_thr, fc_thr), col="black") +
@@ -1869,7 +1875,7 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
       ylab(if(pval_fdr){"-log10(fdr)"}else{"-log10(p_val)"}) +
       scale_color_manual(values=c(color_constrast[comp,"color_constrast"], color_constrast[comp,"color_constrast_dark"], "grey70")) +
       scale_x_continuous(limits = c(min(-max(abs(input_df$log2_FC)),-3), max(max(abs(input_df$log2_FC)),3))) +
-      scale_y_continuous(limits = c(0, max(max(abs(-log10(if(pval_fdr){input_df$p_adj}else{input_df$p_val}))),4))) +
+      scale_y_continuous(limits = c(0, max(max(abs((if(pval_fdr){input_df$p_adj}else{input_df$p_val}))),4))) +
       theme_bw(base_size = bs, base_family = bf)
 
     # cat("##### ",comp," \n")
@@ -1885,7 +1891,7 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
       m <- labels[i]
       a[[i]] <- list(
         x = input_df[which(input_df$id %in% m),"log2_FC"],
-        y = -log10(input_df[which(input_df$id %in% m), col]),
+        y = (input_df[which(input_df$id %in% m), col]),
         text = m,
         xref = "x",
         yref = "y",
@@ -1896,7 +1902,7 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
       )
     }
     # cat("##### ",comp," \n")
-    plotlist[[comp]] = ggplotly(cmd)
+    plotlist[[comp]] = ggplotly(cmd, tooltip = c("text"))
   }
 shiny::setProgress(0.65, detail = "Perform volcano plot...")
 }
