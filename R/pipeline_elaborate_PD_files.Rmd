@@ -286,7 +286,7 @@ The following report summarizes the results obtained by the proTN integrative pi
 
 ## Description of the output files
 
-- ```protn_report.html```: complete report of the analysis with all pics and results of the enrichment.
+<!-- - ```protn_report.html```: complete report of the analysis with all pics and results of the enrichment. -->
 - [**Data** folder](Data)
   - ```protn_env.RData```: RData object containing the essential variables and data for additional analyses in R. The variables are:
     - *c_anno*: dataframe with the description of the samples;
@@ -410,7 +410,7 @@ cat("**Differential expression** \n ")
 cat(" \n")
 cat(paste0("- Fold Change threshold: log2_FC > ",fc_thr," (+), log2_FC < -",fc_thr," (-) "))
 cat(" \n")
-cat(paste0("- Statistica significance threshold: p.val < ",pval_thr," "))
+cat(paste0("- Statistical significance threshold: p.val < ",pval_thr," "))
 cat(" \n")
 if(signal_thr != -Inf){cat(paste0("- Signal log2 intesity threshold: signal > ",signal_thr," "))}
 cat(" \n \n ")
@@ -875,7 +875,7 @@ shiny::setProgress(0.32, detail = "Calculate distributions...")
 ```
 
 #### 1.2. Percentage of quantified peptides per sample
-Barplot showing the percentage of peptides with available abundancies for each sample.
+Barplot showing the percentage of peptides with available abundances for each sample.
 
 ```{r numeric_numbers, echo=F, message=F, warning=F}
 
@@ -906,7 +906,7 @@ shiny::setProgress(0.34, detail = "Doing normalizations...")
 
 **Peptides** abundances are normalized with the equalMedianNormalization function from the Bioconductor package [DEqMS](<https://www.bioconductor.org/packages/release/bioc/html/DEqMS.html>) (equal medians in all samples). 
 
-**Protein** normalized abundancies were calculated with the medianSweeping function from the Bioconductor package [DEqMS](<https://www.bioconductor.org/packages/release/bioc/html/DEqMS.html>).
+**Protein** normalized abundances were calculated with the medianSweeping function from the Bioconductor package [DEqMS](<https://www.bioconductor.org/packages/release/bioc/html/DEqMS.html>).
 
 ```{r pep_in_proteins, echo=F, message=F, warning=F}
 
@@ -917,14 +917,14 @@ numeric_df$N <- factor(str_sort(str_replace(as.character(numeric_df$N), pattern 
 
 # numeric_df$numeric_values<-colSums(is.na(psm_sig_prot_df))
 # numeric_df$numeric_percentage<- 100-(numeric_df$numeric_values/nrow(psm_sig_prot_df)*100)
-# setnames(numeric_df,"numeric_percentage","% of available abundancies")
+# setnames(numeric_df,"numeric_percentage","% of available abundances")
 hs<-ggplot(data=numeric_df, aes(x=N,y=NPeptides, color = NPeptides, fill = NPeptides))+
   # geom_hline(yintercept = 0, lty=2)+
   # coord_flip()+
   geom_bar(stat="identity",width=.7,alpha=.8)+
   theme_bw()+
   theme(legend.position = "none")+
-  labs(x = "# peptides per protein", y = "# protein") +
+  labs(x = "# peptides per protein", y = "# proteins") +
   # scale_fill_manual(values=brewer.pal(29, name = )) +
   # scale_colour_manual(values="dodgerblue2") +
   theme(panel.grid.minor = element_blank(),panel.grid.major.y = element_blank(),panel.grid.major.x = element_blank())
@@ -937,7 +937,7 @@ shiny::setProgress(0.34, detail = "Doing normalizations...")
 ```
 
 
-**Imputation** is performed on peptide and protein abundancies with the Bioconductor package [PhosR](https://www.sciencedirect.com/science/article/pii/S221112472100084X). Round imputation is performed in absence of replicates. ProTN uses two function of PhosR for the imputation, the first impute the missing values for a peptide across replicates within a single condition, the second is a tail-based imputation approach as implemented in Perseus.
+**Imputation** is performed on peptide and protein abundances with the Bioconductor package [PhosR](https://www.sciencedirect.com/science/article/pii/S221112472100084X). Round imputation is performed in absence of replicates. ProTN uses two function of PhosR for the imputation, the first impute the missing values for a peptide across replicates within a single condition, the second is a tail-based imputation approach as implemented in Perseus.
 
 
 
@@ -1265,8 +1265,8 @@ shiny::setProgress(0.45, detail =  "Save normalized data...")
 
 ```{r norm_distributions, message=F, warning=F, echo=F, results='asis'}
 cat(" \n \n")
-cat("#### 1.4. Distributions of normalized abundancies {.tabset}  \n")
-cat("Violin plot showing sample distributions of log2 normalized and imputed abundancies. \n \n ")
+cat("#### 1.4. Distributions of normalized abundances {.tabset}  \n")
+cat("Violin plot showing sample distributions of log2 normalized and imputed abundances. \n \n ")
 
 cat(" \n \n")
 pg_long_df <- dat_gene[,c_anno[order(c_anno$condition),"sample"]] %>% mutate(id=as.factor(rownames(dat_gene[,c_anno[order(c_anno$condition),"sample"]]))) %>% pivot_longer(-id, names_to = "sample", values_to = "log2 normalized abundance")
@@ -1528,8 +1528,8 @@ prot_find<-unique(c(intersect(prot_boxplot,rownames(dat_gene)),
 
 if(length(prot_find)>0){
   cat("#### 1.7. Abundances of selected proteins {.tabset}  \n")
-  cat("Normalized log2 abundancies are displayed for proteins selected in the input. Abundances are grouped per condition. \n \n ")
-  cat("Selected proteins with available abundancies: \n")
+  cat("Normalized log2 abundances are displayed for proteins selected in the input. Abundances are grouped per condition. \n \n ")
+  cat("Selected proteins with available abundances: \n")
   cat(paste(prot_find, sep = ", "))
   cat(" \n")
   cat(" \n \n")
@@ -1612,7 +1612,7 @@ cat("**Thresholds used:** \n ")
 cat(" \n")
 cat(paste0("- Fold Change threshold: log2_FC > ",fc_thr," (+), log2_FC < -",fc_thr," (-) "))
 cat(" \n")
-cat(paste0("- Statistica significance threshold: p.val < ",pval_thr," "))
+cat(paste0("- Statistical significance threshold: p.val < ",pval_thr," "))
 cat(" \n")
 if(signal_thr != -Inf){cat(paste0("- Signal log2 intesity threshold: signal > ",signal_thr," "))}
 cat(" \n")
