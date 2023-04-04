@@ -292,7 +292,19 @@ The following report summarizes the results obtained by the PhosProTN integrativ
 
 - ```protn_report.html```: complete report of the analysis with all pics and results of the enrichment.
 - [**Data** folder](Data)
-  - ```protn_env.RData```: RData object containing the essential variables and data for additional analyses in R.
+  - ```protn_env.RData```: RData object containing the essential variables and data for additional analyses in R. The variables are:
+    - *c_anno_phos*: dataframe with the description of the samples of the phosphoproteomic;
+    - *c_anno*: dataframe with the description of the samples of the proteomic;
+    - *color_constrast*: plot color of the comparison;
+    - *dat_pep*: dataframe with the peptide normalized abundances of the phosphoproteomic;
+    - *dat_complete*: dataframe with the peptide normalized abundances, of the phosphoproteomic merged with the proteomic protein;
+    - *psm_peptide_table*: descriptive dataframe of the peptides;
+    - *deps_pep_l_df*: dataframe of differential expressed peptides;
+    - *expr_avgse_pep_df*: dataframe with average, standard error and covariance for each condition based on peptide abundances;
+    - *expr_avgse_complete_df*: dataframe with average, standard error and covariance for each condition based on the merged peptides;
+    - *formule_CORAL*: design for the differential analysis;
+    - Settings: *colour_vec*: color list for the plot, *bf*: family text, *bs*: base text size; 
+    - Thresholds: *fc_thr*: Fold Change threshold, *pval_thr*: P.value threshold, *pval_enrich_thr*: P.value threshold for Enrichment, *overlap_size_enrich_thr*: Overlap size threshold for enrichment.
 ```{r print_descr_enrich_dat, warning=FALSE, echo=F, message=FALSE, eval=run_enrich, results='asis'}
   cat("  - ```enrichment_DE.RData```: RData object containing enrichment results based on differentially expressed proteins \n")
 ```

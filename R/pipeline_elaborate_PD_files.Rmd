@@ -63,7 +63,7 @@ list.of.packages <- c("ggrepel","tidyr","ggraph","graphlayouts","RColorBrewer",
                       "corrplot", "data.table", "ggplot2", "ggfortify","lazyeval",
                       "lubridate", "pheatmap", "reshape2","readr", "rlang", "rmdformats",
                       "tibble", "dplyr", "tidyr", "wesanderson","WGCNA","ggbeeswarm","ggthemes",
-                      "extrafont","pdftools","magick")
+                      "extrafont","pdftools","magick","plotly")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) suppressMessages(suppressWarnings({install.packages(new.packages, dependencies = T)}))
 list.of.packages.bio <- c("biomaRt","DEqMS","STRINGdb",
@@ -110,6 +110,7 @@ suppressMessages(suppressWarnings({
   library(pdftools)
   library(magick)
   library(extrafont)
+  library(plotly)
 }))
 
 options(dplyr.summarise.inform = FALSE)
@@ -133,22 +134,22 @@ color_base<-c("dodgerblue2", "#E31A1C", # red
               "#d6ffdf","#a3e5ff","#b1ac8f","#ccffff","#b4bb9f","#7eb7a5","#c5dbc3","#a8b9ff","#74dfbc","#f2ace7")
 colour_vec<-color_base
 
-all_times <- list()  # store the time for each chunk
-knitr::knit_hooks$set(time_it = local({
-  now <- NULL
-  function(before, options) {
-    if (before) {
-      # record the current time before each chunk
-      now <<- Sys.time()
-    } else {
-      # calculate the time difference after a chunk
-      res <- difftime(Sys.time(), now)
-      # return a character string to show the time
-      all_times[[options$label]] <<- res
-    }
-  }
-}))
-knitr::opts_chunk$set(time_it = TRUE)
+# all_times <- list()  # store the time for each chunk
+# knitr::knit_hooks$set(time_it = local({
+#   now <- NULL
+#   function(before, options) {
+#     if (before) {
+#       # record the current time before each chunk
+#       now <<- Sys.time()
+#     } else {
+#       # calculate the time difference after a chunk
+#       res <- difftime(Sys.time(), now)
+#       # return a character string to show the time
+#       all_times[[options$label]] <<- res
+#     }
+#   }
+# }))
+# knitr::opts_chunk$set(time_it = TRUE)
 
 subfold_Fig <- "figures/"
 subfold_Dat <- "data/"
@@ -287,7 +288,18 @@ The following report summarizes the results obtained by the proTN integrative pi
 
 - ```protn_report.html```: complete report of the analysis with all pics and results of the enrichment.
 - [**Data** folder](Data)
-  - ```protn_env.RData```: RData object containing the essential variables and data for additional analyses in R.
+  - ```protn_env.RData```: RData object containing the essential variables and data for additional analyses in R. The variables are:
+    - *c_anno*: dataframe with the description of the samples;
+    - *dat_gene*: dataframe with the protein normalized abundances;
+    - *dat_pep*: dataframe with the peptide normalized abundances;
+    - *psm_peptide_table*: descriptive dataframe of the peptides;
+    - *deps_l_df*: dataframe of differential expressed proteins;
+    - *deps_pep_l_df*: dataframe of differential expressed peptides;
+    - *expr_avgse_df*: dataframe with average, standard error and covariance for each condition based on protein abundances;
+    - *expr_avgse_pep_df*: dataframe with average, standard error and covariance for each condition based on peptide abundances;
+    - *formule_contrast*: design for the differential analysis;
+    - Settings: *colour_vec*: color list for the plot, *bf*: family text, *bs*: base text size; 
+    - Thresholds: *fc_thr*: Fold Change threshold, *pval_thr*: P.value threshold, *pval_enrich_thr*: P.value threshold for Enrichment, *overlap_size_enrich_thr*: Overlap size threshold for enrichment.
 ```{r print_descr_enrich_dat, warning=FALSE, echo=F, message=FALSE, eval=run_enrich, results='asis'}
   cat("  - ```enrichment_DE.RData```: RData object containing enrichment results based on differentially expressed proteins \n")
 ```
@@ -422,14 +434,6 @@ if(run_STRING){
 
 shiny::setProgress(0.18, detail = "Reading files...")
 ```
-
-
-## 1. Sample Annotation
-The table summarize the input samples read in the **Sample_Annotation** file. Each case has:
-
-- a sample name in column **sample**,
-- the associated condition of study in column **condition**,
-- the color of that sample in column **color**.
 
 
 ```{r load_data_from_PD, eval=readPD_files,echo=F, message=F, warning=F, results='asis'}
@@ -1615,11 +1619,9 @@ cat(" \n")
 
 ```
 
-
-### 2.1. Differential expression contrasts
-The following table contains the names and the formulas of the contrasts considered for differential expression analysis.
-
 ```{r print_settings_design, warning=FALSE, echo=F, message=FALSE, results='asis', eval=eval_single_Cond}
+cat("### 2.1. Differential expression contrasts \n \n")
+cat("The following table contains the names and the formulas of the contrasts considered for differential expression analysis. \n \n")
 cat("**Contrast design formula are:** ")
 cat(" \n")
 kable(data.frame("Name"=names(formule_contrast), "Formula"=formule_contrast, "Color"=color_constrast[names(formule_contrast), "color_constrast"]), row.names = F)
@@ -1688,57 +1690,8 @@ message("Differentation analysis DONE.")
 ```
 
 
-In the plot are represented graphically the number of DEPs for each contrast. Tab **Proteins** for the differentially expressed proteins, **Peptides** for the number of the differentially expressed peptides.
-
 ```{r number_deps, warning=FALSE, echo=FALSE, results='asis', eval=eval_single_Cond}
-
-# Plot DEPs barplot (as a double barplot)
-#####
-# plot_DEPs<-function(DEPs_df, # dataframe containing DEPs result
-#                     contrast_col="comp", # Name of the column with contrast names
-#                     class_col="class", # Name of the column with classes (+,-,= are expected)
-#                     color_vec=c("#EAB364", "#84A298") # Colors for Up and Down regulated
-#                      ){
-#   res_mat<-DEPs_df %>% group_by(get(contrast_col),get(class_col),.drop=FALSE) %>% summarise("Number"=n()) %>% ungroup()
-#   # get() to return the value of variable
-#   # in this way we can assign the name of the column to a variable and keep the same script changing every time only the name of the column
-#   # .drop=FALSE to keep the comparisons with zero-value classes (for example in the fdr df)
-#   colnames(res_mat)<-c("Contrast","Class","Number")
-#   res_df<-res_mat %>% filter(Class!="=")
-# 
-#   res_df$Class<-factor(res_df$Class,levels=c("+","-"))
-#   res_df$Contrast<-as.factor(res_df$Contrast)
-#   res_df$Number<-as.numeric(res_df$Number)
-#   res_df$Number[which(res_df$Class=="-")]<-res_df$Number[which(res_df$Class=="-")]*(-1)
-#   # *(-1) to assign to the total number of down-reg a - sign and put them on the left of the plot
-# 
-#   #Change ratio based on the number of comp
-#   n_comp<-length(unique(res_df$Contrast))
-#   # ratio<-1/((5/n_comp)+0.25)
-#   bs<-11
-#   bap<-ggplot(res_df,aes(x=Contrast,y=Number,fill=Class)) +
-#     scale_fill_manual(name="",values=color_vec,labels=c("Up-Regulated","Down-Regulated"))+
-#     geom_bar(stat="identity",position=position_nudge(),width=0.6,alpha=0.9) +
-#     geom_text(aes(x=Contrast, y=Number, label=abs(Number), hjust=ifelse(res_df$Number>=0,1.1,-0.1)), colour="white",size=bs*0.4,fontface="plain") +
-#     theme_bw(base_size = bs) +
-#     theme(axis.title.y=element_blank()) +
-#     theme(panel.border=element_blank()) +
-#     theme(axis.ticks=element_blank()) +
-#     theme(panel.grid=element_blank()) +
-#     # theme(aspect.ratio = ratio) +
-#     geom_hline(yintercept=0,col="grey30",lty=1,lwd=0.05*bs)+
-#     theme(axis.text.y=element_text(colour="grey20")) +
-#     theme(axis.text.x=element_blank()) +
-#     theme(legend.position="bottom") +
-#     #theme(legend.justification=c(1.05,1.05), legend.position=c(1,0.07)) +
-#     theme(legend.title=element_blank())+
-#     coord_flip()+
-#     theme(legend.text = element_text(size = bs),
-#           legend.key.size = unit((0.012*bs),"in"))+
-#     labs(y="Number of DEPs")
-#   return(bap)
-# }
-#####
+cat("In the plot are represented graphically the number of DEPs for each contrast. Tab **Proteins** for the differentially expressed proteins, **Peptides** for the number of the differentially expressed peptides. \n \n")
 cat(" \n \n")
 cat("#### 2.2. Number of differentially expressed proteins and peptides for each comparison {.tabset}  \n")
 #Execute only if found at least one gene differentiated
@@ -1817,7 +1770,7 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
 shiny::setProgress(0.60, detail = "Count DEPs...")
 ```
 
-```{r volcano_protein, fig.height=6, fig.width=6, warning=FALSE, echo=FALSE, results='asis', eval=eval_single_Cond}
+```{r volcano_protein, fig.height=6, fig.width=6, warning=FALSE, echo=FALSE, results='asis', eval=(eval_single_Cond & (deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0))}
 cat(" \n \n")
 if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   cat("#### 2.3. Volcano plots  \n")
@@ -1828,75 +1781,131 @@ if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   cat("Top enriched proteins/peptides are labeled. \n")
   cat(" \n \n")
   
-  cat("#### 2.3.1. Volcano plots of Proteins {.tabset}  \n")
-  cat(" \n \n")
+  plotlist = list()
   
-
   for(comp in unique(deps_l_df$comp)){
+    col <- if(pval_fdr){"p_adj"}else{"p_val"}
     input_df <- deps_l_df[which(deps_l_df$comp == comp),]
-    labels_up <- (input_df %>% filter(class == '+'))$id
-    labels_down <- (input_df %>% filter(class == '-'))$id
+    input_df$log2_FC <- round(input_df$log2_FC, digits = 2)
+    input_df[,col] <- round(-log10(input_df[,col]), digits = 2)
+    # labels_up <- (input_df %>% filter(class == '+'))$id
+    # labels_down <- (input_df %>% filter(class == '-'))$id
 
-    cmd<-ggplot(data=input_df, aes(x=log2_FC, y=-log10(if(pval_fdr){p_adj}else{p_val}), col=class, label=id)) +
+    cmd<-ggplot(data=input_df, aes(x=log2_FC, y=if(pval_fdr){p_adj}else{p_val}, col=class, label=id)) +
       geom_point(pch=20,cex=2) +
       geom_hline(yintercept=-log10(pval_thr), col="black") +
       geom_vline(xintercept=c(-fc_thr, fc_thr), col="black") +
       # geom_text_repel(data = input_df %>% filter(id %in% labels),color="white") +
-      geom_label_repel(data = input_df %>% filter(id %in% labels_up), label.padding = unit(0.1, "lines"), color="black",xlim = c(1.5, NA)) +
-      geom_label_repel(data = input_df %>% filter(id %in% labels_down), label.padding = unit(0.1, "lines"), color="black",xlim = c(NA, -1.5)) +
+      # geom_label_repel(data = input_df %>% filter(id %in% labels_up), label.padding = unit(0.1, "lines"), color="black",xlim = c(1.5, NA)) +
+      # geom_label_repel(data = input_df %>% filter(id %in% labels_down), label.padding = unit(0.1, "lines"), color="black",xlim = c(NA, -1.5)) +
       ggtitle(paste0("Volcano Plot of ",comp)) +
-      ylab(if(pval_fdr){"-log10(fdr)"}else{"-log10(p_val"}) +
+      ylab(if(pval_fdr){"-log10(fdr)"}else{"-log10(p_val)"}) +
       scale_color_manual(values=c(color_constrast[comp,"color_constrast"], color_constrast[comp,"color_constrast_dark"], "grey70")) +
       scale_x_continuous(limits = c(min(-max(abs(input_df$log2_FC)),-3), max(max(abs(input_df$log2_FC)),3))) +
-      scale_y_continuous(limits = c(0, max(max(abs(-log10(if(pval_fdr){input_df$p_adj}else{input_df$p_val}))),4))) +
+      scale_y_continuous(limits = c(0, max(max(abs((if(pval_fdr){input_df$p_adj}else{input_df$p_val}))),4))) +
       theme_bw(base_size = bs, base_family = bf)
-
-    cat("##### ",comp," \n")
-    print(cmd)
-    cat(" \n \n")
+    
+    col <- if(pval_fdr){"p_adj"}else{"p_val"}
+    labels <- c((input_df %>% filter(class == '+'))[order(-(input_df %>% filter(class == '+'))[,"log2_FC"], (input_df %>% filter(class == '+'))[,col]),][1:5,"id"],
+                (input_df %>% filter(class == '-'))[order((input_df %>% filter(class == '-'))[,"log2_FC"], (input_df %>% filter(class == '-'))[,col]),][1:5,"id"])
+    
+    # input_df[[col]]<--log10(input_df[[col]])
+    a <- list()
+    for (i in seq_len(length(labels))) {
+      m <- labels[i]
+      a[[i]] <- list(
+        x = input_df[which(input_df$id %in% m),"log2_FC"],
+        y = (input_df[which(input_df$id %in% m), col]),
+        text = m,
+        xref = "x",
+        yref = "y",
+        showarrow = TRUE,
+        arrowhead = 0.5,
+        ax = 20,
+        ay = -40
+      )
+    }
+    # cat("##### ",comp," \n")
+    plotlist[[comp]] = ggplotly(cmd)
   }
+  
+  
 shiny::setProgress(0.63, detail = "Perform volcano plot...")
 }
 
+cat("#### 2.3.1. Volcano plots of Proteins {.tabset}  \n")
+cat(" \n \n")
+in_tabs(plotlist, labels = names(plotlist), level = 4L)
+cat(" \n \n")
+
 ```
 
-```{r volcano_pep, fig.height=6, fig.width=6, warning=FALSE, echo=FALSE, results='asis', eval=eval_single_Cond}
+```{r volcano_pep, fig.height=6, fig.width=6, warning=FALSE, echo=FALSE, results='asis', eval=(eval_single_Cond & (deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0))}
 cat(" \n \n")
 if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
 
-  cat("#### 2.3.2. Volcano plot of Peptides {.tabset}  \n")
-  cat(" \n \n")
-
+  plotlist = list()
+  
   for(comp in unique(deps_pep_l_df$comp)){
     input_df <- na.omit((deps_pep_l_df[which(deps_pep_l_df$comp == comp),])[order(deps_pep_l_df$id),])
     pos<-lapply(str_match_all(str_split(psm_peptide_table$`Position in Master Proteins`,";",n=1),"\\[(.*?)\\]"), function(x){x[,1][1]})
     labels<-str_c(psm_peptide_table$GeneName,pos,sep="_")
     input_df$id<-labels
-    labels_up <- (input_df %>% filter(class == '+'))$id
-    labels_down <- (input_df %>% filter(class == '-'))$id
+    input_df$log2_FC <- round(input_df$log2_FC, digits = 2)
+    input_df[,col] <- round(-log10(input_df[,col]), digits = 2)
+    # labels_up <- (input_df %>% filter(class == '+'))$id
+    # labels_down <- (input_df %>% filter(class == '-'))$id
 
     cmd<-ggplot(data=input_df, aes(x=log2_FC, y=-log10(if(pval_fdr){p_adj}else{p_val}), col=class, label=id)) +
       geom_point(pch=20,cex=2) +
       geom_hline(yintercept=-log10(pval_thr), col="black") +
       geom_vline(xintercept=c(-fc_thr, fc_thr), col="black") +
       # geom_text_repel(data = input_df %>% filter(id %in% labels),color="white") +
-      geom_label_repel(data = input_df %>% filter(id %in% labels_up, class == '+'),
-                       label.padding = unit(0.1, "lines"), color="black",xlim = c(1.5, NA)) +
-      geom_label_repel(data = input_df %>% filter(id %in% labels_down, class == '-'),
-                       label.padding = unit(0.1, "lines"), color="black",xlim = c(NA, -1.5)) +
+      # geom_label_repel(data = input_df %>% filter(id %in% labels_up, class == '+'),
+      #                  label.padding = unit(0.1, "lines"), color="black",xlim = c(1.5, NA)) +
+      # geom_label_repel(data = input_df %>% filter(id %in% labels_down, class == '-'),
+      #                  label.padding = unit(0.1, "lines"), color="black",xlim = c(NA, -1.5)) +
       ggtitle(paste0("Volcano Plot of ",comp)) +
-      ylab(if(pval_fdr){"-log10(fdr)"}else{"-log10(p_val"}) +
+      ylab(if(pval_fdr){"-log10(fdr)"}else{"-log10(p_val)"}) +
       scale_color_manual(values=c(color_constrast[comp,"color_constrast"], color_constrast[comp,"color_constrast_dark"], "grey70")) +
       scale_x_continuous(limits = c(min(-max(abs(input_df$log2_FC)),-3), max(max(abs(input_df$log2_FC)),3))) +
       scale_y_continuous(limits = c(0, max(max(abs(-log10(if(pval_fdr){input_df$p_adj}else{input_df$p_val}))),4))) +
       theme_bw(base_size = bs, base_family = bf)
 
-    cat("##### ",comp," \n")
-    print(cmd)
-    cat(" \n \n")
+    # cat("##### ",comp," \n")
+    # print(cmd)
+    # cat(" \n \n")
+    col <- if(pval_fdr){"p_adj"}else{"p_val"}
+    labels <- c((input_df %>% filter(class == '+'))[order(-(input_df %>% filter(class == '+'))[,"log2_FC"], (input_df %>% filter(class == '+'))[,col]),][1:5,"id"],
+                (input_df %>% filter(class == '-'))[order((input_df %>% filter(class == '-'))[,"log2_FC"], (input_df %>% filter(class == '-'))[,col]),][1:5,"id"])
+    
+    # input_df[[col]]<--log10(input_df[[col]])
+    a <- list()
+    for (i in seq_len(length(labels))) {
+      m <- labels[i]
+      a[[i]] <- list(
+        x = input_df[which(input_df$id %in% m),"log2_FC"],
+        y = -log10(input_df[which(input_df$id %in% m), col]),
+        text = m,
+        xref = "x",
+        yref = "y",
+        showarrow = TRUE,
+        arrowhead = 0.5,
+        ax = 20,
+        ay = -40
+      )
+    }
+    # cat("##### ",comp," \n")
+    plotlist[[comp]] = ggplotly(cmd)
   }
 shiny::setProgress(0.65, detail = "Perform volcano plot...")
 }
+
+cat("#### 2.3.2. Volcano plot of Peptides {.tabset}  \n")
+cat(" \n \n")
+in_tabs(plotlist, labels = names(plotlist), level = 4L)
+cat(" \n \n")
+
 ```
 
 ```{r MDS_prot_deps, warning=F, message=F, echo=F, results='asis', eval=eval_single_Cond}
@@ -2937,6 +2946,9 @@ save(c_anno,
      expr_avgse_pep_df,
      formule_contrast,
      colour_vec,
+     bf,
+     bs,
+     fc_thr, pval_thr, pval_enrich_thr, overlap_size_enrich_thr,
      file = paste0(dirOutput,subfold_Dat,"protn_env.RData"))
 }else{
 save(c_anno,
@@ -2949,6 +2961,9 @@ save(c_anno,
      expr_avgse_pep_df,
      formule_contrast,
      colour_vec,
+     bf,
+     bs,
+     fc_thr, pval_thr, pval_enrich_thr, overlap_size_enrich_thr,
      file = paste0(dirOutput,subfold_Dat,"protn_env.RData"))
 }
 remove(list = ls()[-1])
