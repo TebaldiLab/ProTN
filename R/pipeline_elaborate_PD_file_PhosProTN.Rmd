@@ -21,6 +21,7 @@ params:
   file_prot_phos: NA
   file_pep_phos: NA
   file_psm_phos: NA
+  filt_absent_value: "1"
   pval_fdr: NA
   phospho_thr: "75"
   signal_thr: "inf"
@@ -111,6 +112,10 @@ suppressMessages(suppressWarnings({
   library(readr)
   library(stringi)
   library(stringr)
+  library(pdftools)
+  library(magick)
+  library(extrafont)
+  library(plotly)
 }))
 
 options(dplyr.summarise.inform = FALSE)
@@ -134,22 +139,22 @@ color_base<-c("dodgerblue2", "#E31A1C", # red
               "#d6ffdf","#a3e5ff","#b1ac8f","#ccffff","#b4bb9f","#7eb7a5","#c5dbc3","#a8b9ff","#74dfbc","#f2ace7")
 colour_vec<-color_base
 
-all_times <- list()  # store the time for each chunk
-knitr::knit_hooks$set(time_it = local({
-  now <- NULL
-  function(before, options) {
-    if (before) {
-      # record the current time before each chunk
-      now <<- Sys.time()
-    } else {
-      # calculate the time difference after a chunk
-      res <- difftime(Sys.time(), now)
-      # return a character string to show the time
-      all_times[[options$label]] <<- res
-    }
-  }
-}))
-knitr::opts_chunk$set(time_it = TRUE)
+# all_times <- list()  # store the time for each chunk
+# knitr::knit_hooks$set(time_it = local({
+#   now <- NULL
+#   function(before, options) {
+#     if (before) {
+#       # record the current time before each chunk
+#       now <<- Sys.time()
+#     } else {
+#       # calculate the time difference after a chunk
+#       res <- difftime(Sys.time(), now)
+#       # return a character string to show the time
+#       all_times[[options$label]] <<- res
+#     }
+#   }
+# }))
+# knitr::opts_chunk$set(time_it = TRUE)
 
 subfold_Fig <- "figures/"
 subfold_Dat <- "data/"
@@ -193,6 +198,12 @@ if(is.na(phospho_thr)){
   message("Warning: parse error for Phosphorilation accuracy percentage threshold. Set default paramenter to 75%\n")
   phospho_thr <- 75
 }
+filt_absent_value=suppressWarnings(parse_double(params$filt_absent_value))
+if(is.na(filt_absent_value)){
+  message("Warning: parse error for the number of acceptable missing condition. Set default paramenter to 0\n")
+  filt_absent_value <- 0
+}
+#Read input parameters for Limma
 signal_thr=suppressWarnings(parse_double(params$signal_thr))
 if(is.na(signal_thr)){signal_thr<- -Inf}
 fc_thr=suppressWarnings(parse_double(params$fc_thr))
@@ -290,7 +301,7 @@ The following report summarizes the results obtained by the PhosProTN integrativ
 
 ## Description of the output files
 
-- ```protn_report.html```: complete report of the analysis with all pics and results of the enrichment.
+<!-- - ```protn_report.html```: complete report of the analysis with all pics and results of the enrichment. -->
 - [**Data** folder](Data)
   - ```protn_env.RData```: RData object containing the essential variables and data for additional analyses in R. The variables are:
     - *c_anno_phos*: dataframe with the description of the samples of the phosphoproteomic;
@@ -408,19 +419,17 @@ if(readPD_files){
   cat(" \n")
 }
 cat(" \n \n")
-cat("**Pipeline** \n ")
 if(batch_corr_exe){
+  cat("**Pipeline** \n ")
   cat(" \n")
   cat("- Execution of batch effect correction.")
 }
-cat(" \n \n ")
-cat(paste0("- Phosphorilation accuracy percentage threshold: phos_% > ",phospho_thr,"% "))
 cat(" \n \n ")
 cat("**Differential expression** \n ")
 cat(" \n")
 cat(paste0("- Fold Change threshold: log2_FC > ",fc_thr," (+), log2_FC < -",fc_thr," (-) "))
 cat(" \n")
-cat(paste0("- Statistica significance threshold: p.val < ",pval_thr," "))
+cat(paste0("- Statistical significance threshold: p.val < ",pval_thr," "))
 cat(" \n")
 if(signal_thr != -Inf){cat(paste0("- Signal log2 intesity threshold: signal > ",signal_thr," "))}
 cat(" \n \n ")
@@ -440,19 +449,15 @@ if(run_STRING){
 cat(" \n")
   cat("- Execution of PPI network analysis with STRINGdb.")
 }
+cat(" \n \n ")
+cat("**Phosphorylation analysis** \n ")
+cat(" \n \n ")
+cat(paste0("- Phosphorilation accuracy percentage threshold: phos_% > ",phospho_thr,"% "))
 cat(" \n \n")
 if(run_kinaseTree){cat("- Execution of Kinase Tree activation analysis with PhosR and CORAL.")}
 
 shiny::setProgress(0.18, detail = "Reading files...")
 ```
-
-
-## 1. Sample Annotation
-The table summarize the input samples read in the **Sample_Annotation** file. Each case has:
-
-- a sample name in column **sample**,
-- the associated condition of study in column **condition**,
-- the color of that sample in column **color**.
 
 
 ```{r load_data_from_PD, eval=readPD_files,echo=F, message=F, warning=F, results='asis'}
@@ -1153,7 +1158,7 @@ shiny::setProgress(0.27, detail = "Annotate proteins/peptides...")
 #Preprocess Protein intensities
 psm_sig_prot_raw_prot[psm_sig_prot_raw_prot == 0] <- NA # transform 0s into NAs
 
-sig_thr<-0 # NA threshold
+sig_thr<-filt_absent_value # NA threshold
 
 psm_long_df_prot <- psm_sig_prot_raw_prot %>% mutate(id=as.factor(rownames(psm_sig_prot_raw_prot)))
 psm_long_df_prot <- psm_long_df_prot %>% pivot_longer(-id, names_to = "sample", values_to = "counts")
@@ -1186,7 +1191,7 @@ remove(psm_anno_raw_prot,psm_sig_prot_raw_prot,psm_long_df_prot,psm_filter_df_pr
 
 #Preprocess peptide intensities
 psm_sig_pet_raw_phos[psm_sig_pet_raw_phos == 0] <- NA # transform 0s into NAs
-sig_thr<-0 # NA threshold
+sig_thr<-filt_absent_value # NA threshold
 
 psm_long_df_phos <- psm_sig_pet_raw_phos %>% mutate(id=as.factor(rownames(psm_sig_pet_raw_phos)))
 psm_long_df_phos <- psm_long_df_phos %>% pivot_longer(-id, names_to = "sample", values_to = "counts")
@@ -1365,10 +1370,10 @@ remove(hs,numeric_df)
 shiny::setProgress(0.34, detail = "Doing normalizations...")
 ```
 
-#### 1.3. Percentage of phosphosite
-The following graph represent the percentage of S, T, Y of the phosphosites.
+#### 1.3. Phosphosite residues
+The following graph represent the percentage of the phosphosites located on Serine (S), Throenines (T) and Tyrosines (Y).
 
-```{r numeric_percentage_phosphosite, echo=F, message=F, warning=F, results='asis'}
+```{r numeric_percentage_phosphosite, echo=F, message=F, warning=F, results='asis', fig.height=3, fig.width=7.5}
 cat("\n \n")
 if(readPD_files){
   active_sites <- lapply(lapply(stri_extract_all_regex(psm_peptide_table$modif, "\\w\\d+\\(1|\\w\\d+\\.|\\ \\w\\]|\\w\\(1"), 
@@ -1387,19 +1392,30 @@ numeric_df<- data.frame("Site" = c("S", "T", "Y"),
                                    paste(as.character(round(active_sites["Y"]/sum(active_sites)*100, digits = 2)), "%")))
 setnames(numeric_df,"perc","Percentage of phosphosite (%)")
 
-hs <- ggplot(data=numeric_df, aes(x=Site,y=`Percentage of phosphosite (%)`,fill=Site))+
-  # geom_hline(yintercept = c(0, 25, 50, 75, 100), lty=1, alpha=.1)+
-  #coord_flip()+
-  geom_bar(stat="identity",width=.4,alpha=.95)+
-  theme_bw(base_size = bs*1.5, base_family = bf)+
-  theme(legend.position = "none")+
-  labs(y = "Percentage of the phosphosite (%)") +
-  scale_fill_manual(values=c("#F79256", "#FBD1A2", "#7DCFB6")) +
-  # scale_colour_manual(values=(colour_vec)) +
-  ylim(0, 100) +
-  # scale_fill_hue(l=45) +
-  theme(panel.grid.minor = element_blank(),panel.grid.major.x = element_blank()) +
-  geom_text(data=numeric_df,aes(label=label, y=Inf),fontface="italic", colour=rep("black",3), alpha=0.9,size=0.4*bs,vjust=1.5,hjust=0.5)
+# hs <- ggplot(data=numeric_df, aes(x=Site,y=`Percentage of phosphosite (%)`,fill=Site))+
+#   # geom_hline(yintercept = c(0, 25, 50, 75, 100), lty=1, alpha=.1)+
+#   #coord_flip()+
+#   geom_bar(stat="identity",width=.4,alpha=.95)+
+#   theme_bw(base_size = bs*1.5, base_family = bf)+
+#   theme(legend.position = "none")+
+#   labs(y = "Percentage of the phosphosite (%)") +
+#   scale_fill_manual(values=c("#F79256", "#FBD1A2", "#7DCFB6")) +
+#   # scale_colour_manual(values=(colour_vec)) +
+#   ylim(0, 100) +
+#   # scale_fill_hue(l=45) +
+#   theme(panel.grid.minor = element_blank(),panel.grid.major.x = element_blank()) +
+#   geom_text(data=numeric_df,aes(label=label, y=Inf),fontface="italic", colour=rep("black",3), alpha=0.9,size=0.4*bs,vjust=1.5,hjust=0.5)
+
+hs <- enrichment_lollipop(numeric_df, 
+                    x_col = "Percentage of phosphosite (%)", 
+                    y_col = "Site", 
+                    size_col = "Percentage of phosphosite (%)", size_vec = c(6,6),
+                    shape_col = "Site", shape_vec = c(16,16,16),
+                    color_col = "Site", color_vec = c("#F79256", "#FBD1A2", "#7DCFB6"), 
+                    fill_col = "Site", fill_vec = c("#F79256", "#FBD1A2", "#7DCFB6"), 
+                    text_col = "label") + theme(legend.position = "none")
+  
+  
 
 print(hs)
 cat("\n \n")
@@ -1411,15 +1427,15 @@ shiny::setProgress(0.34, detail = "Doing normalizations...")
 
 #### 1.4. Normalization, peptide-to-protein summarization, imputation 
 
-**Peptides** abundances are normalized with the equalMedianNormalization function from the Bioconductor package [DEqMS](<https://www.bioconductor.org/packages/release/bioc/html/DEqMS.html>) (equal medians in all samples). 
+**Phospho-peptides** abundances are normalized with the equalMedianNormalization function from the Bioconductor package [DEqMS](<https://www.bioconductor.org/packages/release/bioc/html/DEqMS.html>) (equal medians in all samples). 
 
-**Protein** normalized abundancies were calculated with the medianSweeping function from the Bioconductor package [DEqMS](<https://www.bioconductor.org/packages/release/bioc/html/DEqMS.html>).
+**Protein** normalized abundancies are calculated with the medianSweeping function from the Bioconductor package [DEqMS](<https://www.bioconductor.org/packages/release/bioc/html/DEqMS.html>).
 
 ```{r pep_in_proteins, echo=F, message=F, warning=F}
 
 numeric_df <- as.data.table(table(psm_anno_df$symbol))
 numeric_df[which(numeric_df$N > 20), "N"] <- 20
-numeric_df <- numeric_df[order(numeric_df$N) , .(NPeptides = .N), by = c("N")]
+numeric_df <- numeric_df[order(numeric_df$N) , .(NPeptides = .N), by = c("N")][2:20,]
 numeric_df$N <- factor(str_sort(str_replace(as.character(numeric_df$N), pattern = "20", replacement = "20+"), numeric = T), levels = c(2:19, "20+"))
 
 # numeric_df$numeric_values<-colSums(is.na(psm_sig_prot_df))
@@ -2078,9 +2094,9 @@ if(length(prot_find)>0){
 shiny::setProgress(0.56, detail = "Control boxplot proteins...")
 ```
 
-## 2. Identification of Differentially Expressed Peptides of the phospho-proteomic
+## 2. Identification of Differentially Phosphorylated Peptides
 
-Differentially expressed peptides are identified using the Limma Bioconductor package. First are reported the comparison for which PhosProTN execute the differential analysis. Other than the formula desired by the user, for each condition is studied the differentiality between the phospho samples against the proteomic samples. 
+Differentially phosphorylated peptides are identified using the Limma Bioconductor package. In each comparison, phospho-peptide changes are scaled for differences in the corresponding protein levels. PhosProTN also perform phosphorylation enrichment analysis for each condition 
 
 ```{r print_settings_diff_analysis, warning=FALSE, echo=F, message=FALSE, results='asis'}
 cat(" \n \n")
@@ -2090,7 +2106,7 @@ cat("**Thresholds used:** \n ")
 cat(" \n")
 cat(paste0("- Fold Change threshold: log2_FC > ",fc_thr," (+), log2_FC < -",fc_thr," (-) "))
 cat(" \n")
-cat(paste0("- Statistica significance threshold: p.val < ",pval_thr," "))
+cat(paste0("- Statistical significance threshold: p.val < ",pval_thr," "))
 cat(" \n")
 if(signal_thr != -Inf){cat(paste0("- Signal log2 intesity threshold: signal > ",signal_thr," "))}
 cat(" \n")
@@ -2196,78 +2212,30 @@ message("Differentation analysis DONE.")
 ```
 
 ### 2.1. Differential expression contrasts
-The following table contains the names and the formulas of the contrasts considered for differential expression analysis.
+The following table contains the names and the formulas of the contrasts considered for differential phosphorylation analysis.
 
-The conditions from the phospho-proteomics are represented by an **_p** at the end of the condition, the **_i** represent the conditions from the proteomics. Also, the comparison provided in input by the user are adapted for the phospho differential analysis.
+The conditions from the phospho-proteomics are represented by an **_p** at the end of the condition, the **_i** represent the conditions from the proteomics. Also, the comparison provided in input by the user are adapted for the differential phosphorylation analysis.
 
 ```{r print_settings_design, warning=FALSE, echo=F, message=FALSE, results='asis'}
-cat("**Contrast design formula are:** ")
+cat("**Contrast design formulas:** ")
 cat(" \n")
 kable(data.frame("Name"=names(formule_contrast), "Formula"=formule_contrast, "Color"=color_constrast[names(formule_contrast), "color_constrast"]), row.names = F)
 cat(" \n")
 
 ```
 
-In the plot are represented graphically the number of DEPs for each contrast. Tab **Proteins** for the differentially expressed proteins, **Peptides** for the number of the differentially expressed peptides.
-
 ```{r number_deps, warning=FALSE, echo=FALSE, results='asis'}
 
 # Plot DEPs barplot (as a double barplot)
-#####
-# plot_DEPs<-function(DEPs_df, # dataframe containing DEPs result
-#                     contrast_col="comp", # Name of the column with contrast names
-#                     class_col="class", # Name of the column with classes (+,-,= are expected)
-#                     color_vec=c("#EAB364", "#84A298") # Colors for Up and Down regulated
-#                      ){
-#   res_mat<-DEPs_df %>% group_by(get(contrast_col),get(class_col),.drop=FALSE) %>% summarise("Number"=n()) %>% ungroup()
-#   # get() to return the value of variable
-#   # in this way we can assign the name of the column to a variable and keep the same script changing every time only the name of the column
-#   # .drop=FALSE to keep the comparisons with zero-value classes (for example in the fdr df)
-#   colnames(res_mat)<-c("Contrast","Class","Number")
-#   res_df<-res_mat %>% filter(Class!="=")
-# 
-#   res_df$Class<-factor(res_df$Class,levels=c("+","-"))
-#   res_df$Contrast<-as.factor(res_df$Contrast)
-#   res_df$Number<-as.numeric(res_df$Number)
-#   res_df$Number[which(res_df$Class=="-")]<-res_df$Number[which(res_df$Class=="-")]*(-1)
-#   # *(-1) to assign to the total number of down-reg a - sign and put them on the left of the plot
-# 
-#   #Change ratio based on the number of comp
-#   n_comp<-length(unique(res_df$Contrast))
-#   # ratio<-1/((5/n_comp)+0.25)
-#   bs<-11
-#   bap<-ggplot(res_df,aes(x=Contrast,y=Number,fill=Class)) +
-#     scale_fill_manual(name="",values=color_vec,labels=c("Up-Regulated","Down-Regulated"))+
-#     geom_bar(stat="identity",position=position_nudge(),width=0.6,alpha=0.9) +
-#     geom_text(aes(x=Contrast, y=Number, label=abs(Number), hjust=ifelse(res_df$Number>=0,1.1,-0.1)), colour="white",size=bs*0.4,fontface="plain") +
-#     theme_bw(base_size = bs) +
-#     theme(axis.title.y=element_blank()) +
-#     theme(panel.border=element_blank()) +
-#     theme(axis.ticks=element_blank()) +
-#     theme(panel.grid=element_blank()) +
-#     # theme(aspect.ratio = ratio) +
-#     geom_hline(yintercept=0,col="grey30",lty=1,lwd=0.05*bs)+
-#     theme(axis.text.y=element_text(colour="grey20")) +
-#     theme(axis.text.x=element_blank()) +
-#     theme(legend.position="bottom") +
-#     #theme(legend.justification=c(1.05,1.05), legend.position=c(1,0.07)) +
-#     theme(legend.title=element_blank())+
-#     coord_flip()+
-#     theme(legend.text = element_text(size = bs),
-#           legend.key.size = unit((0.012*bs),"in"))+
-#     labs(y="Number of DEPs")
-#   return(bap)
-# }
-#####
 cat(" \n \n")
-cat("#### 2.2. Number of differentially expressed peptides for each comparison  \n")
+cat("#### 2.2. Number of differentially phosphorylated peptides for each comparison  \n")
 #Execute only if found at least one gene differentiated
 
 
 #Peptides
 if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   cat(" \n \n")
-  heig<-unique(deps_pep_l_df$comp)
+  # heig<-unique(deps_pep_l_df$comp)
   lolli_df <- data.table("comp"=deps_pep_l_df$comp[which(deps_pep_l_df$class == "+" | deps_pep_l_df$class == "-")], 
                        "class"=factor(deps_pep_l_df$class[which(deps_pep_l_df$class == "+" | deps_pep_l_df$class == "-")]))
   lolli_df <- lolli_df[ , .(N = .N), by=c("comp","class")]
@@ -2278,164 +2246,111 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   names(col_vec)[(1:length(lolli_df$comp))[(1:length(lolli_df$comp))%%2 == 0]]<-paste0(lolli_df$comp[(1:length(lolli_df$comp))[(1:length(lolli_df$comp))%%2 == 1]], "_-")
 
   
-  pDEPs<-deps_b2b_lollipop(input_df=lolli_df, break_vec=seq(0,max(lolli_df$N),round(max(lolli_df$N)/5, 0)), fill_vec = col_vec, color_vec = col_vec, char_max = 30)
+  pDEPs<-deps_b2b_lollipop(input_df=lolli_df, 
+                           break_vec=seq(0,plyr::round_any(max(lolli_df$N)*1.2, if(max(lolli_df$N)>90){100}else{10}, f = ceiling),
+                                         round((plyr::round_any(max(lolli_df$N)*1.2, if(max(lolli_df$N)>90){100}else{10}, f = ceiling))/5, 0)), 
+                           fill_vec = col_vec, 
+                           color_vec = col_vec, 
+                           char_max = 30, position_dodge = 0.1)
   
-  # pDEPs<-plot_DEPs(deps_pep_l_df,
-  #                   contrast_col="comp",
-  #                   class_col="class",
-  #                   color_vec=c("grey60", "grey40"))
-  
-  oldheig <- knitr::opts_chunk$get("fig.height")
-  knitr::opts_chunk$set(fig.height = max(min(20,length(heig)*0.75),2))
+  # oldheig <- knitr::opts_chunk$get("fig.height")
+  # knitr::opts_chunk$set(fig.height = max(min(20,length(heig)*0.75),2))
   print(pDEPs)
   cat(" \n \n")
-  knitr::opts_chunk$set(fig.height = oldheig)
+  # knitr::opts_chunk$set(fig.height = oldheig)
 
-  suppressMessages(ggsave(paste0(dirOutput,subfold_Fig,subfold_expr,"DE_peptide_barplot.pdf"), pDEPs, device=cairo_pdf, 
-                          height = max(min(20,length(heig)*0.75),2), units = c("in")))
+  suppressMessages(ggsave(paste0(dirOutput,subfold_Fig,subfold_expr,"DE_peptide_barplot.pdf"), pDEPs, device=cairo_pdf, units = c("in")))
+                          # height = max(min(20,length(heig)*0.75),2), units = c("in")))
   remove(pDEPs,cmd,mds_cmdscale)
 }else{
   message("No gene differentiated discovered.")
   cat("No gene differentiated discovered.")
 }
 
-
-
-
-
 shiny::setProgress(0.60, detail = "Count DEPs...")
 ```
 
-```{r volcano_protein, fig.height=6, fig.width=6, warning=FALSE, echo=FALSE, results='asis', eval=F}
-cat(" \n \n")
-if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
-
-  cat("#### 3.1.1. Volcano plot of Proteins {.tabset}  \n")
-  cat("In the tabs below, the figures represent the volcano plots of differentially expressed proteins. Each condition has its own tab with the correspoding figure. \n \n ")
-  cat("The line in the volcano are the threshold set. \n \n ")
-  cat("Class identify the state of the protein. \"+\" are the Up-regulated DEPs, \"-\" are the Down-regulated DEPs, \"=\" are the non-significative DEPs. The tool writes the labels of the proteins which can fit in the graph. \n")
-  cat(" \n \n")
-
-  for(comp in unique(deps_l_df$comp)){
-    input_df <- deps_l_df[which(deps_l_df$comp == comp),]
-    labels_up <- (input_df %>% filter(class == '+'))$id
-    labels_down <- (input_df %>% filter(class == '-'))$id
-
-    cmd<-ggplot(data=input_df, aes(x=log2_FC, y=-log10(if(pval_fdr){p_adj}else{p_val}), col=class, label=id)) +
-      geom_point(pch=20,cex=2) +
-      geom_hline(yintercept=-log10(pval_thr), col="black") +
-      geom_vline(xintercept=c(-fc_thr, fc_thr), col="black") +
-      # geom_text_repel(data = input_df %>% filter(id %in% labels),color="white") +
-      geom_label_repel(data = input_df %>% filter(id %in% labels_up), label.padding = unit(0.1, "lines"), color="black",xlim = c(1.5, NA)) +
-      geom_label_repel(data = input_df %>% filter(id %in% labels_down), label.padding = unit(0.1, "lines"), color="black",xlim = c(NA, -1.5)) +
-      ggtitle(paste0("Volcano Plot of ",comp)) +
-      ylab(if(pval_fdr){"-log10(fdr)"}else{"-log10(p_val"}) +
-      scale_color_manual(values=c(color_constrast[comp,"color_constrast"], color_constrast[comp,"color_constrast_dark"], "grey70")) +
-      scale_x_continuous(limits = c(min(-max(abs(input_df$log2_FC)),-3), max(max(abs(input_df$log2_FC)),3))) +
-      scale_y_continuous(limits = c(0, max(max(abs(-log10(if(pval_fdr){input_df$p_adj}else{input_df$p_val}))),4))) +
-      theme_bw(base_size = bs, base_family = bf)
-
-    cat("##### ",comp," \n")
-    print(cmd)
-    cat(" \n \n")
-  }
-shiny::setProgress(0.63, detail = "Perform volcano plot...")
-}
-
-```
 
 ```{r volcano_pep, fig.height=6, fig.width=6, warning=FALSE, echo=FALSE, results='asis'}
 
 cat(" \n \n")
 if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
 
-  cat("#### 2.3.2. Volcano plot of Peptides {.tabset}  \n")
-  cat(" \n \n")
-
+  plotlist = list()
+  
   for(comp in unique(deps_pep_l_df$comp)){
+    col <- if(pval_fdr){"p_adj"}else{"p_val"}
     input_df <- na.omit((deps_pep_l_df[which(deps_pep_l_df$comp == comp),])[order(deps_pep_l_df$id),])
     input_df$id <- psm_peptide_table[input_df$id, "GeneName"]
+    input_df$log2_FC <- round(input_df$log2_FC, digits = 2)
+    input_df[,col] <- round(-log10(input_df[,col]), digits = 2)
     # pos<-lapply(str_match_all(str_split(psm_peptide_table$`Position in Master Proteins`,";",n=1),"\\[(.*?)\\]"), function(x){x[,1][1]})
     # labels<-str_c(psm_peptide_table$GeneName,pos,sep="_")
     # input_df$id<-labels
-    labels_up <- (input_df[order(input_df$p_val),] %>% filter(class == '+'))$id
-    labels_up <- labels_up[1:min(100, length(labels_up))]
-    labels_down <- (input_df[order(input_df$p_val),] %>% filter(class == '+'))$id
-    labels_down <- labels_down[1:min(100, length(labels_down))]
+    # labels_up <- (input_df[order(input_df$p_val),] %>% filter(class == '+'))$id
+    # labels_up <- labels_up[1:min(100, length(labels_up))]
+    # labels_down <- (input_df[order(input_df$p_val),] %>% filter(class == '+'))$id
+    # labels_down <- labels_down[1:min(100, length(labels_down))]
 
-    cmd<-ggplot(data=input_df, aes(x=log2_FC, y=-log10(if(pval_fdr){p_adj}else{p_val}), col=class, label=id)) +
+    cmd<-ggplot(data=input_df, aes(x=log2_FC, y=if(pval_fdr){p_adj}else{p_val}, col=class, text = paste('</br>Gene: ', id,
+                      '</br>Class: ', class,
+                      '</br>Log2_FC: ', log2_FC,
+                      '</br>',if(pval_fdr){"P_adj"}else{"P_val"},': ',if(pval_fdr){p_adj}else{p_val}))) +
       geom_point(pch=20,cex=2) +
       geom_hline(yintercept=-log10(pval_thr), col="black") +
       geom_vline(xintercept=c(-fc_thr, fc_thr), col="black") +
       # geom_text_repel(data = input_df %>% filter(id %in% labels),color="white") +
-      geom_label_repel(data = input_df %>% filter(id %in% labels_up, class == '+'),
-                       label.padding = unit(0.1, "lines"), color="black",xlim = c(1.5, NA)) +
-      geom_label_repel(data = input_df %>% filter(id %in% labels_down, class == '-'),
-                       label.padding = unit(0.1, "lines"), color="black",xlim = c(NA, -1.5)) +
+      # geom_label_repel(data = input_df %>% filter(id %in% labels_up, class == '+'),
+      #                  label.padding = unit(0.1, "lines"), color="black",xlim = c(1.5, NA)) +
+      # geom_label_repel(data = input_df %>% filter(id %in% labels_down, class == '-'),
+      #                  label.padding = unit(0.1, "lines"), color="black",xlim = c(NA, -1.5)) +
       ggtitle(paste0("Volcano Plot of ",comp)) +
-      ylab(if(pval_fdr){"-log10(fdr)"}else{"-log10(p_val"}) +
+      ylab(if(pval_fdr){"-log10(fdr)"}else{"-log10(p_val)"}) +
       scale_color_manual(values=c(color_constrast[comp,"color_constrast"], color_constrast[comp,"color_constrast_dark"], "grey70")) +
       scale_x_continuous(limits = c(min(-max(abs(input_df$log2_FC)),-3), max(max(abs(input_df$log2_FC)),3))) +
-      scale_y_continuous(limits = c(0, max(max(abs(-log10(if(pval_fdr){input_df$p_adj}else{input_df$p_val}))),4))) +
+      scale_y_continuous(limits = c(0, max(max(abs((if(pval_fdr){input_df$p_adj}else{input_df$p_val}))),4))) +
       theme_bw(base_size = bs, base_family = bf)
 
-    cat("##### ",comp," \n")
-    print(cmd)
-    cat(" \n \n")
+    # cat("##### ",comp," \n")
+    # print(cmd)
+    # cat(" \n \n")
+    col <- if(pval_fdr){"p_adj"}else{"p_val"}
+    labels <- c((input_df %>% filter(class == '+'))[order(-(input_df %>% filter(class == '+'))[,"log2_FC"], (input_df %>% filter(class == '+'))[,col]),][1:5,"id"],
+                (input_df %>% filter(class == '-'))[order((input_df %>% filter(class == '-'))[,"log2_FC"], (input_df %>% filter(class == '-'))[,col]),][1:5,"id"])
+    
+    # input_df[[col]]<--log10(input_df[[col]])
+    a <- list()
+    for (i in seq_len(length(labels))) {
+      m <- labels[i]
+      a[[i]] <- list(
+        x = input_df[which(input_df$id %in% m),"log2_FC"],
+        y = (input_df[which(input_df$id %in% m), col]),
+        text = m,
+        xref = "x",
+        yref = "y",
+        showarrow = TRUE,
+        arrowhead = 0.5,
+        ax = 20,
+        ay = -40
+      )
+    }
+    # cat("##### ",comp," \n")
+    plotlist[[comp]] = ggplotly(cmd, tooltip = c("text"))
   }
 shiny::setProgress(0.65, detail = "Perform volcano plot...")
 }
 
-```
-
-```{r MDS_prot_deps, warning=F, message=F, echo=F, eval=T, results='asis', eval =F}
-if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
-  cat("#### 3.2.1. Multi-dimensional reduction analysis of samples based on up-/down-regulated proteins \n")
-  cat("The below figure is the MDS analysis on the significative differentially expressed proteins. \n \n")
-  #Select only genes that are differentiated and print PCA of samples
-  deps_vec_all<- deps_l_df %>% dplyr::filter(class!="=") %>%
-  pull(id) %>% unique() %>% sort()
-
-  # sample_data<-t(dat_gene[toupper(deps_vec_all),])
-  sample_data<-t(dat_gene[(deps_vec_all),])
-
-  sample_distances <- dist(sample_data, method = "euclidean")
-
-  mds_cmdscale <- as.data.frame(cmdscale(as.matrix(sample_distances)))
-  colnames(mds_cmdscale) <- c("MDS_1","MDS_2")
-  mds_cmdscale$sample <- rownames(mds_cmdscale)
-
-  mds_cmdscale <- suppressMessages(left_join(mds_cmdscale,c_anno_prot))
-  #Take correct order of color
-  cc<-mds_cmdscale$color
-  if(is.null(cc)){
-    cc<-colour_vec[1:length(unique(mds_cmdscale$condition))]
-    names(cc)<-unique(mds_cmdscale$condition)
-  } else{
-    names(cc)<-mds_cmdscale$condition
-  }
-  cmd<-ggplot(mds_cmdscale, aes(MDS_1, MDS_2, colour=condition)) + #plot according to the new coordinates
-    # ggtitle("samples")+
-    geom_point(size=1.5,alpha=.9) + #colour=factor(df) to choose colour according to the condition
-    geom_text_repel(aes(label=sample), size=0.15*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
-    scale_colour_manual(values=cc[unique(names(cc))]) +
-    theme_bw(base_size = bs, base_family = bf) +
-    theme(legend.position = "right", panel.grid.minor=element_blank())
-
-  print(cmd)
-
-  ggsave(paste0(dirOutput,subfold_Fig,"DEPs_proteins_mds.pdf"), cmd, device=cairo_pdf, width = (3+(0.13*nrow(mds_cmdscale))), height = (3+(0.07*nrow(mds_cmdscale))), units = c("in"))
-
-  shiny::setProgress(0.67, detail = "Perform MDS...")
-
-}
+cat("#### 2.3.2. Volcano plot of Peptides {.tabset}  \n")
+cat(" \n \n")
+in_tabs(plotlist, labels = names(plotlist), level = 4L)
+cat(" \n \n")
 
 ```
 
 ```{r MDS_deps_pep, warning=F, message=F, echo=F, eval=T, results='asis'}
 if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
-  cat("#### 2.4. MDS based on differentially expressed peptides {.tabset}  \n " )
-  cat("Multidimensional scaling (MDS) are performed on normalized abundances of differentially expressed peptides. \n")
+  cat("#### 2.4. MDS based on differentially phosphorylated peptides {.tabset}  \n " )
+  cat("Multidimensional scaling (MDS) are performed on normalized abundances of differentially phosphorylated peptides. \n")
   cat(" \n \n")  #Select only genes that are differentiated and print PCA of samples
   #Select only genes that are differentiated and print PCA of samples
   deps_vec_all<- deps_pep_l_df %>% dplyr::filter(class!="=") %>%
@@ -2476,61 +2391,11 @@ shiny::setProgress(0.69, detail = "Perform MDS...")
 
 ```
 
-
 ```{r pca_deps, warning=F, message=F, echo=F, results='asis'}
   cat(" \n \n")
-  cat("#### 2.5. PCA based on differentially expressed peptides {.tabset}  \n")
-  cat("Principal component analysis (PCA) are performed on normalized abundances of differentially expressed Peptides. \n")
+  cat("#### 2.5. PCA based on differentially phosphorylated peptides {.tabset}  \n")
+  cat("Principal component analysis (PCA) are performed on normalized abundances of differentially phosphorylated Peptides. \n")
   cat(" \n \n")
-######################
-# if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){  
-# 
-# shiny::setProgress(0.70, detail = "Perform PCA...")
-# 
-#   deps_vec_all<- deps_l_df %>% dplyr::filter(class!="=") %>%
-#   pull(id) %>% unique() %>% sort()
-# 
-#   # sample_data<-t(dat_gene[toupper(deps_vec_all),])
-#   sample_data<-t(dat_gene[(deps_vec_all),])
-#   apca_prot <- sample_data %>% prcomp(scale = TRUE, center = TRUE)
-#   pc <- apca_prot$x[,1:2]
-# 
-#   pc[,"PC1"] <- as.numeric(pc[,"PC1"]) / (apca_prot$sdev[1] * sqrt(nrow(sample_data)))
-#   pc[,"PC2"] <- as.numeric(pc[,"PC2"]) / (apca_prot$sdev[2] * sqrt(nrow(sample_data)))
-#   pc<- merge(pc, c_anno_prot, by = 0)
-#   pc$condition <- as.factor(pc$condition)
-# 
-#   ve <- apca_prot$sdev^2/sum(apca_prot$sdev^2)
-#   ve <- ve[c(1, 2)]
-#   labs <- paste0(colnames(pc)[c(2,3)], " (", round(ve * 100, 2), "%)")
-# 
-#   #Take correct order of color
-#   cc<-pc$color
-#   if(is.null(cc)){
-#     cc<-colour_vec[1:length(unique(pc$condition))]
-#     names(cc)<-unique(pc$condition)
-#   } else{
-#     names(cc)<-pc$condition
-#   }
-#   #ggplot method
-#   p1 <- ggplot(pc, aes(PC1, PC2, colour = condition)) +
-#         geom_point(size=1.5,alpha=.9) + #colour=factor(df) to choose colour according to the condition
-#         geom_text_repel(aes(label=sample), size=0.15*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
-#         scale_colour_manual(values=cc[unique(names(cc))]) +
-#         theme_bw(base_size = bs, base_family = bf) +
-#         theme(legend.position = "right", panel.grid.minor=element_blank()) +
-#         xlab(labs[1]) +
-#         ylab(labs[2])
-# 
-#   cat("##### Proteins \n")
-#   print(p1)
-#   cat(" \n \n")
-# 
-#   suppressMessages(ggsave(paste0(dirOutput,"DEPs_proteins_PCA.pdf"), p1, device=cairo_pdf, width = (3+(0.13*nrow(pc))), height = (3+(0.07*nrow(pc))), units = c("in")))
-# 
-#   remove(sample_data,sample_distances,mds_cmdscale,cmd)
-# }
-######################
 
 cat(" \n \n")
 if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
@@ -3227,7 +3092,7 @@ shiny::setProgress(0.82, detail = "Network analysis in progress... \n Can requir
 cat(" \n \n")
 cat("## 4. Protein-protein interaction network analysis of differentially expressed proteins \n")
 cat(paste0("Protein-protein interactions (PPIs) are crucial for understanding cell physiopathology. PPI analysis of differentially expressed proteins is based on the [STRING](https://string-db.org/) database. Only interactions with score > 600 are considered for building the network. Communities within the network are identified with the Clauset-Newman-Moore (CNM) algorithm. \n \n"))
-cat("For a better visualization of the network, in the few cases that a contrast has 500+ DEPs, the best 500 genes are taken.")
+cat("For a better visualization of the network, only the top 500 differential proteins are considered for each contrast.")
 #Reset of height of plots
 if(run_enrich){knitr::opts_chunk$set(fig.height = def_val_height)}
 
@@ -3348,9 +3213,9 @@ for (comp in names(doComp)){
   net_edges <- subset(dt_links[[comp]], from%in%net_genes & to%in%net_genes) #select genes with weight>scr_thr
   net_edges<-net_edges[which(net_edges$weight > mean(net_edges$weight)*0.7),]
 
-  gene_links<-table(c(net_edges$from,net_edges$to))
-  filt_genes<-names(gene_links)[which(gene_links > links)] #select genes with link > links
-  net_edges<-subset(net_edges,from %in% filt_genes & to %in% filt_genes)
+  # gene_links<-table(c(net_edges$from,net_edges$to))
+  # filt_genes<-names(gene_links)[which(gene_links > links)] #select genes with link > links
+  # net_edges<-subset(net_edges,from %in% filt_genes & to %in% filt_genes)
 
   gene_links<-table(c(net_edges$from,net_edges$to))
   filt_genes<-names(gene_links)[which(gene_links >= 2)] #remove isolated genes (leaves)
@@ -3386,7 +3251,8 @@ for (comp in names(doComp)){
     cat(" \n \n")
     ggsave(paste0(dirOutput_net,gsub(comp, pattern = "\\/", replacement="vs"),"_communities_sizes.pdf"), nc, device=cairo_pdf, width = 4, height = 4, units = c("in"))
 
-    # plot with DiagrammeR----
+    write_tsv(data.frame("GeneSymbol"=gene_vertices$label, "Community"=gene_vertices$Community), 
+              file = paste0(dirOutput_net,gsub(comp, pattern = "\\/", replacement="vs"),"_communities_sizes.txt"))
      
     # net_net <- (fortify(geomnet::as.edgedf(as.data.frame(net_edges)), gene_vertices)) #GEOMNET
     # uniqueN(net_net$from_id)
@@ -3447,7 +3313,10 @@ cat("\n \n")
 cat("#### 4.2. Network plots \n ")
 cat("\n \n Results inside folder: *network*")
 cat("\n ")
-cat("\n \n The network are not reported in this report since for each comparison are generated 2 figures since we use 2 layouts for the nodes. For each comparison a 2-page pdf file is created. \n")
+cat("\n \n The networks are not reported in this report. For each comparison, a 2-page pdf file is created inside the network folder. \n \n \n ")
+cat("Below is reported an example of the first comparison written in the *Design* file with layout Kamada-Kawai (KK)")
+cat(" \n \n")
+image_read_pdf(paste0(dirOutput_net,names(doComp)[1],"_network.pdf"), pages = 2)
 
 message("Cleaning...")
 
@@ -3459,7 +3328,7 @@ shiny::setProgress(0.90, detail = "Network figures generated...")
 shiny::setProgress(0.90, detail = "Kinase identification and Kinase draw in progress... \n Can require several minutes...")
 cat(" \n \n")
 cat("## 6. Kinase Trees  {.tabset}  \n")
-cat("In this step PhosProTN study the kinase activity of the differential expressed phosphosite. The identification of the kinase is perfomed by [PhosR](https://github.com/PYangLab/PhosR) package (Kim et al. 2021), which provide a score of their activity based on the comparison formula provided. The activities of the kinases are saved in txt files inside the *KinaseTree* folder. \n \n Other than the numeric results, graphical kinase trees are generated using an adapted version of the webtool [CORAL](http://phanstiel-lab.med.unc.edu/CORAL/) (Metz K.S. et al. 2018). \n \n ")
+cat("In this step, PhosProTN identifies alterations in the activity of kinases, based on the differentially phosphorylated sites observed in each contrast. The identification of the altered kinases is perfomed by [PhosR](https://github.com/PYangLab/PhosR) package (Kim et al. 2021), which provide a score of kinase activities based on the comparison formula provided. The activities of the kinases are saved in txt files inside the KinaseTree folder \n \n In addition, graphical kinase trees are generated using an adapted version of the webtool [CORAL](http://phanstiel-lab.med.unc.edu/CORAL/) (Metz K.S. et al. 2018). \n \n ")
 cat((paste0("DISCLAIMER CORAL: The kinome tree plots generated by CORAL make use the data generated by",
                 tags$a("Manning et al., Science, 2002",href="http://science.sciencemag.org/content/298/5600/1912.long", target="_blank"),
                 " and are based on a figure generated by ",
