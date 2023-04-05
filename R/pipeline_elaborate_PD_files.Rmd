@@ -62,8 +62,7 @@ list.of.packages <- c("ggrepel","tidyr","ggraph","graphlayouts","RColorBrewer",
                       "scales","igraph","data.table","qpdf","devtools",
                       "corrplot", "data.table", "ggplot2", "ggfortify","lazyeval",
                       "lubridate", "pheatmap", "reshape2","readr", "rlang", "rmdformats",
-                      "tibble", "dplyr", "tidyr", "wesanderson","WGCNA","ggbeeswarm","ggthemes",
-                      "extrafont","pdftools","magick","plotly")
+                      "tibble", "dplyr", "tidyr", "wesanderson","WGCNA","ggbeeswarm","ggthemes")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) suppressMessages(suppressWarnings({install.packages(new.packages, dependencies = T)}))
 list.of.packages.bio <- c("biomaRt","DEqMS","STRINGdb",
@@ -1690,13 +1689,13 @@ message("Differentation analysis DONE.")
 ```
 
 
-```{r number_deps, warning=FALSE, echo=FALSE, results='asis', eval=eval_single_Cond}
+```{r number_deps, warning=FALSE, echo=FALSE, results='asis', eval=eval_single_Cond, fig.height=max(min(20,length(unique(deps_l_df$comp))*0.75),2)}
 cat("In the plot are represented graphically the number of DEPs for each contrast. Tab **Proteins** for the differentially expressed proteins, **Peptides** for the number of the differentially expressed peptides. \n \n")
 cat(" \n \n")
 cat("#### 2.2. Number of differentially expressed proteins and peptides for each comparison {.tabset}  \n")
 #Execute only if found at least one gene differentiated
 if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
-  heig<-unique(deps_l_df$comp)
+  # heig<-unique(deps_l_df$comp)
   lolli_df <- data.table("comp"=deps_l_df$comp[which(deps_l_df$class == "+" | deps_l_df$class == "-")], 
                        "class"=factor(deps_l_df$class[which(deps_l_df$class == "+" | deps_l_df$class == "-")]))
   lolli_df <- lolli_df[ , .(N = .N), by=c("comp","class")]
@@ -1707,21 +1706,32 @@ if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   names(col_vec)[(1:length(lolli_df$comp))[(1:length(lolli_df$comp))%%2 == 0]]<-paste0(lolli_df$comp[(1:length(lolli_df$comp))[(1:length(lolli_df$comp))%%2 == 1]], "_-")
   
   
-  pDEPs<-deps_b2b_lollipop(input_df=lolli_df, break_vec=seq(0,max(lolli_df$N),round(max(lolli_df$N)/5, 0)), fill_vec = col_vec, color_vec = col_vec, char_max = 30)
+  pDEPs<-deps_b2b_lollipop(input_df=lolli_df, break_vec=seq(0,plyr::round_any(max(lolli_df$N)*1.2, if(max(lolli_df$N)>90){100}else{10}, f = ceiling),
+                                                            round((plyr::round_any(max(lolli_df$N)*1.2, if(max(lolli_df$N)>90){100}else{10}, f = ceiling))/5, 0)), 
+                           fill_vec = col_vec, color_vec = col_vec, char_max = 30, position_dodge = if(length(unique(deps_l_df$comp))>1){0.08}else{0.05})
   
   # pDEPs<-plot_DEPs(deps_l_df,
   #                   contrast_col="comp",
   #                   class_col="class",
   #                   color_vec=c("grey60", "grey40"))
-  oldheig <- knitr::opts_chunk$get("fig.height")
-  knitr::opts_chunk$set(fig.height = max(min(20,length(heig)*0.75),2))
+  # if(length(heig) < 5){
+  #   oldheig <- knitr::opts_chunk$get("fig.height")
+  #   cat(oldheig)
+  #   knitr::opts_chunk$set(fig.height = unit(max(min(20,length(heig)*0.75),2),"in"))
+  #   cat("\n \n ")
+  #   cat(knitr::opts_chunk$get("fig.height"))
+  # }
   cat("##### Proteins \n")
   print(pDEPs)
   cat(" \n \n")
-  knitr::opts_chunk$set(fig.height = oldheig)
+  # if(length(heig) < 5){
+  #   knitr::opts_chunk$set(fig.height = oldheig)
+  #   suppressMessages(ggsave(paste0(dirOutput,subfold_Fig,subfold_expr,"DE_protein_barplot.pdf"), pDEPs, device=cairo_pdf,
+  #                         height = max(min(20,length(heig)*0.75),2), units = c("in")))
+  # }else{
+    suppressMessages(ggsave(paste0(dirOutput,subfold_Fig,subfold_expr,"DE_protein_barplot.pdf"), pDEPs, device=cairo_pdf, units = c("in")))
+  # }
 
-  suppressMessages(ggsave(paste0(dirOutput,subfold_Fig,subfold_expr,"DE_protein_barplot.pdf"), pDEPs, device=cairo_pdf, 
-                          height = max(min(20,length(heig)*0.75),2), units = c("in")))
   remove(pDEPs,cmd,mds_cmdscale)
 }else{
   message("No gene differentiated discovered.")
@@ -1730,7 +1740,7 @@ if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
 #Peptides
 if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   cat(" \n \n")
-  heig<-unique(deps_pep_l_df$comp)
+  # heig<-unique(deps_pep_l_df$comp)
   lolli_df <- data.table("comp"=deps_pep_l_df$comp[which(deps_pep_l_df$class == "+" | deps_pep_l_df$class == "-")], 
                        "class"=factor(deps_pep_l_df$class[which(deps_pep_l_df$class == "+" | deps_pep_l_df$class == "-")]))
   lolli_df <- lolli_df[ , .(N = .N), by=c("comp","class")]
@@ -1741,22 +1751,28 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   names(col_vec)[(1:length(lolli_df$comp))[(1:length(lolli_df$comp))%%2 == 0]]<-paste0(lolli_df$comp[(1:length(lolli_df$comp))[(1:length(lolli_df$comp))%%2 == 1]], "_-")
 
   
-  pDEPs<-deps_b2b_lollipop(input_df=lolli_df, break_vec=seq(0,max(lolli_df$N),round(max(lolli_df$N)/5, 0)), fill_vec = col_vec, color_vec = col_vec, char_max = 30)
+  pDEPs<-deps_b2b_lollipop(input_df=lolli_df, break_vec=seq(0,plyr::round_any(max(lolli_df$N)*1.2, if(max(lolli_df$N)>90){100}else{10}, f = ceiling),
+                                                            round((plyr::round_any(max(lolli_df$N)*1.2, if(max(lolli_df$N)>90){100}else{10}, f = ceiling))/5, 0)), 
+                           fill_vec = col_vec, color_vec = col_vec, char_max = 30, position_dodge = if(length(unique(deps_l_df$comp))>1){0.08}else{0.05})
   
   # pDEPs<-plot_DEPs(deps_pep_l_df,
   #                   contrast_col="comp",
   #                   class_col="class",
   #                   color_vec=c("grey60", "grey40"))
-  
-  oldheig <- knitr::opts_chunk$get("fig.height")
-  knitr::opts_chunk$set(fig.height = max(min(20,length(heig)*0.75),2))
+  # if(length(heig) < 5){
+  #   oldheig <- knitr::opts_chunk$get("fig.height")
+  #   knitr::opts_chunk$set(fig.height = unit(max(min(20,length(heig)*0.75),2),"in"))
+  # }
   cat("##### Peptides \n")
   print(pDEPs)
   cat(" \n \n")
-  knitr::opts_chunk$set(fig.height = oldheig)
-
-  suppressMessages(ggsave(paste0(dirOutput,subfold_Fig,subfold_expr,"DE_peptide_barplot.pdf"), pDEPs, device=cairo_pdf, 
-                          height = max(min(20,length(heig)*0.75),2), units = c("in")))
+  # if(length(heig) < 5){
+  #   knitr::opts_chunk$set(fig.height = oldheig)
+  #   suppressMessages(ggsave(paste0(dirOutput,subfold_Fig,subfold_expr,"DE_peptide_barplot.pdf"), pDEPs, device=cairo_pdf, 
+  #                           height = max(min(20,length(heig)*0.75),2), units = c("in")))
+  # }else{
+    suppressMessages(ggsave(paste0(dirOutput,subfold_Fig,subfold_expr,"DE_peptide_barplot.pdf"), pDEPs, device=cairo_pdf, units = c("in")))
+  # }
   remove(pDEPs,cmd,mds_cmdscale)
 }else{
   message("No gene differentiated discovered.")
@@ -2741,7 +2757,7 @@ shiny::setProgress(0.90, detail = "Network analysis in progress... \n Can requir
 cat(" \n \n")
 cat("## 4. Protein-protein interaction network analysis of differentially expressed proteins \n")
 cat(paste0("Protein-protein interactions (PPIs) are crucial for understanding cell physiopathology. PPI analysis of differentially expressed proteins is based on the [STRING](https://string-db.org/) database. Only interactions with score > 600 are considered for building the network. Communities within the network are identified with the Clauset-Newman-Moore (CNM) algorithm. \n \n"))
-cat("For a better visualization of the network, in the few cases that a contrast has 500+ DEPs, the best 500 genes are taken.")
+cat("For a better visualization of the network, only the top 500 differential proteins are considered for each contrast.")
 #Reset of height of plots
 if(run_enrich){knitr::opts_chunk$set(fig.height = def_val_height)}
 
@@ -2931,7 +2947,7 @@ cat("\n \n")
 cat("#### 4.2. Network plots \n ")
 cat("\n \n Results inside folder: *network*")
 cat("\n")
-cat("\n \n The network are not reported in this report since for each comparison are generated 2 figures since we use 2 layouts for the nodes. For each comparison a 2-page pdf file is created. \n \n \n ")
+cat("\n \n The networks are not reported in this report. For each comparison, a 2-page pdf file is created inside the network folder. \n \n \n ")
 cat("Below is reported an example of the first comparison written in the *Design* file with layout Kamada-Kawai (KK)")
 cat(" \n \n")
 image_read_pdf(paste0(dirOutput_net,names(doComp)[1],"_network.pdf"), pages = 2)
