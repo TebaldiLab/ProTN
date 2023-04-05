@@ -530,7 +530,8 @@ deps_b2b_lollipop <- function(input_df, # input dataframe
                                     char_max = 50, # maximum number of chars in text
                                     sort_y = T, # sort rows according to y?
                                     shift_mult = 1, # space left for middle labels (by default, if left to 1, equal to the space dedicated to the lollipop on each side)
-                                    break_vec=seq(0,1500,250) # specification of x breaks
+                                    break_vec=seq(0,1500,250), # specification of x breaks
+                                    position_dodge = 0.06
 ){
   bf<-"Arial"
   plot_df <- input_df %>% dplyr::select(bb_col=all_of(bb_col),
@@ -577,7 +578,8 @@ deps_b2b_lollipop <- function(input_df, # input dataframe
     geom_text(data = plot_df[plot_df$bb_col==f_left,],
               aes(y = y_col, x = 0, label = y_col),
               inherit.aes = F,family=bf,size=4)+
-    scale_x_continuous(limits =c((-shift-max(plot_df$x_col)),(shift+max(plot_df$x_col))),
+    # xlim(-max(break_vec)-shift, max(break_vec)+shift) +
+    scale_x_continuous(limits =c((-shift-max(break_vec)),(shift+max(break_vec))),
                        breaks = c(rev(-break_vec)-shift, break_vec+shift),
                        labels = c(as.character(rev(break_vec)),as.character(break_vec)))+
     theme_tufte(base_family = bf)+
@@ -591,9 +593,9 @@ deps_b2b_lollipop <- function(input_df, # input dataframe
   if("size_col" %in% colnames(plot_df)){
     lp <- lp + 
       geom_point(data = plot_df[plot_df$bb_col==f_left,],
-                 aes(x = -shift-x_col, size = 5), position = position_nudge(y = -0.06))+
+                 aes(x = -shift-x_col, size = 5), position = position_nudge(y = -position_dodge))+
       geom_point(data = plot_df[plot_df$bb_col==f_right,],
-                 aes(x = shift+x_col, size = 5), position = position_nudge(y = 0.06))+
+                 aes(x = shift+x_col, size = 5), position = position_nudge(y = position_dodge))+
       scale_size(name=size_col,range = size_vec)
   } else {
     lp <- lp + 
@@ -606,15 +608,14 @@ deps_b2b_lollipop <- function(input_df, # input dataframe
   
   if("text_col" %in% colnames(plot_df)){
     lp <- lp + geom_text(data = plot_df[plot_df$bb_col==f_left,],
-                         aes(x = -shift-x_col, label=text_col, vjust=(-0.25)),
+                         aes(x = -(shift*13/10)-x_col, label=text_col, vjust=(1.1)),
                          fontface="italic", size=4, show_guide = F) +
       geom_text(data = plot_df[plot_df$bb_col==f_right,],
-                aes(x = shift+x_col, label=text_col, vjust=(1.2)),
-                fontface="italic", size=4, show_guide = F) 
+                aes(x = (shift*13/10)+x_col, label=text_col, vjust=(-0.1)),
+                fontface="italic", size=4, show_guide = F)
     # scale_x_continuous(limits =c((-shift-max(plot_df$x_col)),(shift+max(plot_df$x_col))),
     #                    breaks = c(rev(-break_vec)-shift, break_vec+shift),
-    #                    labels = c(as.character(rev(break_vec)),as.character(break_vec)),
-    #                    expand = expansion(mult = c(.3, .3)))
+    #                    labels = c(as.character(rev(break_vec)),as.character(break_vec)))
   }
   
   if("shape_col" %in% colnames(plot_df)){
