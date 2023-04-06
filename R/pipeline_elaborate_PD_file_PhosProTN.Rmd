@@ -21,7 +21,7 @@ params:
   file_prot_phos: NA
   file_pep_phos: NA
   file_psm_phos: NA
-  filt_absent_value: "1"
+  filt_absent_value: "0"
   pval_fdr: NA
   phospho_thr: "75"
   signal_thr: "inf"
@@ -1413,7 +1413,7 @@ hs <- enrichment_lollipop(numeric_df,
                     shape_col = "Site", shape_vec = c(16,16,16),
                     color_col = "Site", color_vec = c("#F79256", "#FBD1A2", "#7DCFB6"), 
                     fill_col = "Site", fill_vec = c("#F79256", "#FBD1A2", "#7DCFB6"), 
-                    text_col = "label") + theme(legend.position = "none")
+                    text_col = "label") + theme(legend.position = "none", axis.text.y = element_text(size = 14))
   
   
 
@@ -2251,7 +2251,7 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
                                          round((plyr::round_any(max(lolli_df$N)*1.2, if(max(lolli_df$N)>90){100}else{10}, f = ceiling))/5, 0)), 
                            fill_vec = col_vec, 
                            color_vec = col_vec, 
-                           char_max = 30, position_dodge = 0.1)
+                           char_max = 30, position_dodge = if(length(unique(deps_pep_l_df$comp))>1){0.08}else{0.05})
   
   # oldheig <- knitr::opts_chunk$get("fig.height")
   # knitr::opts_chunk$set(fig.height = max(min(20,length(heig)*0.75),2))

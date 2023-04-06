@@ -17,7 +17,7 @@ params:
   file_input: NA
   file_prot: NA
   file_pep: NA
-  filt_absent_value: "1"
+  filt_absent_value: "0"
   pval_fdr: NA
   signal_thr: "inf"
   fc_thr: "0.75"
