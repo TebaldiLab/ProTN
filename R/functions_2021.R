@@ -74,7 +74,7 @@ enrichment_test <- function(input_vec, # character vector, input genes
 
 enrichment_enrichr <- function(input_vec, # vector with gene names
                                input_name="i1", # name for input list
-                               dbs_vec="", # vector with database names
+                               dbs_vec=NULL, # vector with database names
                                return_size_in_anno = T # use only genes with at least 1 annotation to calculate input size
 ){ 
    
@@ -578,6 +578,9 @@ deps_b2b_lollipop <- function(input_df, # input dataframe
     geom_text(data = plot_df[plot_df$bb_col==f_left,],
               aes(y = y_col, x = 0, label = y_col),
               inherit.aes = F,family=bf,size=4)+
+    geom_text(data = plot_df[plot_df$bb_col==f_right,],
+              aes(y = y_col, x = 0, label = y_col),
+              inherit.aes = F,family=bf,size=4)+
     # xlim(-max(break_vec)-shift, max(break_vec)+shift) +
     scale_x_continuous(limits =c((-shift-max(break_vec)),(shift+max(break_vec))),
                        breaks = c(rev(-break_vec)-shift, break_vec+shift),
@@ -632,9 +635,14 @@ deps_b2b_lollipop <- function(input_df, # input dataframe
   
   # lp <- lp + ggforce::facet_col(vars(facet_col), scales = "free_y", space = "free") +
       # theme(strip.text = element_text(margin = margin(1,1,1,1), face="bold"))
+  if(nrow(plot_df)/2 == length(unique(plot_df$y_col))){
+    lp <- lp + geom_text(aes(x=shift, label=c("Up-regulated", rep("",nrow(plot_df)-1)), hjust=(-0.05), vjust=(-2), fontface=2, color="black"),family=bf,size=4)
+    lp <- lp + geom_text(aes(x=-shift, label=c("Down-regulated", rep("",nrow(plot_df)-1)), hjust=(1.1), vjust=(-2), fontface=2, color="black"),family=bf,size=4)
+  } else{
+    lp <- lp + geom_text(aes(x=shift, label=c("Up-regulated", rep("",nrow(plot_df)-1)), hjust=(-0.05), vjust=(-2), fontface=2, color="black"),family=bf,size=4, nudge_y = 2.5)
+    lp <- lp + geom_text(aes(x=-shift, label=c("Down-regulated", rep("",nrow(plot_df)-1)), hjust=(1.1), vjust=(-2), fontface=2, color="black"),family=bf,size=4, nudge_y = 2.5)
+  }
 
-  lp <- lp + geom_text(aes(x=shift, label=c("Up-regulated", rep("",nrow(plot_df)-1)), hjust=(-0.05), vjust=(-2), fontface=2, color="black"),family=bf,size=4)
-  lp <- lp + geom_text(aes(x=-shift, label=c("Down-regulated", rep("",nrow(plot_df)-1)), hjust=(1.1), vjust=(-2), fontface=2, color="black"),family=bf,size=4)
   return(lp)
   
 }
@@ -1123,6 +1131,7 @@ enrichRfnc<-function(in_df, pval_fdr_enrich, pval_enrich_thr, overlap_size_enric
        source("functions_2021.R")
        frg<-DEGs_lists[[a]]
        if(length(frg)>0){
+         message(a)
          enrichment_enrichr(frg, input_name=a, dbs_vec = dbs)
        }
        # clu_n <- enrichment_enrichr(frg, input_name=a, dbs_vec = dbs)
@@ -1144,7 +1153,18 @@ enrichRfnc<-function(in_df, pval_fdr_enrich, pval_enrich_thr, overlap_size_enric
      }
      stopCluster(cluster_ext)
    }
-   
+   enr_df<-na.omit(enr_df)
+   enr_df<-
+     transform(enr_df, 
+               overlap_size = as.numeric(overlap_size), 
+               p_value = as.numeric(p_value), 
+               fdr = as.numeric(fdr), 
+               odds_ratio = as.numeric(odds_ratio), 
+               combined_score = as.numeric(combined_score), 
+               input_size = as.numeric(input_size), 
+               anno_size = as.numeric(anno_size), 
+               overlap_input_ratio = as.numeric(overlap_input_ratio),
+               overlap_anno_ratio = as.numeric(overlap_anno_ratio))
    enr_df$"Significant"<-ifelse(if(pval_fdr_enrich){(enr_df$fdr<pval_enrich_thr) & (enr_df$overlap_size>=overlap_size_enrich_thr)}else{(enr_df$p_value<pval_enrich_thr) & (enr_df$overlap_size>=overlap_size_enrich_thr)},"TRUE","FALSE") %>% factor(levels=c("TRUE","FALSE"))
    enr_df$log2_OR<-log2(enr_df$odds_ratio)
    return(enr_df)

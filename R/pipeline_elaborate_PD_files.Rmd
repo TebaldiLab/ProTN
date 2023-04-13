@@ -1579,7 +1579,7 @@ if(length(prot_find)>0){
 
   suppressMessages(ggsave(paste0(dirOutput,subfold_Fig,subfold_expr,"selected_protein_plot.pdf"), g, device=cairo_pdf, 
                           width = ((if(length(prot_find)<4){((length(prot_find)-1/(length(prot_find)))^1.2)*0.9}else{(4*1.2)*0.9}))+(0.75*length(unique(prot_avg_se_long$Condition))), 
-                          height = 4*(if(length(prot_find)>=4){(length(prot_find) %/% 4)+1}else{1}), units = c("in")))
+                          height = 3*(if(length(prot_find)>=4){(length(prot_find) %/% 4)+1}else{1}), units = c("in")))
 
 }else{
   cat("##### Selected proteins in options file do not find in the normalised matrix. Check the spell of the proteins. \n")
@@ -2162,7 +2162,7 @@ doNextChunk <- tryCatch({
     dbs<-enrich_filter_DBs
   }
   #Perform enriched analysis with EnrichR
-  enr_df<-enrichRfnc(deps_l_df, pval_fdr_enrich, pval_enrich_thr, overlap_size_enrich_thr, dbs)
+  enr_df<-enrichRfnc(in_df = deps_l_df, pval_fdr_enrich, pval_enrich_thr, overlap_size_enrich_thr, dbs)
   #Save in RData for possible further analysis
   enrich_df<-enr_df[which(enr_df$Significant == "TRUE" & enr_df$overlap_size>=overlap_size_enrich_thr),c(1:13)]
   save(enrich_df, file=paste0(dirOutput,subfold_Dat,"enrichment_DE.RData"))
@@ -2487,8 +2487,8 @@ if(p$is_alive() | is.null(p$get_result())){
                       path = paste0(dirOutput,subfold_Tab,"enrichment_allproteins.xlsx"))
   remove(enrich_all_df)
 
-  dir.create(file.path(dirOutput,subfold_Fig,"enrich/"), showWarnings = FALSE)
-  dirOutput_enr=paste0(dirOutput,subfold_Fig,"enrich/")
+  # dir.create(file.path(dirOutput,subfold_Fig,"enrich/"), showWarnings = FALSE)
+  # dirOutput_enr=paste0(dirOutput,subfold_Fig,"enrich/")
   message("Enrichment whole universe DONE.")
 }
 shiny::setProgress(0.75, detail = "Done Enrichment of universe...")
@@ -2795,7 +2795,7 @@ gc()
 #Read STRINGdb edges for human
 #Human id --> 9606
 #Mouse id --> 10090
-string_db <- STRINGdb$new(version="11.5", species=taxonomy_NCBI, score_threshold=600, input_directory="")
+string_db <- STRINGdb$new(version="11.5", species=taxonomy_NCBI, score_threshold=500, input_directory="")
 gene_name<-unlist(g_sel_comp) %>% unique() %>% as.data.frame()
 colnames(gene_name)<-c("gene_id")
 string_mapped <- string_db$map(gene_name, "gene_id", removeUnmappedRows = TRUE)
@@ -2939,26 +2939,31 @@ for (comp in names(doComp)){
     gc()
   }
 }
+# save(list = ls(), file="tmp.RData")
 
-
-cat("\n \n")
-message("Networking with STRING DONE")
-cat("\n \n")
-cat("#### 4.2. Network plots \n ")
-cat("\n \n Results inside folder: *network*")
-cat("\n")
-cat("\n \n The networks are not reported in this report. For each comparison, a 2-page pdf file is created inside the network folder. \n \n \n ")
-cat("Below is reported an example of the first comparison written in the *Design* file with layout Kamada-Kawai (KK)")
-cat(" \n \n")
-image_read_pdf(paste0(dirOutput_net,names(doComp)[1],"_network.pdf"), pages = 2)
-
+net_pdf<-list.files(dirOutput_net, pattern = "network.pdf", full.names = T)
+if(length(net_pdf) > 0){
+  cat("\n \n")
+  message("Networking with STRING DONE")
+  cat("\n \n")
+  cat("#### 4.2. Network plots \n ")
+  cat("\n \n Results inside folder: *network*")
+  cat("\n")
+  cat("\n \n The networks are not reported in this report. For each comparison, a 2-page pdf file is created inside the network folder. \n \n \n ")
+  cat("Below is reported an example of the first comparison written in the *Design* file with layout Kamada-Kawai (KK)")
+  cat(" \n \n")
+  image_read_pdf(net_pdf[1], pages = pdf_info(net_pdf[1])$pages)
+}else{
+  cat("\n \n")
+  cat("WARNING: Cannot be possible generate networks \n ")
+}
 message("Cleaning...")
 
 shiny::setProgress(0.98, detail = "Network figures generated...")
 ```
 
 ```{r save_df, echo=F, message=F, warning=F, results='hide'}
-save(list = ls(), file="tmp.RData")
+# save(list = ls(), file="tmp.RData")
 if(!(eval_single_Cond)){
 save(c_anno,
      dat_gene,
