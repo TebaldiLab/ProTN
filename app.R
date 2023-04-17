@@ -154,19 +154,19 @@ ui <- tagList(
                 width = 4,
                 fluidRow(
                   textInput("title_exp_phos", "Title of the analysis"),
-                  # uiOutput("help1")
+                  uiOutput("help1_P")
                 ),
                 fluidRow(
                   textAreaInput("description_exp_phos", "Brief description", rows = 6),
-                  # uiOutput("help2")
+                  uiOutput("help2_P")
                 ),
                 fluidRow(
                   radioButtons("sw_analyzer_phos", "Software Analyzer", c("ProteomeDiscoverer", "MaxQuant"), inline = TRUE),
-                  # uiOutput("help3")
+                  uiOutput("help3_P")
                 ),
                 fluidRow(
                   fileInput("design_phos", "Select a file with the design for the comparisons..."),
-                  # uiOutput("help12")
+                  uiOutput("help12_P")
                 )
               ),
               column(
@@ -226,7 +226,7 @@ server <- function(input, output, session) {
       tagList(
         fluidRow(
           radioButtons("enrichR_universe", "Execute enrichment of the whole Universe", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
-          # uiOutput("help14")
+          uiOutput("help21")
         ),
         fluidRow(
           selectizeInput("DB_enrich", "DB to analyse",
@@ -237,7 +237,7 @@ server <- function(input, output, session) {
         ),
         fluidRow(
           radioButtons("enrichR_DB", "Execute enrichment only on selected database", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
-          # uiOutput("help14")
+          uiOutput("help22")
         ),
         fluidRow(
           textInput("terms_enrich", "Terms to search"),
@@ -245,7 +245,7 @@ server <- function(input, output, session) {
         ),
         fluidRow(
           radioButtons("pval_fdr_enrich", "Use FDR instead of P.Value for enrichment", c("TRUE", "FALSE"), inline = TRUE, selected = TRUE),
-          # uiOutput("help10")
+          uiOutput("help23")
         ),
         fluidRow(
           textInput("pvalue_enrich", "P.Value thr for enrichment", value = "0.05"),
@@ -270,11 +270,11 @@ server <- function(input, output, session) {
             width = 4,
             fluidRow(
               textInput("filt_absent_value", "Threshold of acceptable missing values for condition", value = "0"),
-              # uiOutput("help8")
+              uiOutput("help19")
             ),
               fluidRow(
                 radioButtons("pval_fdr", "Use FDR instead of P.Value", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
-                # uiOutput("help10")
+                uiOutput("help20")
               ),
               fluidRow(
                 textInput("FC_DEPs", "Log2 FC thr", value = "0.75"),
@@ -323,34 +323,34 @@ server <- function(input, output, session) {
       tagList(
         fluidRow(
           radioButtons("enrichR_universe_phos", "Execute enrichment of the whole Universe", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
-          # uiOutput("help14")
+          uiOutput("help21_P")
         ),
         fluidRow(
           selectizeInput("DB_enrich_phos", "DB to analyse",
                          choices = read_delim("R/dbs_enrichR.txt", delim = "\n", col_names = FALSE)[[1]],
                          selected = NULL, multiple = TRUE
           ),
-          # uiOutput("help15")
+          uiOutput("help18_P")
         ),
         fluidRow(
           radioButtons("enrichR_DB_phos", "Execute enrichment only on selected database", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
-          # uiOutput("help14")
+          uiOutput("help22_P")
         ),
         fluidRow(
           textInput("terms_enrich_phos", "Terms to search"),
-          # uiOutput("help18")
+          uiOutput("help15_P")
         ),
         fluidRow(
           radioButtons("pval_fdr_enrich_phos", "Use FDR instead of P.Value for enrichment", c("TRUE", "FALSE"), inline = TRUE, selected = TRUE),
-          # uiOutput("help10")
+          uiOutput("help23_P")
         ),
         fluidRow(
           textInput("pvalue_enrich_phos", "P.Value thr for enrichment", value = "0.05"),
-          # uiOutput("help16")
+          uiOutput("help16_P")
         ),
         fluidRow(
           sliderInput("os_enrich_phos", "Overlap size thr for enrichment", 1, 30, step = 1, value = 5),
-          # uiOutput("help17")
+          uiOutput("help17_P")
         )
       )
     }
@@ -367,50 +367,50 @@ server <- function(input, output, session) {
             width = 4,
             fluidRow(
               textInput("filt_absent_value_phos", "Threshold of acceptable missing values for condition", value = "0"),
-              # uiOutput("help8")
+              uiOutput("help19_P")
             ),
             fluidRow(
               radioButtons("pval_fdr_phos", "Use FDR instead of P.Value", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
-              # uiOutput("help10")
+              uiOutput("help20_P")
             ),
             fluidRow(
               textInput("phospho_phos", "Phosphorilation accuracy percentage thr (%)", value = "75"),
-              # uiOutput("help9")
+              uiOutput("help24_P")
             ),
             fluidRow(
               textInput("signal_DEPs_phos", "Signal log2 expr thr", value = "-inf"),
-              # uiOutput("help7")
+              uiOutput("help7_P")
             ),
             fluidRow(
               textInput("FC_DEPs_phos", "Log2 FC thr", value = "0.75"),
-              # uiOutput("help8")
+              uiOutput("help8_P")
             ),
             fluidRow(
               textInput("pvalue_DEPs_phos", "P.Value thr", value = "0.05"),
-              # uiOutput("help9")
+              uiOutput("help9_P")
             )
           ),
           column(
             width = 4,
             fluidRow(
               radioButtons("batch_corr_phos", "Batch effect correction", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
-              # uiOutput("help10")
+              uiOutput("help10_P")
             ),
             fluidRow(
               textInput("prot_boxplot_phos", "Control Boxplot proteins"),
-              # uiOutput("help11")
+              uiOutput("help11_P")
             ),
             fluidRow(
               radioButtons("STRING_phos", "Execute PPI network STRINGdb", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
-              # uiOutput("help13")
+              uiOutput("help13_P")
             ),
             fluidRow(
               radioButtons("enrichR_phos", "Execute enrichment", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
-              # uiOutput("help14")
+              uiOutput("help14_P")
             ),
             fluidRow(
               radioButtons("kinaseTree_phos", "Draw the kinase trees", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
-              # uiOutput("help14")
+              uiOutput("help25_P")
             )
           ),
           column(
@@ -427,30 +427,26 @@ server <- function(input, output, session) {
       tagList(
         fluidRow(
           fileInput("input_file_prot", "Select the SAMPLE_ANNOTATION file of the PROTEOMICS..."),
-          # uiOutput("help4")
+          uiOutput("help4_P")
         ),
         fluidRow(
           fileInput("pep_file_prot", "Select the PEP file of the PROTEOMICS..."),
-          # uiOutput("help5")
+          uiOutput("help5_P")
         ),
         fluidRow(
           fileInput("prot_file_prot", "Select the PROT file of the PROTEOMICS..."),
-          # uiOutput("help6")
+          uiOutput("help6_P")
         )
       )
     } else if(input$sw_analyzer_phos == "MaxQuant"){
       tagList(
         fluidRow(
           fileInput("input_file_prot", "Select the SAMPLE_ANNOTATION file of the PROTEOMICS..."),
-          # uiOutput("help4")
+          uiOutput("help4_P")
         ),
         fluidRow(
           fileInput("pep_file_prot", "Select the EVIDENCE file of the PROTEOMICS..."),
-          # uiOutput("help5")
-          # ),
-          # fluidRow(
-          #   fileInput("prot_file_prot", "Select the PROT file of the PROTEOMICS..."),
-          # uiOutput("help6")
+          uiOutput("help26_P")
         )
       )
     } else{
@@ -465,19 +461,19 @@ server <- function(input, output, session) {
       tagList(
         fluidRow(
           fileInput("input_file_phos", "Select the SAMPLE_ANNOTATION file of the PHOSPHOproteomics..."),
-          # uiOutput("help4")
+          uiOutput("help27_P")
         ),
         fluidRow(
           fileInput("pep_file_phos", "Select the PEP file of the PHOSPHOproteomics..."),
-          # uiOutput("help5")
+          uiOutput("help28_P")
         ),
         fluidRow(
           fileInput("prot_file_phos", "Select the PROT file of the PHOSPHOproteomics..."),
-          # uiOutput("help6")
+          uiOutput("help29_P")
         ),
         fluidRow(
           fileInput("psm_file_phos", "Select the PSM file of the PHOSPHOproteomics..."),
-          # uiOutput("help6")
+          uiOutput("help30_P")
         ),
         radioButtons("custom_param_phos", "Use custom parameter", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
         fillRow(
@@ -489,15 +485,11 @@ server <- function(input, output, session) {
       tagList(
         fluidRow(
           fileInput("input_file_phos", "Select the SAMPLE_ANNOTATION file of the PHOSPHOproteomics..."),
-          # uiOutput("help4")
+          uiOutput("help27_P")
         ),
         fluidRow(
           fileInput("pep_file_phos", "Select the EVIDENCE file of the PHOSPHOproteomics..."),
-          # uiOutput("help5")
-          # ),
-          # fluidRow(
-          #   fileInput("prot_file_phos", "Select the PROT file of the PHOSPHOproteomics..."),
-          # uiOutput("help6")
+          uiOutput("help31_P")
         ),
         radioButtons("custom_param_phos", "Use custom parameter", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
         fillRow(
@@ -536,34 +528,71 @@ server <- function(input, output, session) {
     DT::datatable(design_file_phos, escape = FALSE)
   })
   
-  # SHOW HELP NOTIFICATION
   setHelp <- function(x) {
     showNotification(
       type = "message",
       duration = 7,
       switch(x,
-        "help_btn1" = "Title of the experiment. It will be the title of the web page report.",
-        "help_btn2" = "Description of the current experiment. It is the first paragraph of the report.",
-        "help_btn3" = "Determine with software was use to identify peptides and proteins. PD: Protein Discoverer; MQ: MaxQuant.",
-        "help_btn4" = "File with the information about the samples and the correlation between replicate ID and condition. [FURTHER DETAILS IN THE INFO TAB]",
-        "help_btn5" = "Raw file of peptides obtained from PD or MQ (file peptides.txt).",
-        "help_btn6" = "Raw file of protein groups obtained from PD or MQ (file proteinGroups.txt).",
-        "help_btn7" = "Signal log2 expression threshold for the differential analysis. DEFAULT: DEPs if Signal_log2_thr > -∞ (No Limit, represent by value \"inf\" in the cell)",
-        "help_btn8" = "Fold Change threshold for the differential analysis. DEFAULT: DEPs if log2_FC_thr = 0.75 (Up-regulated > 0.75, Down-regulated < -0.75)",
-        "help_btn9" = "P.value threshold for the differential analysis. DEFAULT: DEPs if P_value_thr < 0.05",
-        "help_btn10" = "Execution of the batch effect correction performed by proBatch. If TRUE, column MS_batch required in Input file.",
-        "help_btn11" = "List of proteins used as control of the intensities. For each protein a boxplot is generated comparing the mean of the intensities group by condition. Separator: ,",
-        "help_btn12" = "Excel file containing the formulas of the contrast comparison you want to analyse. [FURTHER DETAILS IN THE INFO TAB]",
-        "help_btn14" = "Execution of the enrichment step.",
-        "help_btn13" = "Execution of the network analysis.",
-        "help_btn15" = "Write the word that you want to search in the results of EnrichR (EX: MYC, C-MYC, Senescence,...). If empty, no plots are returned.",
-        "help_btn16" = "P.value threshold for the enrichment analysis. DEFAULT: Term is significant if P_value_Enrich_thr < 0.05.",
-        "help_btn17" = "Overlap size threshold. The overlap size is the number of DEPs discovered in the enriched terms. DEFAULT: Term is significant if min_overlap_gene > 5.",
-        "help_btn18" = "Write the DBs that you want to see in your plots. If empty, no plots are returned."
+             "help_btn1" = "Title of the experiment. It will be the title of the web page report.",
+             "help_btn2" = "Description of the current experiment. It is the first paragraph of the report.",
+             "help_btn3" = "Determine with software was use to identify peptides and proteins. PD: Protein Discoverer; MQ: MaxQuant.",
+             "help_btn4" = "File with the information about the samples and the correlation between replicate ID and condition. [FURTHER DETAILS IN THE INFO TAB]",
+             "help_btn5" = "Raw file of peptides obtained from PD or MQ (file peptides.txt).",
+             "help_btn6" = "Raw file of protein groups obtained from PD or MQ (file proteinGroups.txt).",
+             "help_btn7" = "Signal log2 expression threshold for the differential analysis. DEFAULT: DEPs if Signal_log2_thr > -∞ (No Limit, represent by value \"inf\" in the cell)",
+             "help_btn8" = "Fold Change threshold for the differential analysis. DEFAULT: DEPs if log2_FC_thr = 0.75 (Up-regulated > 0.75, Down-regulated < -0.75)",
+             "help_btn9" = "P.value threshold for the differential analysis. DEFAULT: DEPs if P_value_thr < 0.05",
+             "help_btn10" = "Execution of the batch effect correction performed by proBatch. If TRUE, column MS_batch required in Input file.",
+             "help_btn11" = "List of proteins used as control of the intensities. For each protein a boxplot is generated comparing the mean of the intensities group by condition. Separator: ,",
+             "help_btn12" = "Excel file containing the formulas of the contrast comparison you want to analyse. [FURTHER DETAILS IN THE INFO TAB]",
+             "help_btn14" = "Execution of the enrichment step.",
+             "help_btn13" = "Execution of the network analysis.",
+             "help_btn15" = "Write the word that you want to search in the results of EnrichR (EX: MYC, C-MYC, Senescence,...). If empty, no plots are returned.",
+             "help_btn16" = "P.value threshold for the enrichment analysis. DEFAULT: Term is significant if P_value_Enrich_thr < 0.05.",
+             "help_btn17" = "Overlap size threshold. The overlap size is the number of DEPs discovered in the enriched terms. DEFAULT: Term is significant if min_overlap_gene > 5.",
+             "help_btn18" = "Write the DBs that you want to see in your plots. If empty, no plots are returned.",
+             "help_btn19" = "The number correspond to the upper limit of acceptable NA in the condition. If 0, a peptide require at least a condition with all the intensities.",
+             "help_btn20" = "Choice on the usege of the FDR or the standard P.Value for the DEPs. DEFAULT: standard P.Value",
+             "help_btn21" = "Execution of the global enrichment on the whole experimental universe. Enrichment of all proteins, not only DEPs.",
+             "help_btn22" = "Execute the enrichment only on the datasets selected. By default the analysis is performed on all 98 datasets, provide more results but take longer time.",
+             "help_btn23" = "Choice on the usege of the FDR or the standard P.Value for the Enrichment. DEFAULT: standard P.Value",
+             
+             "help_btn1_P" = "Title of the experiment. It will be the title of the web page report.",
+             "help_btn2_P" = "Description of the current experiment. It is the first paragraph of the report.",
+             "help_btn3_P" = "Determine with software was use to identify peptides and proteins. PD: Protein Discoverer; MQ: MaxQuant.",
+             "help_btn4_P" = "File with the information about the samples and the correlation between replicate ID and condition of the proteomics. [FURTHER DETAILS IN THE INFO TAB]",
+             "help_btn5_P" = "Raw file of peptides obtained from PD.",
+             "help_btn26_P" = "Raw file of peptides obtained from MQ (file evidence.txt).",
+             "help_btn6_P" = "Raw file of protein groups obtained from PD.",
+             "help_btn7_P" = "Signal log2 expression threshold for the differential analysis. DEFAULT: DEPs if Signal_log2_thr > -∞ (No Limit, represent by value \"inf\" in the cell)",
+             "help_btn8_P" = "Fold Change threshold for the differential analysis. DEFAULT: DEPs if log2_FC_thr = 0.75 (Up-regulated > 0.75, Down-regulated < -0.75)",
+             "help_btn9_P" = "P.value threshold for the differential analysis. DEFAULT: DEPs if P_value_thr < 0.05",
+             "help_btn10_P" = "Execution of the batch effect correction performed by proBatch. If TRUE, column MS_batch required in Input file.",
+             "help_btn11_P" = "List of proteins used as control of the intensities. For each protein a boxplot is generated comparing the mean of the intensities group by condition. Separator: ,",
+             "help_btn12_P" = "Excel file containing the formulas of the contrast comparison you want to analyse. [FURTHER DETAILS IN THE INFO TAB]",
+             "help_btn14_P" = "Execution of the enrichment step.",
+             "help_btn13_P" = "Execution of the network analysis.",
+             "help_btn15_P" = "Write the word that you want to search in the results of EnrichR (EX: MYC, C-MYC, Senescence,...). If empty, no plots are returned.",
+             "help_btn16_P" = "P.value threshold for the enrichment analysis. DEFAULT: Term is significant if P_value_Enrich_thr < 0.05.",
+             "help_btn17_P" = "Overlap size threshold. The overlap size is the number of DEPs discovered in the enriched terms. DEFAULT: Term is significant if min_overlap_gene > 5.",
+             "help_btn18_P" = "Write the DBs that you want to see in your plots. If empty, no plots are returned.",
+             "help_btn19_P" = "The number correspond to the upper limit of acceptable NA in the condition. If 0, a peptide require at least a condition with all the intensities.",
+             "help_btn20_P" = "Choice on the usege of the FDR or the standard P.Value for the DEPs. DEFAULT: standard P.Value",
+             "help_btn21_P" = "Execution of the global enrichment on the whole experimental universe. Enrichment of all proteins, not only DEPs.",
+             "help_btn22_P" = "Execute the enrichment only on the datasets selected. By default the analysis is performed on all 98 datasets, provide more results but take longer time.",
+             "help_btn23_P" = "Choice on the usege of the FDR or the standard P.Value for the Enrichment. DEFAULT: standard P.Value",
+             "help_btn24_P" = "Filter on the phosphorilation accuracy. Maintain peptides with % > value.",
+             "help_btn25_P" = "Execution of the kinase activity tree analysis.",
+             "help_btn27_P" = "File with the information about the samples and the correlation between replicate ID and condition of the phosphoproteomic. [FURTHER DETAILS IN THE INFO TAB]",
+             "help_btn28_P" = "Raw file of peptides obtained from PD.",
+             "help_btn31_P" = "Raw file of peptides obtained from MQ (file evidence.txt).",
+             "help_btn29_P" = "Raw file of protein groups obtained from PD.",
+             "help_btn30_P" = "Raw file of the PSM obtained from PD.",
       )
     )
   }
-
+  # SHOW HELP NOTIFICATION PROTN
+  {
   output$help1 <- renderUI(
     actionButton("help_btn1", "", icon = icon("circle-question"))
   )
@@ -618,12 +647,133 @@ server <- function(input, output, session) {
   output$help18 <- renderUI(
     actionButton("help_btn18", "", icon = icon("circle-question"))
   )
-  paste0("help_btn", 1:18) %>%
+  output$help19 <- renderUI(
+    actionButton("help_btn19", "", icon = icon("circle-question"))
+  )
+  output$help20 <- renderUI(
+    actionButton("help_btn20", "", icon = icon("circle-question"))
+  )
+  output$help21 <- renderUI(
+    actionButton("help_btn21", "", icon = icon("circle-question"))
+  )
+  output$help22 <- renderUI(
+    actionButton("help_btn22", "", icon = icon("circle-question"))
+  )
+  output$help23 <- renderUI(
+    actionButton("help_btn23", "", icon = icon("circle-question"))
+  )
+  paste0("help_btn", 1:23) %>%
     map(~ observeEvent(input[[.x]], {
       setHelp(.x)
       runjs(paste0('setTimeout(function(){$("#', str_remove(.x, "_btn"), '").append($("#shiny-notification-panel"))},0);'))
     }))
-
+  }
+  
+  # SHOW HELP NOTIFICATION PhosProTN
+  {
+    output$help1_P <- renderUI(
+      actionButton("help_btn1_P", "", icon = icon("circle-question"))
+    )
+    output$help2_P <- renderUI(
+      actionButton("help_btn2_P", "", icon = icon("circle-question"))
+    )
+    output$help3_P <- renderUI(
+      actionButton("help_btn3_P", "", icon = icon("circle-question"))
+    )
+    output$help4_P <- renderUI(
+      actionButton("help_btn4_P", "", icon = icon("circle-question"))
+    )
+    output$help5_P <- renderUI(
+      actionButton("help_btn5_P", "", icon = icon("circle-question"))
+    )
+    output$help26_P <- renderUI(
+      actionButton("help_btn26_P", "", icon = icon("circle-question"))
+    )
+    output$help6_P <- renderUI(
+      actionButton("help_btn6_P", "", icon = icon("circle-question"))
+    )
+    output$help7_P <- renderUI(
+      actionButton("help_btn7_P", "", icon = icon("circle-question"))
+    )
+    output$help8_P <- renderUI(
+      actionButton("help_btn8_P", "", icon = icon("circle-question"))
+    )
+    output$help9_P <- renderUI(
+      actionButton("help_btn9_P", "", icon = icon("circle-question"))
+    )
+    output$help10_P <- renderUI(
+      actionButton("help_btn10_P", "", icon = icon("circle-question"))
+    )
+    output$help11_P <- renderUI(
+      actionButton("help_btn11_P", "", icon = icon("circle-question"))
+    )
+    output$help12_P <- renderUI(
+      actionButton("help_btn12_P", "", icon = icon("circle-question"))
+    )
+    output$help13_P <- renderUI(
+      actionButton("help_btn13_P", "", icon = icon("circle-question"))
+    )
+    output$help14_P <- renderUI(
+      actionButton("help_btn14_P", "", icon = icon("circle-question"))
+    )
+    output$help15_P <- renderUI(
+      actionButton("help_btn15_P", "", icon = icon("circle-question"))
+    )
+    output$help16_P <- renderUI(
+      actionButton("help_btn16_P", "", icon = icon("circle-question"))
+    )
+    output$help17_P <- renderUI(
+      actionButton("help_btn17_P", "", icon = icon("circle-question"))
+    )
+    output$help18_P <- renderUI(
+      actionButton("help_btn18_P", "", icon = icon("circle-question"))
+    )
+    output$help19_P <- renderUI(
+      actionButton("help_btn19_P", "", icon = icon("circle-question"))
+    )
+    output$help20_P <- renderUI(
+      actionButton("help_btn20_P", "", icon = icon("circle-question"))
+    )
+    output$help21_P <- renderUI(
+      actionButton("help_btn21_P", "", icon = icon("circle-question"))
+    )
+    output$help22_P <- renderUI(
+      actionButton("help_btn22_P", "", icon = icon("circle-question"))
+    )
+    output$help23_P <- renderUI(
+      actionButton("help_btn23_P", "", icon = icon("circle-question"))
+    )
+    output$help24_P <- renderUI(
+      actionButton("help_btn24_P", "", icon = icon("circle-question"))
+    )
+    output$help25_P <- renderUI(
+      actionButton("help_btn25_P", "", icon = icon("circle-question"))
+    )
+    output$help26_P <- renderUI(
+      actionButton("help_btn26_P", "", icon = icon("circle-question"))
+    )
+    output$help27_P <- renderUI(
+      actionButton("help_btn27_P", "", icon = icon("circle-question"))
+    )
+    output$help28_P <- renderUI(
+      actionButton("help_btn28_P", "", icon = icon("circle-question"))
+    )
+    output$help29_P <- renderUI(
+      actionButton("help_btn29_P", "", icon = icon("circle-question"))
+    )
+    output$help30_P <- renderUI(
+      actionButton("help_btn30_P", "", icon = icon("circle-question"))
+    )
+    output$help31_P <- renderUI(
+      actionButton("help_btn31_P", "", icon = icon("circle-question"))
+    )
+    paste0("help_btn", 1:31, "_P") %>%
+      map(~ observeEvent(input[[.x]], {
+        setHelp(.x)
+        runjs(paste0('setTimeout(function(){$("#', str_remove(.x, "_btn"), '").append($("#shiny-notification-panel"))},0);'))
+      }))
+  }
+  
   # EXECUTE ProTN
   output$report <- downloadHandler(
     filename = "results_ProTN.zip",
@@ -649,7 +799,6 @@ server <- function(input, output, session) {
             dir.create(file.path(paste0(dirOutput_Server, "figures"),"PCA_MDS"), showWarnings = FALSE)
             # tempReport <- file.path(tempdir(), "R/pipeline_elaborate_PD_files.Rmd")
             # file.copy("pipeline_elaborate_PD_files.Rmd", tempReport, overwrite = TRUE)
-
             # Set up parameters to pass to Rmd document
             params <- list(
               doc_title = input$title_exp,
@@ -676,7 +825,7 @@ server <- function(input, output, session) {
               contr_design = input$design$datapath,
               prot_boxplot = if(is.null(input$prot_boxplot)){""}else{input$prot_boxplot},
               run_enrich = if(is.null(input$enrichR)){FALSE}else{input$enrichR},
-              run_enrich_universe = if(is.null(input$enrichR_universe) | (is.null(input$enrichR) | input$enrichR==F)){FALSE}else{input$enrichR_universe},
+              run_enrich_universe = if(!(is.null(input$enrichR) | is.null(input$enrichR_universe))){if(input$enrichR==T){input$enrichR_universe}else{FALSE}}else{FALSE},
               run_STRING = if(is.null(input$STRING)){FALSE}else{input$STRING},
               pval_fdr_enrich = if(is.null(input$pval_fdr_enrich)){TRUE}else{input$pval_fdr_enrich},
               pval_enrich_thr = if(is.null(input$pvalue_enrich)){"0.05"}else{input$pvalue_enrich},
@@ -773,7 +922,7 @@ server <- function(input, output, session) {
               contr_design = input$design_phos$datapath,
               prot_boxplot = if(is.null(input$prot_boxplot_phos)){""}else{input$prot_boxplot_phos},
               run_enrich = if(is.null(input$enrichR_phos)){FALSE}else{input$enrichR_phos},
-              run_enrich_universe = if(is.null(input$enrichR_universe_phos) | (is.null(input$enrichR_phos) | input$enrichR_phos==F)){FALSE}else{input$enrichR_universe_phos},
+              run_enrich_universe = if(!(is.null(input$enrichR_phos) | is.null(input$enrichR_universe_phos))){if(input$enrichR_phos==T){input$enrichR_universe_phos}else{FALSE}}else{FALSE},
               run_STRING = if(is.null(input$STRING_phos)){FALSE}else{input$STRING_phos},
               run_kinaseTree = if(is.null(input$kinaseTree_phos)){FALSE}else{input$kinaseTree_phos},
               pval_fdr_enrich = if(is.null(input$pval_fdr_enrich_phos)){TRUE}else{input$pval_fdr_enrich_phos},
@@ -825,10 +974,6 @@ server <- function(input, output, session) {
       tryCatch(
         {
           withProgress(message = "Rendering, please wait!", {
-            start.time <- Sys.time()
-            message(start.time)
-            # shinyjs::removeClass(id = "cover",class = "cover_hide")
-            # shinyjs::addClass(id = "cover",class = "cover_run")
             shinyjs::disable("report")
             shinyjs::disable("case_study")
             js$pageDisable("none")
@@ -843,6 +988,8 @@ server <- function(input, output, session) {
             dir.create(file.path(dirOutput_Server, "figures"), showWarnings = FALSE)
             dir.create(file.path(dirOutput_Server, "data"), showWarnings = FALSE)
             dir.create(file.path(dirOutput_Server, "tables"), showWarnings = FALSE)
+            dir.create(file.path(paste0(dirOutput_Server, "figures"),"Expression"), showWarnings = FALSE)	
+            dir.create(file.path(paste0(dirOutput_Server, "figures"),"PCA_MDS"), showWarnings = FALSE)
             # tempReport <- file.path(tempdir(), "R/pipeline_elaborate_PD_files.Rmd")
             # file.copy("pipeline_elaborate_PD_files.Rmd", tempReport, overwrite = TRUE)
 
@@ -855,6 +1002,8 @@ server <- function(input, output, session) {
               file_input = "../Data/Input.xlsx",
               file_prot = "../Data/proteinGroups.txt",
               file_pep = "../Data/peptides.txt",
+              filt_absent_value = "0",
+              pval_fdr = FALSE,
               signal_thr = "inf",
               fc_thr = "0.75",
               pval_thr = "0.05",
@@ -864,6 +1013,7 @@ server <- function(input, output, session) {
               run_enrich = TRUE,
               run_enrich_universe = FALSE,
               run_STRING = TRUE,
+              pval_fdr_enrich = TRUE,
               pval_enrich_thr = "0.05",
               overlap_size_enrich_thr = as.integer(5),
               enrich_filter_term = NULL,
@@ -878,12 +1028,13 @@ server <- function(input, output, session) {
                 "Jensen_COMPARTMENTS",
                 "DisGeNET"
               ),
+              enrichR_DB = FALSE,
               dirOutput = dirOutput_Server
             )
 
 
               rmarkdown::render("R/pipeline_elaborate_PD_files.Rmd",
-                output_file = "report.html",
+                output_file = "protn_cas_study_report.html",
                 output_dir = dirOutput_Server,
                 params = params,
                 envir = new.env(parent = globalenv())
@@ -896,12 +1047,7 @@ server <- function(input, output, session) {
               setwd(oldwd)
             shinyjs::enable("report")
             shinyjs::enable("case_study")
-            # shinyjs::removeClass(id = "cover",class = "cover_run")
-            # shinyjs::addClass(id = "cover",class = "cover_hide")
             js$pageDisable("all")
-            end.time <- Sys.time()
-            time.taken <- end.time - start.time
-            message(time.taken)
           })
         },
         error = function(e) {
@@ -909,8 +1055,6 @@ server <- function(input, output, session) {
           shinyjs::enable("report")
           shinyjs::enable("case_study")
           js$pageDisable("all")
-          # shinyjs::removeClass(id = "cover",class = "cover_run")
-          # shinyjs::addClass(id = "cover",class = "cover_hide")
         }
       )
     }
@@ -919,9 +1063,9 @@ server <- function(input, output, session) {
   
   # ----------------- DELETE TEMP FILES WHEN SESSION ENDS ---------------- #
   
-  # session$onSessionEnded(function() {
-  #   if (dir.exists(tempdir())){unlink(tempdir(), recursive = T)}
-  # })
+  session$onSessionEnded(function() {
+    if (dir.exists(tempdir())){unlink(list.files(tempdir(), full.names = T), recursive = T)}
+  })
 }
 
 # Run the application
