@@ -278,7 +278,6 @@ if(is.na(overlap_size_enrich_thr)){
   message("Warning: parse error for Overlap size enrichment threshold. Set default paramenter to 5\n")
   overlap_size_enrich_thr <- 5
 }
-
 enrich_filter_term<-if(is.null(params$enrich_filter_term)){list()
 }else if(params$enrich_filter_term == ""){list()
 }else{na.omit(strsplit(params$enrich_filter_term, split = "\\;|\\,|\\; |\\, ")[[1]])}

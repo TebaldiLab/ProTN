@@ -618,7 +618,7 @@ if(is.na(taxonomy_NCBI)){
 # input_files$PEP$`Master Protein Accessions`<-lapply(input_files$PEP$`Master Protein Accessions`,
 #                                                                 function(x){unlist(str_split(x, ";"))[1]}) %>% unlist()
 input_files$PEP<-input_files$PEP[,c("Proteins","Sequence","Start position","End position",
-                                    colnames(input_files$PEP)[which(grepl("Intensity ",colnames(input_files$PEP)))])]
+                                    grep("Intensity ",colnames(input_files$PEP)[grepl(paste(input_files$Input$Sample, collapse = "|"), colnames(input_files$PEP))], value = T))]
 
 
 #merge by uniprot the prot description and the pep table
@@ -877,7 +877,6 @@ shiny::setProgress(0.32, detail = "Calculate distributions...")
 Barplot showing the percentage of peptides with available abundances for each sample.
 
 ```{r numeric_numbers, echo=F, message=F, warning=F}
-
 numeric_df<- c_anno[c_anno[order(c_anno$condition),"sample"],]
 numeric_df$numeric_values<-colSums(is.na(psm_sig_prot_df))
 numeric_df$numeric_percentage<- 100-(numeric_df$numeric_values/nrow(psm_sig_prot_df)*100)
@@ -2142,7 +2141,7 @@ p = callr::r_bg(
 
 ```
 
-```{r enrichment,message=F, warning=F,echo=F, eval=run_enrich, results='asis'}
+```{r enrichment_sms,message=F, warning=F,echo=F, eval=run_enrich, results='asis'}
 shiny::setProgress(0.75, detail = "Enrichment in progress... \n Can require several minutes...")
 cat(" \n \n")
 cat("## 3. Functional enrichment analysis \n")
@@ -2156,6 +2155,9 @@ cat(" \n")
 if(run_enrich_universe){cat("- Execution of the enrichmentalso on all detected proteins.")}
 def_val_height=  knitr::opts_chunk$get("fig.height")
 message("Enrichment step with EnrichR in proress...")
+```
+
+```{r enrichment,message=F, warning=F,echo=F, eval=run_enrich, results='hide'}
 doNextChunk <- tryCatch({
   dbs<-NULL
   if(enrichR_DB){
@@ -2795,7 +2797,7 @@ gc()
 #Read STRINGdb edges for human
 #Human id --> 9606
 #Mouse id --> 10090
-string_db <- STRINGdb$new(version="11.5", species=taxonomy_NCBI, score_threshold=500, input_directory="")
+string_db <- STRINGdb$new(version="11.5", species=taxonomy_NCBI, score_threshold=500, input_directory="STRINGdb/")
 gene_name<-unlist(g_sel_comp) %>% unique() %>% as.data.frame()
 colnames(gene_name)<-c("gene_id")
 string_mapped <- string_db$map(gene_name, "gene_id", removeUnmappedRows = TRUE)
