@@ -1112,7 +1112,8 @@ limmafnc<-function(type = "PROT",c_anno,dat_gene,psm_count_table,contro_list,exp
 
 
 enrichRfnc<-function(in_df, pval_fdr_enrich, pval_enrich_thr, overlap_size_enrich_thr, dbs=NULL){
-   DEGs_lists<-NULL
+  setEnrichrSite("Enrichr") 
+  DEGs_lists<-NULL
    
    for(comp_c in unique(in_df$comp)){
       
@@ -1121,8 +1122,7 @@ enrichRfnc<-function(in_df, pval_fdr_enrich, pval_enrich_thr, overlap_size_enric
       DEGs_lists[[paste0(comp_c,"_down")]]<-in_df %>% dplyr::filter(comp==comp_c,class=="-") %>% pull(id) %>% unique() %>% sort()
       
    }
-   
-   ncores <- min(detectCores()-2, length(unique(in_df$comp))*3)
+   ncores <- min(detectCores()-2, length(unique(in_df$comp)))
    enr_df<-NULL
    
    
@@ -1131,7 +1131,6 @@ enrichRfnc<-function(in_df, pval_fdr_enrich, pval_enrich_thr, overlap_size_enric
        source("functions_2021.R")
        frg<-DEGs_lists[[a]]
        if(length(frg)>0){
-         message(a)
          enrichment_enrichr(frg, input_name=a, dbs_vec = dbs)
        }
        # clu_n <- enrichment_enrichr(frg, input_name=a, dbs_vec = dbs)
@@ -1152,6 +1151,17 @@ enrichRfnc<-function(in_df, pval_fdr_enrich, pval_enrich_thr, overlap_size_enric
        # enr_df<-rbind(enr_df,clu_n)
      }
      stopCluster(cluster_ext)
+   }
+   
+   if(any(is.na(enr_df))){
+     shiny::setProgress(0.75, detail = "Enrichment in progress... \n Can require several minutes... \n WARNING: Connection problem with EnrichR. Retry with single connection. REQUIRE TIME...")
+     enr_df<-NULL
+     for(a in names(DEGs_lists)){
+       frg<-DEGs_lists[[a]]
+       if(length(frg)>0){
+         enr_df<-rbind(enr_df,enrichment_enrichr(frg, input_name=a, dbs_vec = dbs))
+       }
+     }
    }
    enr_df<-na.omit(enr_df)
    enr_df<-
