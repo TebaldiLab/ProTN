@@ -1519,6 +1519,7 @@ shiny::setProgress(0.51, detail = "Calculate PCA...")
 
 
 ```{r boxplot_proteins, warning=F, message=F, echo=F, eval=boxplot_prot_exe, results='asis'}
+save(list = ls(), file="tmp.RData")
 prot_find<-unique(c(intersect(prot_boxplot,rownames(dat_gene)),
                     intersect(str_to_title(prot_boxplot),rownames(dat_gene)),
                     intersect(str_to_upper(prot_boxplot),rownames(dat_gene)),
