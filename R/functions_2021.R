@@ -199,7 +199,7 @@ enrichment_enrichr <- function(input_vec, # vector with gene names
    # 
    # dbs_default<-c(dbs_transcription,dbs_pathway,dbs_onto,dbs_disease,dbs_tissue,dbs_misc,dbs_geo)
    # 
-   dbs_default <- read_delim("dbs_enrichR.txt", delim = "\n", col_names = FALSE)[[1]]
+   dbs_default <- as.vector(read_tsv("dbs_enrichR.txt", col_names = FALSE)[,1]) %>% unlist()
    dbs <- listEnrichrDbs()
    if(!is.null(dbs_vec)){dbs_used<-intersect(dbs_vec,dbs$libraryName)
    } else {dbs_used<-intersect(dbs_default,dbs$libraryName)}
@@ -1126,7 +1126,7 @@ enrichRfnc<-function(in_df, pval_fdr_enrich, pval_enrich_thr, overlap_size_enric
    enr_df<-NULL
    
    
-   if(.Platform$OS.type == "unix") { 
+   if(.Platform$OS.type == "unix") {
      enrfcn <- function(a) {
        source("functions_2021.R")
        frg<-DEGs_lists[[a]]
@@ -1140,7 +1140,7 @@ enrichRfnc<-function(in_df, pval_fdr_enrich, pval_enrich_thr, overlap_size_enric
    } else {
      cluster_ext <- makeCluster(ncores, type = "SOCK")
      registerDoParallel(cl = cluster_ext)
-     
+
      enr_df<-foreach(a = names(DEGs_lists),.combine='rbind',.packages = c("dplyr","enrichR","tidyr","stringr")) %dopar% {
        source("functions_2021.R")
        frg<-DEGs_lists[[a]]
@@ -1152,14 +1152,14 @@ enrichRfnc<-function(in_df, pval_fdr_enrich, pval_enrich_thr, overlap_size_enric
      }
      stopCluster(cluster_ext)
    }
-   
+
    if(any(is.na(enr_df))){
      shiny::setProgress(0.75, detail = "Enrichment in progress... \n Can require several minutes... \n WARNING: Connection problem with EnrichR. Retry with single connection. REQUIRE TIME...")
      enr_df<-NULL
      for(a in names(DEGs_lists)){
        frg<-DEGs_lists[[a]]
        if(length(frg)>0){
-         enr_df<-rbind(enr_df,enrichment_enrichr(frg, input_name=a, dbs_vec = dbs))
+         enr_df<-rbind(enr_df,enrichment_enrichr(input_vec = frg, input_name=a, dbs_vec = dbs))
        }
      }
    }
