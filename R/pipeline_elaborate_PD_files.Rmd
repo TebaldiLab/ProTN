@@ -62,7 +62,8 @@ list.of.packages <- c("ggrepel","tidyr","ggraph","graphlayouts","RColorBrewer",
                       "scales","igraph","data.table","qpdf","devtools",
                       "corrplot", "data.table", "ggplot2", "ggfortify","lazyeval",
                       "lubridate", "pheatmap", "reshape2","readr", "rlang", "rmdformats",
-                      "tibble", "dplyr", "tidyr", "wesanderson","WGCNA","ggbeeswarm","ggthemes")
+                      "tibble", "dplyr", "tidyr", "wesanderson","WGCNA","ggbeeswarm","ggthemes", 
+                      "magick", "pdftools", "plotly", "svgPanZoom")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) suppressMessages(suppressWarnings({install.packages(new.packages, dependencies = T)}))
 list.of.packages.bio <- c("biomaRt","DEqMS","STRINGdb",
@@ -1313,8 +1314,6 @@ cat(" \n \n")
 remove(hs, pg_long_df)
 
 shiny::setProgress(0.47, detail =  "Calculate post-norm distribution...")
-
-
 ```
 
 ```{r check_number_sample, warning=FALSE, echo=F, message=FALSE}
@@ -2114,6 +2113,7 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   
   remove(sample_data,sample_distances,mds_cmdscale,p1)
 }
+
 ```
 
 
@@ -2353,6 +2353,7 @@ if(length(enrich_filter_DBs) > 0){
     }
   }
   
+
   tryCatch({
     cat("#### 3.2. Top enrichments in selected annotation databases (UP,DOWN). {.tabset}  \n")
     cat("Significant enrichments (FDR<0.05) are displayed as filled dots, non-significant as empty dots. Point size is proportional to log2 Odds Ratio. \n ")
@@ -2362,8 +2363,6 @@ if(length(enrich_filter_DBs) > 0){
     for(db in names(plotlist2)){
       cat(paste0("##### ",db," \n"))
       print(resize_plot(resizePlot = plotlist2[[db]], resizeHeight = max(min(20,length(unique(enr_sele_df[which(enr_sele_df$anno_class %in% category_db[[db]][,1]), "anno_name"]))*0.3),3)))
-
-      # suppressWarnings(print(plotlist2[[db]]))
       cat(" \n \n")
     }
     # suppressWarnings(in_tabs(plotlist2, labels = names(plotlist2), level = 4L))
@@ -2613,7 +2612,7 @@ if(p$is_alive() | is.null(p$get_result())){
   # dirOutput_enr=paste0(dirOutput,subfold_Fig,"enrich/")
   message("Enrichment whole universe DONE.")
 }
-save(list = ls(), file="tmp.RData")
+#save(list = ls(), file="tmp.RData")
 
 shiny::setProgress(0.75, detail = "Done Enrichment of universe...")
 ```
