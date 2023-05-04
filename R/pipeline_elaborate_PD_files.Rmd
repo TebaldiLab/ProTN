@@ -39,22 +39,6 @@ params:
 
 ```{r settings, message=F, warning=F, echo=F,results='hide'}
 shiny::setProgress(0, detail = "Initialize...")  # set progress to 50%
-# require("knitr")
-# library("rstudioapi")
-# library(stringr)
-# #find and set the home directory depending on the position of the current Rmd
-# PATH_R_FILE<-paste(str_split(getSourceEditorContext()$path, "/")[[1]][1:(length(str_split(getSourceEditorContext()$path, "/")[[1]])-2)],collapse = "/")
-# opts_knit$set(root.dir = PATH_R_FILE,
-#               dev="cairo.pdf")
-# setwd(PATH_R_FILE)
-#
-# #Create the output directory
-# dirOutput_2="../outputResults/"
-# dir.create(file.path("./",dirOutput_2), showWarnings = FALSE)
-# currentTime = gsub(".*?([0-9]+).*?", "\\1", Sys.time())
-# dirOutput_1=paste(currentTime,"/",sep = "")
-# dir.create(file.path(dirOutput_2, dirOutput_1), showWarnings = FALSE)
-# dirOutput=paste(dirOutput_2,dirOutput_1,sep = "")
 
 dirOutput = params$dirOutput
 #Auto-install needed library
@@ -96,7 +80,6 @@ suppressMessages(suppressWarnings({
   library(graphlayouts)
   library(RColorBrewer) # Color palettes
   library(scales) # heatmap colors scales
-  # library(geomnet) # network plots
   library(igraph) # Network analysis
   library(data.table)
   library(qpdf)
@@ -134,23 +117,7 @@ color_base<-c("dodgerblue2", "#E31A1C", # red
               "#d6ffdf","#a3e5ff","#b1ac8f","#ccffff","#b4bb9f","#7eb7a5","#c5dbc3","#a8b9ff","#74dfbc","#f2ace7")
 colour_vec<-color_base
 
-# all_times <- list()  # store the time for each chunk
-# knitr::knit_hooks$set(time_it = local({
-#   now <- NULL
-#   function(before, options) {
-#     if (before) {
-#       # record the current time before each chunk
-#       now <<- Sys.time()
-#     } else {
-#       # calculate the time difference after a chunk
-#       res <- difftime(Sys.time(), now)
-#       # return a character string to show the time
-#       all_times[[options$label]] <<- res
-#     }
-#   }
-# }))
-# knitr::opts_chunk$set(time_it = TRUE)
-
+#Variables with names of subdir
 subfold_Fig <- "figures/"
 subfold_Dat <- "data/"
 subfold_Tab <- "tables/"
@@ -164,27 +131,12 @@ shiny::setProgress(0.01, detail = "Initialize...")  # set progress to 50%
 
 ```{r load_settings, warning=FALSE, echo=F, message=FALSE, results='hide'}
 message("Reading options")
-# tpm<-getwd()
-#Load the excel file with  the basic settings
-# input_settings <- tryCatch({suppressMessages({readxl::read_excel("options.xlsx", col_names = F)})},
-#                            error=function(cond){stop("Error: \'options.xlsx\' not present in the current folder. Follow the instruction in the README.")})
-# input_settings <- input_settings[rowSums(is.na(input_settings)) != ncol(input_settings), ]
 # #Read title and description
-# bindingIsLocked("params", env = .GlobalEnv)
-# unlockBinding("params", env = .GlobalEnv)
-# if(!is.na(input_settings$...2[1])){params$doc_title<-input_settings$...2[1]}
 description<-params$description
-# input_settings<-input_settings[3:nrow(input_settings),]
 #Read Platform of previuos quantification
-# sw_analysis <-input_settings$...2[1]
-# readPD_files <- readMQ_files <- FALSE
-# if(sw_analysis == "PD"){ readPD_files <- TRUE
-# }else if(sw_analysis == "MQ"){ readMQ_files <- TRUE
-# }else { stop("Error: Incorrect plaftorm of quantification inserted. Write \'PD\' for Protein Discovery or \'MQ\' for MaxQuant.")}
 readPD_files <- params$readPD_files
 readMQ_files <- params$readMQ_files
 #Read input directory
-# dir_file_input<-input_settings$...2[2]
 filenames<-list(params$file_input, params$file_pep, params$file_prot)
 filt_absent_value=suppressWarnings(parse_double(params$filt_absent_value))
 if(is.na(filt_absent_value)){
@@ -206,7 +158,6 @@ if(is.na(pval_thr)){
 }
 batch_corr_exe<-as.logical(params$batch_corr_exe)
 
-# save(signal_thr, fc_thr, pval_thr, batch_corr_exe, readMQ_files, readPD_files, file="tmp.RData")
 message(params$contr_design)
 #Read the design
 input_settings<-read_excel_allsheets(params$contr_design)[[1]]
@@ -248,7 +199,7 @@ run_enrich <- as.logical(params$run_enrich)
 run_enrich_universe <- as.logical(params$run_enrich_universe)
 enrichR_DB <- as.logical(params$enrichR_DB)
 run_STRING <- as.logical(params$run_STRING)
-# save(params, file = "tmp.RData")
+
 pval_enrich_thr <- if(is.null(params$pval_enrich_thr)){0.05
 }else if(is.double(params$pval_enrich_thr)){params$pval_enrich_thr
 }else{parse_double(params$pval_enrich_thr)}
@@ -286,7 +237,6 @@ The following report summarizes the results obtained by the proTN integrative pi
 
 ## Description of the output files
 
-<!-- - ```protn_report.html```: complete report of the analysis with all pics and results of the enrichment. -->
 - [**Data** folder](Data)
   - ```protn_env.RData```: RData object containing the essential variables and data for additional analyses in R. The variables are:
     - *c_anno*: dataframe with the description of the samples;
@@ -370,7 +320,6 @@ cat("    - **enr_DE_keywords.pdf**: dot plot of top enriched terms based on diff
 
 shiny::setProgress(0.10, detail = "Settings...")
 ```
-
 ```{r print_descr_enrich_uni_fig, warning=FALSE, echo=F, message=FALSE, eval=run_enrich_universe, results='asis'}
 cat("      - **enr_updown_keysources.pdf**: dot plot of top enriched terms based on differentially expressed proteins compared to all detected proteins, divided in up- and down-regulated. Terms are filtered for key source datasets selected in the advanced options. \n")
 cat("      - **enr_updown_keywords.pdf**: dot plot of top enriched terms based on differentially expressed proteins compared to all detected proteins, divided in up- and down-regulated. Terms are filtered for keywords defined in the advanced options. \n")
@@ -379,13 +328,11 @@ cat("    - **enr_DE_keywords.pdf**: dot plot of top enriched terms based on diff
 
 shiny::setProgress(0.10, detail = "Settings...")
 ```
-
 ```{r print_descr_STRING, warning=FALSE, echo=F, message=FALSE, eval=run_STRING, results='asis'}
 cat("  - ```Network``` directory: Directory with figures from network analysis of differentially expressed proteins, based on STRINGdb protein-protein interactions. For each contrast, two files are generated: \n")
 cat("    - **communities_sizes.pdf**: histogram representing the number of protein in each network community. \n")
 cat("    - **ppi_network.pdf**: network representation in two layouts: Fruchterman Reingold (*fr*) and Kamada Kawai (*kk*). \n")
 ```
-
 
 ## Summary of input parameters and thresholds
 
@@ -445,7 +392,6 @@ input_files<-list("FILES")
 for (f in template_files){
   input_files[f] <- tryCatch({
     read_excel_allsheets(filenames[f][[1]])
-    # read_excel_allsheets(paste0(dir_file_input,filenames[which(grepl(f,filenames) & !grepl('~', filenames))]))
   }, error=function(cond){
     stop(paste0("Error: missing file. The file \'",f,"\' is missing or not have the pattern in the filename or there are duplicates files."))
   })
@@ -545,9 +491,6 @@ if("color" %in% colnames(c_anno)){
 rownames(c_anno)<-c_anno$sample
 
 remove(uniprot_to_take,input_files)
-#Print Annotation table
-# kable(c_anno)
-
 shiny::setProgress(0.23, detail = "Files correctly read...")
 ```
 
@@ -562,15 +505,12 @@ for (f in template_files){
   if(f == template_files[1]){
     input_files[f] <- tryCatch({
       read_excel_allsheets(filenames[f][[1]])
-      # read_excel_allsheets(paste0(dir_file_input,filenames[which(grepl(f,filenames) & !grepl('~', filenames))]))
     }, error=function(cond){
       stop(paste0("Error: missing file. The file \'",f,"\' is missing or not have the pattern in the filename or there are duplicates files."))
     })
   }else{
     input_files[f] <- tryCatch({
       list(read_tsv(filenames[f][[1]]))
-      
-      # list(read_tsv(paste0(dir_file_input,filenames[which(grepl(f,filenames) & !grepl('~', filenames))])))
     }, error=function(cond){
       stop(paste0("Error: missing file. The file \'",f,"\' is missing or not have the pattern in the filename or there are duplicates files."))
     })
@@ -600,7 +540,6 @@ if(any(str_starts(input_files$Input$Condition, "[0-9]"))){
                                                                                            input_files$Input$Condition[(str_starts(input_files$Input$Condition,
                                                                                                                                    "[0-9]"))])
 }
-# save(list = ls(all.names = TRUE), file = "tmp_3.RData")
 #Prepare PROT table with only column Accession and Dscription, extract fro Description the GeneName and remove contaminants
 input_files$PROT <- input_files$PROT[-which(grepl("Keratin|keratin",input_files$PROT$`Fasta headers`) |
                                               grepl("CON_",input_files$PROT$`Majority protein IDs`))
@@ -616,8 +555,6 @@ if(is.na(taxonomy_NCBI)){
   taxonomy_NCBI<-9606
 }
 #Mantain only the first UNIPROT code
-# input_files$PEP$`Master Protein Accessions`<-lapply(input_files$PEP$`Master Protein Accessions`,
-#                                                                 function(x){unlist(str_split(x, ";"))[1]}) %>% unlist()
 input_files$PEP<-input_files$PEP[,c("Proteins","Sequence","Start position","End position",
                                     grep("Intensity ",colnames(input_files$PEP)[grepl(paste(input_files$Input$Sample, collapse = "|"), colnames(input_files$PEP))], value = T))]
 
@@ -634,7 +571,6 @@ colnames(input_files$PD_PEP_matrix)<-c(c("Accession","Description","GeneName",
                                          str_split(x," ")[[1]][2]
                                        }})
                                        ))
-# input_files$PD_PEP_matrix$GeneName<-str_split_fixed(str_split_fixed(input_files$PD_PEP_matrix$GeneName,"-",n=2)[,1],"[.]",n=2)[,1] %>% toupper()
 input_files$PD_PEP_matrix$GeneName<-str_split_fixed(str_split_fixed(input_files$PD_PEP_matrix$GeneName,"-",n=2)[,1],"[.]",n=2)[,1]
 #Maintain only the new complete matrix of intensity
 psm_sig_raw<-input_files$PD_PEP_matrix
@@ -652,9 +588,6 @@ if("color" %in% colnames(c_anno)){
 }
 rownames(c_anno)<-c_anno$sample
 remove(uniprot_to_take,input_files)
-#Print Annotation table
-# kable(c_anno)
-
 
 shiny::setProgress(0.23, detail = "Files correctly read...")
 ```
@@ -664,12 +597,6 @@ psm_sig_raw$`Position in Master Proteins`<-gsub(" ", "_", psm_sig_raw$`Position 
 psm_sig_raw$Modifications<-gsub(" ", "_", psm_sig_raw$Modifications)
 
 if(readPD_files){
-  #For peptides analysis
-  # psm_anno_raw <- data.frame("accession"=psm_sig_raw$Accession,
-  #                            "symbol"=psm_sig_raw$GeneName,
-  #                            "sequence"=psm_sig_raw$`Annotated Sequence`,
-  #                            "modifications"=psm_sig_raw$Modifications)
-  #For protein groups analysis
   psm_anno_raw <- data.frame("symbol"=psm_sig_raw$GeneName,
                              "sequence"=psm_sig_raw$`Annotated Sequence`,
                              "modifications"=psm_sig_raw$Modifications)
@@ -707,11 +634,6 @@ psm_sig_prot_raw<-psm_sig_raw[,c(7:ncol(psm_sig_raw))]
 psm_sig_pet_raw<-psm_sig_raw[,c(7:ncol(psm_sig_raw))]
 rownames(psm_sig_pet_raw)<-rownames(psm_peptide_table)
 
-#For Peptide analysis
-# rownames(psm_sig_raw)<-make.names(psm_anno_raw$accession,unique=T)
-# rownames(psm_table_info)<-make.names(psm_table_info$Accession,unique=T)
-# rownames(psm_anno_raw)<-make.names(psm_anno_raw$accession,unique=T)
-
 shiny::setProgress(0.27, detail = "Annotate proteins/peptides...")
 
 ```
@@ -747,7 +669,6 @@ filter_df_single_pep<-psm_anno_df %>% dplyr::group_by(symbol) %>% dplyr::summari
 filter_df_single_pep <- left_join(filter_df_single_pep, psm_anno_df) %>% pull(id)
 psm_log_prot_df <-psm_log_prot_df[intersect(rownames(psm_log_prot_df), filter_df_single_pep),]
 psm_anno_df <- psm_anno_df[intersect(rownames(psm_anno_df), filter_df_single_pep),]
-# psm_table_info <- psm_table_info[filter_id,]
 #Clean old variables
 remove(psm_anno_raw,psm_sig_prot_raw,psm_long_df,psm_filter_df,filter_id,sig_thr)
 
@@ -765,8 +686,6 @@ filter_id <- as.character(psm_filter_df %>% dplyr::filter(passes_c > 0) %>% pull
 
 psm_sig_pet_df <-psm_sig_pet_raw[filter_id,]
 psm_peptide_table<-psm_peptide_table[filter_id,]
-
-
 
 #Determine column tryptic
 peptides_df <- psm_peptide_table[,c("Accession", "Annotated Sequence")]
@@ -829,7 +748,6 @@ The sample table below annotates the samples of the study as in the **Sample_Ann
 cat(" \n")
 kable(c_anno, row.names = F, col.names = str_to_title(colnames(c_anno)))
 cat(" \n")
-
 ```
 
 
@@ -858,13 +776,11 @@ psm_long_df <- psm_log_prot_df[,c_anno[order(c_anno$condition),"sample"]] %>% mu
 psm_long_df <- suppressMessages(left_join(psm_long_df,c_anno))
 
 hs<-ggplot(data=psm_long_df, aes(x=factor(sample, levels=unique(psm_long_df$sample)),y=`log2 raw abundance`,fill=sample,colour=sample))+
-  #geom_hline(yintercept = 0, lty=2)+
   coord_flip()+
   geom_violin(alpha=0.5,scale="width",trim = F,colour=NA)+
   geom_boxplot(alpha=1,fill="white",width=0.2,outlier.shape = NA, notch = T)+
   theme_bw()+
   theme(legend.position = "none",axis.title.y = element_blank()) +
-  # labs(x = "Log2 Intensity") +
   scale_fill_manual(values=setNames(as.list(c_anno$color), c_anno$sample)) +
   scale_colour_manual(values=setNames(as.list(c_anno$color), c_anno$sample)) +
   theme(panel.grid.minor = element_blank(),panel.grid.major.y = element_blank())
@@ -882,13 +798,12 @@ numeric_df<- c_anno[c_anno[order(c_anno$condition),"sample"],]
 numeric_df$numeric_values<-colSums(is.na(psm_sig_prot_df))
 numeric_df$numeric_percentage<- 100-(numeric_df$numeric_values/nrow(psm_sig_prot_df)*100)
 setnames(numeric_df,"numeric_percentage","% of available abundances")
+
 hs<-ggplot(data=numeric_df, aes(x=factor(sample, levels=unique(psm_long_df$sample)),y=`% of available abundances`,fill=sample,colour=sample))+
-  #geom_hline(yintercept = 0, lty=2)+
   coord_flip()+
   geom_bar(stat="identity",width=.7,alpha=.8)+
   theme_bw()+
   theme(legend.position = "none",axis.title.y = element_blank())+
-  # labs(x = "Percentage of known intensity (%)") +
   scale_fill_manual(values=setNames(as.list(c_anno$color), c_anno$sample)) +
   scale_colour_manual(values=setNames(as.list(c_anno$color), c_anno$sample)) +
   theme(panel.grid.minor = element_blank(),panel.grid.major.y = element_blank())
@@ -896,12 +811,15 @@ hs<-ggplot(data=numeric_df, aes(x=factor(sample, levels=unique(psm_long_df$sampl
 hs
 
 remove(hs,numeric_df)
-
 shiny::setProgress(0.34, detail = "Doing normalizations...")
 ```
 
 
-#### 1.3. Normalization, peptide-to-protein summarization, imputation 
+#### 1.3. Imputation, normalization, peptide-to-protein summarization 
+
+**Imputation** is performed on peptide and protein abundances with the Bioconductor package [PhosR](https://www.sciencedirect.com/science/article/pii/S221112472100084X). Round imputation is performed in absence of replicates. ProTN uses two function of PhosR for the imputation, the first impute the missing values for a peptide across replicates within a single condition, the second is a tail-based imputation approach as implemented in Perseus.
+
+**Normalization:**
 
 **Peptides** abundances are normalized with the equalMedianNormalization function from the Bioconductor package [DEqMS](<https://www.bioconductor.org/packages/release/bioc/html/DEqMS.html>) (equal medians in all samples). 
 
@@ -914,29 +832,18 @@ numeric_df[which(numeric_df$N > 20), "N"] <- 20
 numeric_df <- numeric_df[order(numeric_df$N) , .(NPeptides = .N), by = c("N")]
 numeric_df$N <- factor(str_sort(str_replace(as.character(numeric_df$N), pattern = "20", replacement = "20+"), numeric = T), levels = c(2:19, "20+"))
 
-# numeric_df$numeric_values<-colSums(is.na(psm_sig_prot_df))
-# numeric_df$numeric_percentage<- 100-(numeric_df$numeric_values/nrow(psm_sig_prot_df)*100)
-# setnames(numeric_df,"numeric_percentage","% of available abundances")
 hs<-ggplot(data=numeric_df, aes(x=N,y=NPeptides, color = NPeptides, fill = NPeptides))+
-  # geom_hline(yintercept = 0, lty=2)+
-  # coord_flip()+
   geom_bar(stat="identity",width=.7,alpha=.8)+
   theme_bw()+
   theme(legend.position = "none")+
   labs(x = "# peptides per protein", y = "# proteins") +
-  # scale_fill_manual(values=brewer.pal(29, name = )) +
-  # scale_colour_manual(values="dodgerblue2") +
   theme(panel.grid.minor = element_blank(),panel.grid.major.y = element_blank(),panel.grid.major.x = element_blank())
 
 hs
 
 remove(hs,numeric_df)
-
 shiny::setProgress(0.34, detail = "Doing normalizations...")
 ```
-
-
-**Imputation** is performed on peptide and protein abundances with the Bioconductor package [PhosR](https://www.sciencedirect.com/science/article/pii/S221112472100084X). Round imputation is performed in absence of replicates. ProTN uses two function of PhosR for the imputation, the first impute the missing values for a peptide across replicates within a single condition, the second is a tail-based imputation approach as implemented in Perseus.
 
 ```{r imputation, echo=F, message=F, warning=F, results='asis'}
 message("Imputation of intensity matrix in progress...")
@@ -949,7 +856,6 @@ psm_log_prot_df<-tryCatch(
     ppe <- scImpute(ppe, 0.6, grps)
     ppe <- tImpute(ppe, assay = "imputed")
     psm_log_prot_df[is.na(psm_log_prot_df)]<-ppe@assays@data@listData$imputed[is.na(psm_log_prot_df)]
-    # cat("##### Done the *PhosR* imputation for proteins \n")
     psm_log_prot_df
   },
   error=function(cond){
@@ -965,7 +871,6 @@ psm_log_prot_df<-tryCatch(
     set.seed(42)
     imp_matrix<-matrix(rnorm(length(vec_all), mean = imp_stats[1], sd = imp_stats[2]), ncol=ncol(mat_i)) # create matrix of imputed values
     psm_log_prot_df[is.na(psm_log_prot_df)]<-imp_matrix[is.na(psm_log_prot_df)]
-    # cat("##### Done *round* imputation for proteins \n")
     psm_log_prot_df
   }
 )
@@ -980,7 +885,6 @@ psm_log_pet_df<-tryCatch(
     ppe <- scImpute(ppe, 0.6, grps)
     ppe <- tImpute(ppe, assay = "imputed")
     psm_log_pet_df[is.na(psm_log_pet_df)]<-ppe@assays@data@listData$imputed[is.na(psm_log_pet_df)]
-    # cat("##### Done the *PhosR* imputation for peptides \n")
     psm_log_pet_df
   },
   error=function(cond){
@@ -996,44 +900,26 @@ psm_log_pet_df<-tryCatch(
     set.seed(42)
     imp_matrix<-matrix(rnorm(length(vec_all), mean = imp_stats[1], sd = imp_stats[2]), ncol=ncol(mat_i)) # create matrix of imputed values
     psm_log_pet_df[is.na(psm_log_pet_df)]<-imp_matrix[is.na(psm_log_pet_df)]
-    # cat("##### Done *round* imputation for peptides \n")
     psm_log_pet_df
   }
 )
 
 remove(ppe,grps)
-
 shiny::setProgress(0.42, detail = "Done normalization and imputation...")
 ```
 
-
 ```{r prot_summarization, warning=F, message=F, echo=F}
 message("Median normalization in progress...")
-# gene_anno_df <- psm_anno_df %>% dplyr::select(symbol) %>% unique()
-
-dat_psm <- cbind(psm_anno_df[,c("id","symbol")],psm_log_prot_df)
-#For peptides analysis
-# dat_psm <- cbind(rownames(psm_anno_df),rownames(psm_anno_df),psm_log_df)
-
-# 4 methods to summarise peptides into proteins:
-# medianSweeping (also correct intensities so that the median of all proteins is 0)
-# medianSummary
-# medpolishSummary
-# farmsSummary
-
 #Summarize into proteins and normalize by median
+dat_psm <- cbind(psm_anno_df[,c("id","symbol")],psm_log_prot_df)
 dat_gene = DEqMS::medianSweeping(dat_psm,group_col = 2)
-# remove(gene_anno_df)
 
 # Median centering log2 table for peptides
 dat_pep = DEqMS::equalMedianNormalization(psm_log_pet_df)
 
 message("Normalization DONE.")
-
 shiny::setProgress(0.38, detail = "Doing imputation...")
 ```
-
-
 
 ```{r batch_correction, warning=F, message=F, echo=F, eval=batch_corr_exe, results='asis'}
 cat("#### 1.3.1. Batch correction {.tabset}  \n")
@@ -1043,92 +929,19 @@ cat(" \n \n")
 batch_annotation <- c_anno
 batch_annotation$order<-c(1:nrow(batch_annotation))
 
+#Batch correction of peptides
 dat_pep_long <- matrix_to_long(dat_pep) %>% setnames("FullRunName","sample")
-# loess_fit_df_pep <- adjust_batch_trend_df(dat_pep_long, batch_annotation, batch_col="ms_batch", sample_id_col="sample")
 comBat_df_pep <- correct_with_ComBat_df(dat_pep_long, batch_annotation, batch_col="ms_batch", sample_id_col="sample")
 dat_pep = as.data.frame(long_to_matrix(comBat_df_pep, sample_id_col = "sample"))
 
+#Batch correction of peptides
 dat_gene_long <- matrix_to_long(dat_gene) %>% setnames("FullRunName","sample")
-# loess_fit_df_gene <- adjust_batch_trend_df(dat_gene_long, batch_annotation, batch_col="ms_batch", sample_id_col="sample")
 comBat_df_gene <- correct_with_ComBat_df(dat_gene_long, batch_annotation, batch_col="ms_batch", sample_id_col="sample")
 dat_gene = as.data.frame(long_to_matrix(comBat_df_gene, sample_id_col = "sample"))
 
-# setnames(c_anno,"FullRunName","sample")
-
-###################
-# sample_data<-(t(dat_gene))
-# sample_distances <- dist(sample_data, method = "euclidean")
-# 
-# mds_cmdscale <- as.data.frame(cmdscale(as.matrix(sample_distances)))
-# colnames(mds_cmdscale) <- c("MDS_1","MDS_2")
-# mds_cmdscale$sample <- rownames(mds_cmdscale)
-# 
-# mds_cmdscale <- suppressMessages(left_join(mds_cmdscale,c_anno))
-# 
-# #Take correct order of color
-# cc<-mds_cmdscale$color
-# if(is.null(cc)){
-#   cc<-colour_vec[1:length(unique(mds_cmdscale$condition))]
-#   names(cc)<-unique(mds_cmdscale$condition)
-# } else{
-#   names(cc)<-mds_cmdscale$condition
-# }
-# 
-# cmd<-ggplot(mds_cmdscale, aes(MDS_1, MDS_2, colour=condition)) + #plot according to the new coordinates
-#   geom_point(size=1.5,alpha=.9) + #colour=factor(df) to choose colour according to the condition
-#   geom_text_repel(aes(label=sample), size=0.3*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
-#   scale_colour_manual(values=cc[unique(names(cc))]) +
-#   theme_bw(base_size = bs, base_family = bf) +
-#   theme(legend.position = "right", panel.grid.minor=element_blank())
-# 
-# cat("##### Proteins \n")
-# print(cmd)
-# cat(" \n \n")
-# 
-# suppressMessages(ggsave(paste0(dirOutput,subfold_Fig,"corrected_mds_proteins.pdf"), cmd, device=cairo_pdf, width = (3+(0.13*nrow(mds_cmdscale))), height = (3+(0.07*nrow(mds_cmdscale))), units = c("in")))
-# 
-# remove(sample_data,sample_distances,mds_cmdscale,cmd)
-# 
-# #Peptides
-# sample_data<-(t(dat_pep))
-# sample_distances <- dist(sample_data, method = "euclidean")
-# 
-# mds_cmdscale <- as.data.frame(cmdscale(as.matrix(sample_distances)))
-# colnames(mds_cmdscale) <- c("MDS_1","MDS_2")
-# mds_cmdscale$sample <- rownames(mds_cmdscale)
-# 
-# mds_cmdscale <- suppressMessages(left_join(mds_cmdscale,c_anno))
-# 
-# #Take correct order of color
-# cc<-mds_cmdscale$color
-# if(is.null(cc)){
-#   cc<-colour_vec[1:length(unique(mds_cmdscale$condition))]
-#   names(cc)<-unique(mds_cmdscale$condition)
-# } else{
-#   names(cc)<-mds_cmdscale$condition
-# }
-# 
-# cmd<-ggplot(mds_cmdscale, aes(MDS_1, MDS_2, colour=condition)) + #plot according to the new coordinates
-#   geom_point(size=1.5,alpha=.9) + #colour=factor(df) to choose colour according to the condition
-#   geom_text_repel(aes(label=sample), size=0.3*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
-#   scale_colour_manual(values=cc[unique(names(cc))]) +
-#   theme_bw(base_size = bs, base_family = bf) +
-#   theme(legend.position = "right", panel.grid.minor=element_blank())
-# 
-# cat("##### Peptides \n")
-# print(cmd)
-# cat(" \n \n")
-# 
-# suppressMessages(ggsave(paste0(dirOutput,subfold_Fig,"corrected_mds_peptides.pdf"), cmd, device=cairo_pdf, width = 4, height = 3, units = c("in")))
-# 
-# remove(sample_data,sample_distances,mds_cmdscale,cmd)
-
-shiny::setProgress(0.53, detail = "Perfom Batch effect correction...")
 ```
 
-
 ```{r sig_tables, message=F, warning=F, echo=F, results='hide'}
-
 #Save proteins table
 expr_mat<-as.data.table(dat_gene)
 expr_mat$gene <- rownames(dat_gene)
@@ -1158,40 +971,6 @@ toPrint_datGene$symbol<-rownames(dat_gene)
 
 df_to_save<-list("protein_per_sample"=merge.data.table(n_pep_prot,toPrint_datGene),
                  "protein_per_condition"=merge.data.table(n_pep_prot,toPrint))
-# expr_mat<-(dat_gene)
-# expr_l_df <- expr_mat %>% mutate(id=rownames(expr_mat)) %>% pivot_longer(-id, names_to = "sample", values_to = "expr")
-# expr_l_df <- suppressMessages(left_join(expr_l_df,c_anno))
-# 
-# #Add Standard Deviation column and average
-# expr_cond_df<-expr_l_df %>% dplyr::group_by(condition,id) %>%
-#             dplyr::summarise(N=n(),avg=mean(expr),sd=sd(expr),CV=sd(expr)/mean(expr)) %>% ungroup() %>% mutate("se"=sd/sqrt(N))
-# 
-# expr_avg_df <- expr_cond_df %>% dplyr::select(id,condition,avg) %>% pivot_wider(names_from = condition, values_from = avg)
-# colnames(expr_avg_df)[-1]<-paste0(colnames(expr_avg_df)[-1],"_avg")
-# 
-# expr_se_df <- expr_cond_df %>% dplyr::select(id,condition,se) %>% pivot_wider(names_from = condition, values_from = se)
-# colnames(expr_se_df)[-1]<-paste0(colnames(expr_se_df)[-1],"_se")
-# 
-# expr_cv_df <- expr_cond_df %>% dplyr::select(id,condition,CV) %>% pivot_wider(names_from = condition, values_from = CV)
-# colnames(expr_cv_df)[-1]<-paste0(colnames(expr_cv_df)[-1],"_Coef_Variant_(%)")
-# 
-# expr_avgse_df<- suppressMessages(left_join(left_join(expr_avg_df,expr_se_df),expr_cv_df))
-# rownames(expr_avgse_df) <- expr_avgse_df$id
-# toPrint<-expr_avgse_df
-# colnames(toPrint)[1]<-"symbol"
-# 
-# n_pep_prot <- psm_anno_df %>% dplyr::group_by(symbol, .drop=FALSE) %>% dplyr::summarise("Num. Peptides"=n_distinct(row)) %>% ungroup()
-# n_pep_prot <- left_join(psm_peptide_table, n_pep_prot, by = c("GeneName" = "symbol"))
-# colnames(n_pep_prot)[3]<-"symbol"
-# toPrint_datGene<-dat_gene
-# toPrint_datGene$symbol<-rownames(dat_gene)
-
-#Export table with SE e MEAN
-# df_to_save<-list("protein_per_sample"=merge.data.table(n_pep_prot,toPrint_datGene),
-#                  "protein_per_condition"=merge.data.table(n_pep_prot,toPrint))
-# writexl::write_xlsx(df_to_save,paste0(dirOutput,"normalised_intensities.xlsx"))
-# remove(expr_mat,expr_l_df,expr_cond_df,expr_se_df,expr_avg_df,toPrint)
-
 
 #Save peptides table
 expr_mat<-as.data.table(dat_pep)
@@ -1213,39 +992,15 @@ colnames(expr_cv_pep_df)[-1]<-paste0(colnames(expr_cv_pep_df)[-1],"_Coef_Variant
 expr_avgse_pep_df <- Reduce(merge,list(expr_avg_pet_df,expr_se_pet_df,expr_cv_pep_df))
 
 toPrint<-expr_avgse_pep_df
-# colnames(toPrint)[1]<-"symbol"
-
-# expr_mat<-dat_pep
-
-# expr_l_df <- expr_mat %>% mutate(id=rownames(expr_mat)) %>% pivot_longer(-id, names_to = "sample", values_to = "expr")
-# expr_l_df <- suppressMessages(left_join(expr_l_df,c_anno))
-
-#Add Standard Deviation column and average
-# expr_cond_df<-expr_l_df %>% dplyr::group_by(condition,id) %>%
-#             dplyr::summarise(N=n(),avg=mean(expr),sd=sd(expr),CV=sd(expr)/mean(expr)) %>% ungroup() %>% mutate("se"=sd/sqrt(N))
-# 
-# expr_avg_pet_df <- expr_cond_df %>% dplyr::select(id,condition,avg) %>% pivot_wider(names_from = condition, values_from = avg)
-# colnames(expr_avg_pet_df)[-1]<-paste0(colnames(expr_avg_pet_df)[-1],"_avg")
-# 
-# expr_se_pet_df <- expr_cond_df %>% dplyr::select(id,condition,se) %>% pivot_wider(names_from = condition, values_from = se)
-# colnames(expr_se_pet_df)[-1]<-paste0(colnames(expr_se_pet_df)[-1],"_se")
-# 
-# expr_cv_pep_df <- expr_cond_df %>% dplyr::select(id,condition,CV) %>% pivot_wider(names_from = condition, values_from = CV)
-# colnames(expr_cv_pep_df)[-1]<-paste0(colnames(expr_cv_pep_df)[-1],"_Coef_Variant_(%)")
-# 
-# expr_avgse_pep_df<- suppressMessages(left_join(left_join(expr_avg_pet_df,expr_se_pet_df)
-#                                                ,expr_cv_pep_df))
-# rownames(expr_avgse_pep_df) <- expr_avgse_pep_df$id
-# toPrint<-expr_avgse_pep_df
 
 #Prepare the README
-readme_sheet <- data.frame("INFO"=c(   NA,
-                                       "Excel file containing abundance values generated by proTN. Abundances are log2 transformed, normalized, imputed (and batch corrected). The file is organized in the following sheets",
-                                       NA,
-                                       "Sheet *protein_per_sample*: protein abundances per sample.",
-                                       "Sheet *peptide_per_sample*: peptide abundances per sample.",
-                                       "Sheet *protein_per_condition*: protein abundances per condition (average & standard deviation), as defined in the Sample Annotation.",
-                                       "Sheet *peptide_per_condition*: peptide abundances per condition (average & standard deviation), as defined in the Sample Annotation."
+readme_sheet <- data.frame("INFO"=c(NA,
+                                    "Excel file containing abundance values generated by proTN. Abundances are log2 transformed, normalized, imputed (and batch corrected). The file is organized in the following sheets",
+                                    NA,
+                                    "Sheet *protein_per_sample*: protein abundances per sample.",
+                                    "Sheet *peptide_per_sample*: peptide abundances per sample.",
+                                    "Sheet *protein_per_condition*: protein abundances per condition (average & standard deviation), as defined in the Sample Annotation.",
+                                    "Sheet *peptide_per_condition*: peptide abundances per condition (average & standard deviation), as defined in the Sample Annotation."
 ))
 
 #Export table with SE e MEAN
@@ -1261,7 +1016,6 @@ remove(expr_mat,expr_l_df,expr_cond_df,expr_se_pet_df,expr_avg_pet_df,toPrint)
 shiny::setProgress(0.45, detail =  "Save normalized data...")
 ```
 
-
 ```{r norm_distributions, message=F, warning=F, echo=F, results='asis'}
 cat(" \n \n")
 cat("#### 1.4. Distributions of normalized abundances {.tabset}  \n")
@@ -1271,16 +1025,12 @@ cat(" \n \n")
 pg_long_df <- dat_gene[,c_anno[order(c_anno$condition),"sample"]] %>% mutate(id=as.factor(rownames(dat_gene[,c_anno[order(c_anno$condition),"sample"]]))) %>% pivot_longer(-id, names_to = "sample", values_to = "log2 normalized abundance")
 pg_long_df <- suppressMessages(left_join(pg_long_df,c_anno))
 
-
 hs<-ggplot(data=pg_long_df, aes(x=factor(sample, levels=unique(psm_long_df$sample)),y=`log2 normalized abundance`,fill=sample,colour=sample))+
-  # ggtitle("Normalized samples")+
-  #geom_hline(yintercept = 0, lty=2)+
   coord_flip()+
   geom_violin(alpha=0.5,scale="width",trim = F,colour=NA)+
   geom_boxplot(alpha=1,fill="white",width=0.2,outlier.shape = NA, notch = F)+
   theme_bw()+
   theme(legend.position = "none",axis.title.y = element_blank())+
-  # labs(x = "Log2 Intensity") +
   scale_fill_manual(values=setNames(as.list(c_anno$color), c_anno$sample)) +
   scale_colour_manual(values=setNames(as.list(c_anno$color), c_anno$sample)) +
   theme(panel.grid.minor = element_blank(),panel.grid.major.y = element_blank())
@@ -1294,14 +1044,11 @@ pg_long_df <- suppressMessages(left_join(pg_long_df,c_anno))
 
 
 hs<-ggplot(data=pg_long_df, aes(x=factor(sample, levels=unique(psm_long_df$sample)),y=`log2 normalized abundance`,fill=sample,colour=sample))+
-  # ggtitle("Normalized samples")+
-  #geom_hline(yintercept = 0, lty=2)+
   coord_flip()+
   geom_violin(alpha=0.5,scale="width",trim = F,colour=NA)+
   geom_boxplot(alpha=1,fill="white",width=0.2,outlier.shape = NA, notch = F)+
   theme_bw()+
   theme(legend.position = "none",axis.title.y = element_blank())+
-  # labs(x = "Log2 Intensity") +
   scale_fill_manual(values=setNames(as.list(c_anno$color), c_anno$sample)) +
   scale_colour_manual(values=setNames(as.list(c_anno$color), c_anno$sample)) +
   theme(panel.grid.minor = element_blank(),panel.grid.major.y = element_blank())
@@ -1310,9 +1057,7 @@ cat("##### Peptides \n")
 print(hs)
 cat(" \n \n")
 
-
 remove(hs, pg_long_df)
-
 shiny::setProgress(0.47, detail =  "Calculate post-norm distribution...")
 ```
 
@@ -1343,7 +1088,6 @@ if(!eval_single_Cond | length(formule_contrast) > 0){
 }
 ```
 
-
 ```{r mds_counts, warning=F, message=F, echo=F, results='asis', eval=eval_single_Cond}
 cat(" \n \n")
 cat("#### 1.5. Multi-dimensional scaling {.tabset}  \n")
@@ -1357,19 +1101,16 @@ sample_distances <- dist(sample_data, method = "euclidean")
 mds_cmdscale <- as.data.frame(cmdscale(as.matrix(sample_distances)))
 colnames(mds_cmdscale) <- c("MDS_1","MDS_2")
 mds_cmdscale$sample <- rownames(mds_cmdscale)
-
 mds_cmdscale <- suppressMessages(left_join(mds_cmdscale,c_anno))
 
 #Take correct order of color
-
-cc<-mds_cmdscale$color
+c<-mds_cmdscale$color
 if(is.null(cc)){
   cc<-colour_vec[1:length(unique(mds_cmdscale$condition))]
   names(cc)<-unique(mds_cmdscale$condition)
 } else{
   names(cc)<-mds_cmdscale$condition
 }
-
 
 cmd<-ggplot(mds_cmdscale, aes(MDS_1, MDS_2, colour=condition)) + #plot according to the new coordinates
   geom_point(size=1.5,alpha=.9) + #colour=factor(df) to choose colour according to the condition
@@ -1382,8 +1123,8 @@ cat("##### Proteins \n")
 print(cmd)
 cat(" \n \n")
 
-suppressMessages(ggsave(paste0(dirOutput,subfold_Fig,subfold_MDSPCA,"mds_proteins.pdf"), cmd, device=cairo_pdf, width = (3+(0.13*nrow(mds_cmdscale))), height = (3+(0.07*nrow(mds_cmdscale))), units = c("in")))
-
+suppressMessages(ggsave(paste0(dirOutput,subfold_Fig,subfold_MDSPCA,"mds_proteins.pdf"), cmd, device=cairo_pdf, 
+                        width = (3+(0.13*nrow(mds_cmdscale))), height = (3+(0.07*nrow(mds_cmdscale))), units = c("in")))
 remove(sample_data,sample_distances,mds_cmdscale,cmd)
 
 #Peptides
@@ -1393,11 +1134,9 @@ sample_distances <- dist(sample_data, method = "euclidean")
 mds_cmdscale <- as.data.frame(cmdscale(as.matrix(sample_distances)))
 colnames(mds_cmdscale) <- c("MDS_1","MDS_2")
 mds_cmdscale$sample <- rownames(mds_cmdscale)
-
 mds_cmdscale <- suppressMessages(left_join(mds_cmdscale,c_anno))
 
 #Take correct order of color
-
 cc<-mds_cmdscale$color
 if(is.null(cc)){
   cc<-colour_vec[1:length(unique(mds_cmdscale$condition))]
@@ -1405,7 +1144,6 @@ if(is.null(cc)){
 } else{
   names(cc)<-mds_cmdscale$condition
 }
-
 
 cmd<-ggplot(mds_cmdscale, aes(MDS_1, MDS_2, colour=condition)) + #plot according to the new coordinates
   geom_point(size=1.5,alpha=.9) + #colour=factor(df) to choose colour according to the condition
@@ -1418,10 +1156,10 @@ cat("##### Peptides \n")
 print(cmd)
 cat(" \n \n")
 
-suppressMessages(ggsave(paste0(dirOutput,subfold_Fig,subfold_MDSPCA,"mds_peptides.pdf"), cmd, device=cairo_pdf, width = (3+(0.13*nrow(mds_cmdscale))), height = (3+(0.07*nrow(mds_cmdscale))), units = c("in")))
+suppressMessages(ggsave(paste0(dirOutput,subfold_Fig,subfold_MDSPCA,"mds_peptides.pdf"), cmd, device=cairo_pdf, 
+                        width = (3+(0.13*nrow(mds_cmdscale))), height = (3+(0.07*nrow(mds_cmdscale))), units = c("in")))
 
 remove(sample_data,sample_distances,mds_cmdscale,cmd)
-
 shiny::setProgress(0.49, detail = "Calculate MDS...")
 ```
 
@@ -1430,7 +1168,6 @@ cat(" \n \n")
 cat("#### 1.6. Principal Component Analysis {.tabset}  \n")
 cat("Principal component analysis (PCA) is performed on normalized Protein and Peptide abundances. \n \n ")
 cat(" \n \n")
-
 
 sample_data<-(t(dat_gene))
 apca_prot <- sample_data %>% prcomp(scale = TRUE, center = TRUE)
@@ -1468,7 +1205,8 @@ cat("##### Proteins \n")
 print(p1)
 cat(" \n \n")
 
-suppressMessages(ggsave(paste0(dirOutput,subfold_Fig,subfold_MDSPCA,"pca_protein.pdf"), p1, device=cairo_pdf, width = (3+(0.13*nrow(pc))), height = (3+(0.07*nrow(pc))), units = c("in")))
+suppressMessages(ggsave(paste0(dirOutput,subfold_Fig,subfold_MDSPCA,"pca_protein.pdf"), p1, device=cairo_pdf, 
+                        width = (3+(0.13*nrow(pc))), height = (3+(0.07*nrow(pc))), units = c("in")))
 
 remove(sample_data,sample_distances,mds_cmdscale,cmd)
 
@@ -1509,16 +1247,14 @@ cat("##### Peptides \n")
 print(p1)
 cat(" \n \n")
 
-suppressMessages(ggsave(paste0(dirOutput,subfold_Fig,subfold_MDSPCA,"pca_peptides.pdf"), p1, device=cairo_pdf, width = (3+(0.13*nrow(pc))), height = (3+(0.07*nrow(pc))), units = c("in")))
+suppressMessages(ggsave(paste0(dirOutput,subfold_Fig,subfold_MDSPCA,"pca_peptides.pdf"), p1, device=cairo_pdf, 
+                        width = (3+(0.13*nrow(pc))), height = (3+(0.07*nrow(pc))), units = c("in")))
 
 remove(sample_data,sample_distances,mds_cmdscale,p1)
-
 shiny::setProgress(0.51, detail = "Calculate PCA...")
 ```
 
-
 ```{r boxplot_proteins, warning=F, message=F, echo=F, eval=boxplot_prot_exe, results='asis'}
-save(list = ls(), file="tmp.RData")
 prot_find<-unique(c(intersect(prot_boxplot,rownames(dat_gene)),
                     intersect(str_to_title(prot_boxplot),rownames(dat_gene)),
                     intersect(str_to_upper(prot_boxplot),rownames(dat_gene)),
@@ -1549,29 +1285,26 @@ if(length(prot_find)>0){
   prot_avg_se_long <- cbind(prot_avg_long,prot_se_long[3])
   prot_avg_se_long$Condition <- str_replace(prot_avg_se_long$Condition, "_avg", "")
   
-  # save(prot_intensity_long, cc, bs, bf,cc, prot_avg_se_long, dat_gene, prot_find, c_anno, file = "tmp_2.RData")
   g<-ggplot(prot_avg_se_long,aes(Condition,avg,fill=Condition,colour=Condition))+
     geom_crossbar(aes(ymin=avg,ymax=avg),position = "dodge",width=.8,alpha=.9,fatten=1.5)+
     geom_errorbar(aes(ymin=(avg-se), ymax=(avg+se)), width=.4,position=position_dodge(),show.legend=F,alpha=.8)+
     geom_quasirandom(data=prot_intensity_long, aes(Condition,Intensity), alpha=.7,width=.1,shape=16,size=0.11*bs)+
     scale_fill_manual(name="Condition",values=cc[sort(unique(prot_intensity_long$Condition))]) +
     scale_colour_manual(name="Condition",values=cc[sort(unique(prot_intensity_long$Condition))])+
-    # scale_y_continuous(limits=c(0,NA),expand = expand_scale(mult = c(.1, .25)))+
     theme_bw(base_size = bs, base_family = bf) +
-    theme(axis.title.x=element_blank()) +
-    theme(axis.text.x = element_text(angle = 30, hjust = 1, colour=cc[sort(unique(prot_intensity_long$Condition))]))+
-    theme(panel.grid.major.x=element_blank(),
-          panel.grid.minor.y=element_blank())+
-    theme(legend.text = element_text(size = 0.7*bs),
+    theme(axis.title.x=element_blank(),
+          axis.text.x = element_text(angle = 30, hjust = 1, colour=cc[sort(unique(prot_intensity_long$Condition))]),
+          panel.grid.major.x=element_blank(),
+          panel.grid.minor.y=element_blank(),
+          legend.text = element_text(size = 0.7*bs),
           legend.key.size = unit((0.015*bs),"in"),
           legend.position="none",
           legend.title=element_blank(),
-          legend.background = element_rect(fill = NA))+
-    
-    theme(strip.text=element_text(colour="white",face="bold"))+
-    theme(panel.border=element_rect(colour=c("grey40"),size=0.03*bs))+
-    theme(strip.background=element_rect(fill="grey40",colour="grey40",size=0.03*bs))+
-    theme(plot.title = element_text(hjust = 0.5))+
+          legend.background = element_rect(fill = NA),
+          strip.text=element_text(colour="white",face="bold"),
+          panel.border=element_rect(colour=c("grey40"),size=0.03*bs),
+          strip.background=element_rect(fill="grey40",colour="grey40",size=0.03*bs),
+          plot.title = element_text(hjust = 0.5))+
     facet_wrap(~Protein, scales = "free",ncol = if(length(prot_find)>4){round(length(prot_find)/1.9)}else{4})+
     labs(y="Abundance")
   print(g)
@@ -1595,17 +1328,14 @@ Differentially expressed peptides are identified using the Limma Bioconductor pa
 ```{r print_error_diff_analysis, warning=FALSE, echo=F, message=FALSE, results='asis', eval=!(eval_single_Cond)}
 cat(" \n \n")
 #Print summary of filter and contrast design
-
 cat("**WARNING:** differential analysis not executed since are identified only 1 sample for the two condition \n ")
 cat(" \n")
 run_enrich <- run_enrich_universe <- run_STRING <- FALSE
 ```
 
-
 ```{r print_settings_diff_analysis, warning=FALSE, echo=F, message=FALSE, results='asis', eval=eval_single_Cond}
 cat(" \n \n")
 #Print summary of filter and contrast design
-
 cat("**Thresholds used:** \n ")
 cat(" \n")
 cat(paste0("- Fold Change threshold: log2_FC > ",fc_thr," (+), log2_FC < -",fc_thr," (-) "))
@@ -1624,7 +1354,6 @@ cat("**Contrast design formula are:** ")
 cat(" \n")
 kable(data.frame("Name"=names(formule_contrast), "Formula"=formule_contrast, "Color"=color_constrast[names(formule_contrast), "color_constrast"]), row.names = F)
 cat(" \n")
-
 ```
 
 ```{r diff_analysis,  warning=F, message=F, echo=F, eval=eval_single_Cond}
@@ -1646,26 +1375,26 @@ deps_pep_w_df<-deps_pep_df$degs_w_df
 toPrint_pep<-deps_pep_w_df
 
 #Prepare the README
-readme_sheet <- data.frame("INFO"=c(   NA,
-                                       "Excel file containing the results of differential analysis, according to the contrasts defined in the Design file. The file is organized in the following sheets:",
-                                       "protein_DE: protein differential expression results protein abundances per sample.",
-                                       "peptide_DE: peptide differential expression results. ",
-                                       NA,
-                                       "Annotation columns:",
-                                       "1. *Accession*: protein UniprotID,",
-                                       "2. *Description*: protein description,",
-                                       "3. *GeneName*: Gene Symbol,",
-                                       "4. *Peptide_Sequence*: peptide sequence,",
-                                       "5. *Peptide_Modifications*: peptide modifications,",
-                                       "6. *Peptide_Position*: start and end position of the peptide within the protein sequence, defined UniprotID,",
-                                       "7. *Peptide_Tryptic*: peptide tryptic digestion status (fully tryptic, N-semi tryptic, C-semi tryptic, non tryptic)",
-                                       NA,
-                                       "And for each comparison:",
-                                       "8. *class*: defined according to the fold change, p-value and abundance thresholds specified in the input: \"+\" up-regulated protein/peptide, \"-\" down-regulated protein/peptide, \"=\" invariant protein/peptide",
-                                       "9. *log2_FC*: protein/peptide log2 transformed fold change",
-                                       "10. *p_val*: protein/peptide contrast p-value",
-                                       "11. *p_adj*: protein/peptide adjusted p-value (FDR after BH correction)",
-                                       "12. *log2_expr*: protein/peptide log2 average abundance"
+readme_sheet <- data.frame("INFO"=c(NA,
+                                    "Excel file containing the results of differential analysis, according to the contrasts defined in the Design file. The file is organized in the following sheets:",
+                                    "protein_DE: protein differential expression results protein abundances per sample.",
+                                    "peptide_DE: peptide differential expression results. ",
+                                    NA,
+                                    "Annotation columns:",
+                                    "1. *Accession*: protein UniprotID,",
+                                    "2. *Description*: protein description,",
+                                    "3. *GeneName*: Gene Symbol,",
+                                    "4. *Peptide_Sequence*: peptide sequence,",
+                                    "5. *Peptide_Modifications*: peptide modifications,",
+                                    "6. *Peptide_Position*: start and end position of the peptide within the protein sequence, defined UniprotID,",
+                                    "7. *Peptide_Tryptic*: peptide tryptic digestion status (fully tryptic, N-semi tryptic, C-semi tryptic, non tryptic)",
+                                    NA,
+                                    "And for each comparison:",
+                                    "8. *class*: defined according to the fold change, p-value and abundance thresholds specified in the input: \"+\" up-regulated protein/peptide, \"-\" down-regulated protein/peptide, \"=\" invariant protein/peptide",
+                                    "9. *log2_FC*: protein/peptide log2 transformed fold change",
+                                    "10. *p_val*: protein/peptide contrast p-value",
+                                    "11. *p_adj*: protein/peptide adjusted p-value (FDR after BH correction)",
+                                    "12. *log2_expr*: protein/peptide log2 average abundance"
 ))
 
 #Export table with SE e MEAN
@@ -1674,7 +1403,7 @@ prot_id <- unique(psm_peptide_table[,c("Accession","GeneName")]) %>% group_by(Ge
                                                                                                                                   multiple = "first",
                                                                                                                                   suffix = c(".id", ".old"))
 protein_DE <- unique(left_join(prot_id[,c("Accession.id","Description","GeneName")], toPrint, by=c("GeneName" = "GeneSymbol")))
-colnames(protein_DE)[1:7] <- c("Accession","Description","GeneName","Peptide_Sequence","Peptide_Modifications","Peptide_Position","Peptide_Tryptic")
+colnames(protein_DE)[1:7] <- c("Accession","Description","GeneName")
 peptide_DE <- left_join(rownames_to_column(psm_peptide_table), toPrint_pep, by=c("rowname" = "id"))[,-c(1)]
 colnames(peptide_DE)[1:7] <- c("Accession","Description","GeneName","Peptide_Sequence","Peptide_Modifications","Peptide_Position","Peptide_Tryptic")
 df_to_save<-list("README"=readme_sheet,
@@ -1687,14 +1416,12 @@ message("Differentation analysis DONE.")
 
 ```
 
-
 ```{r number_deps, warning=FALSE, echo=FALSE, results='asis', eval=eval_single_Cond, fig.height=max(min(20,length(unique(deps_l_df$comp))*0.75),2)}
 cat("In the plot are represented graphically the number of DEPs for each contrast. Tab **Proteins** for the differentially expressed proteins, **Peptides** for the number of the differentially expressed peptides. \n \n")
 cat(" \n \n")
 cat("#### 2.2. Number of differentially expressed proteins and peptides for each comparison {.tabset}  \n")
 #Execute only if found at least one gene differentiated
 if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
-  # heig<-unique(deps_l_df$comp)
   lolli_df <- data.table("comp"=deps_l_df$comp[which(deps_l_df$class == "+" | deps_l_df$class == "-")], 
                          "class"=factor(deps_l_df$class[which(deps_l_df$class == "+" | deps_l_df$class == "-")]))
   lolli_df <- lolli_df[ , .(N = .N), by=c("comp","class")]
@@ -1704,33 +1431,15 @@ if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   names(col_vec)[(1:length(lolli_df$comp))[(1:length(lolli_df$comp))%%2 == 1]]<-paste0(lolli_df$comp[(1:length(lolli_df$comp))[(1:length(lolli_df$comp))%%2 == 1]], "_+")
   names(col_vec)[(1:length(lolli_df$comp))[(1:length(lolli_df$comp))%%2 == 0]]<-paste0(lolli_df$comp[(1:length(lolli_df$comp))[(1:length(lolli_df$comp))%%2 == 1]], "_-")
   
-  
   pDEPs<-deps_b2b_lollipop(input_df=lolli_df, break_vec=seq(0,plyr::round_any(max(lolli_df$N)*1.1, if(max(lolli_df$N)>90){100}else{10}, f = ceiling),
                                                             round((plyr::round_any(max(lolli_df$N)*1.1, if(max(lolli_df$N)>90){100}else{10}, f = ceiling))/5, 0)), 
                            fill_vec = col_vec, color_vec = col_vec, char_max = 30, position_dodge = if(length(unique(deps_l_df$comp))>1){0.08}else{0.05})
   
-  # pDEPs<-plot_DEPs(deps_l_df,
-  #                   contrast_col="comp",
-  #                   class_col="class",
-  #                   color_vec=c("grey60", "grey40"))
-  # if(length(heig) < 5){
-  #   oldheig <- knitr::opts_chunk$get("fig.height")
-  #   cat(oldheig)
-  #   knitr::opts_chunk$set(fig.height = unit(max(min(20,length(heig)*0.75),2),"in"))
-  #   cat("\n \n ")
-  #   cat(knitr::opts_chunk$get("fig.height"))
-  # }
   cat("##### Proteins \n")
   print(pDEPs)
   cat(" \n \n")
-  # if(length(heig) < 5){
-  #   knitr::opts_chunk$set(fig.height = oldheig)
-  #   suppressMessages(ggsave(paste0(dirOutput,subfold_Fig,subfold_expr,"DE_protein_barplot.pdf"), pDEPs, device=cairo_pdf,
-  #                         height = max(min(20,length(heig)*0.75),2), units = c("in")))
-  # }else{
+
   suppressMessages(ggsave(paste0(dirOutput,subfold_Fig,subfold_expr,"DE_protein_barplot.pdf"), pDEPs, device=cairo_pdf, units = c("in")))
-  # }
-  
   remove(pDEPs,cmd,mds_cmdscale)
 }else{
   message("No gene differentiated discovered.")
@@ -1739,7 +1448,6 @@ if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
 #Peptides
 if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   cat(" \n \n")
-  # heig<-unique(deps_pep_l_df$comp)
   lolli_df <- data.table("comp"=deps_pep_l_df$comp[which(deps_pep_l_df$class == "+" | deps_pep_l_df$class == "-")], 
                          "class"=factor(deps_pep_l_df$class[which(deps_pep_l_df$class == "+" | deps_pep_l_df$class == "-")]))
   lolli_df <- lolli_df[ , .(N = .N), by=c("comp","class")]
@@ -1749,39 +1457,20 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   names(col_vec)[(1:length(lolli_df$comp))[(1:length(lolli_df$comp))%%2 == 1]]<-paste0(lolli_df$comp[(1:length(lolli_df$comp))[(1:length(lolli_df$comp))%%2 == 1]], "_+")
   names(col_vec)[(1:length(lolli_df$comp))[(1:length(lolli_df$comp))%%2 == 0]]<-paste0(lolli_df$comp[(1:length(lolli_df$comp))[(1:length(lolli_df$comp))%%2 == 1]], "_-")
   
-  
   pDEPs<-deps_b2b_lollipop(input_df=lolli_df, break_vec=seq(0,plyr::round_any(max(lolli_df$N)*1.2, if(max(lolli_df$N)>90){100}else{10}, f = ceiling),
                                                             round((plyr::round_any(max(lolli_df$N)*1.2, if(max(lolli_df$N)>90){100}else{10}, f = ceiling))/5, 0)), 
                            fill_vec = col_vec, color_vec = col_vec, char_max = 30, position_dodge = if(length(unique(deps_l_df$comp))>1){0.08}else{0.05})
-  
-  # pDEPs<-plot_DEPs(deps_pep_l_df,
-  #                   contrast_col="comp",
-  #                   class_col="class",
-  #                   color_vec=c("grey60", "grey40"))
-  # if(length(heig) < 5){
-  #   oldheig <- knitr::opts_chunk$get("fig.height")
-  #   knitr::opts_chunk$set(fig.height = unit(max(min(20,length(heig)*0.75),2),"in"))
-  # }
+
   cat("##### Peptides \n")
   print(pDEPs)
   cat(" \n \n")
-  # if(length(heig) < 5){
-  #   knitr::opts_chunk$set(fig.height = oldheig)
-  #   suppressMessages(ggsave(paste0(dirOutput,subfold_Fig,subfold_expr,"DE_peptide_barplot.pdf"), pDEPs, device=cairo_pdf, 
-  #                           height = max(min(20,length(heig)*0.75),2), units = c("in")))
-  # }else{
+
   suppressMessages(ggsave(paste0(dirOutput,subfold_Fig,subfold_expr,"DE_peptide_barplot.pdf"), pDEPs, device=cairo_pdf, units = c("in")))
-  # }
   remove(pDEPs,cmd,mds_cmdscale)
 }else{
   message("No gene differentiated discovered.")
   cat("No gene differentiated discovered.")
 }
-
-
-
-
-
 shiny::setProgress(0.60, detail = "Count DEPs...")
 ```
 
@@ -1803,8 +1492,6 @@ if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
     input_df <- deps_l_df[which(deps_l_df$comp == comp),]
     input_df$log2_FC <- round(input_df$log2_FC, digits = 2)
     input_df[,col] <- round(-log10(input_df[,col]), digits = 2)
-    # labels_up <- (input_df %>% filter(class == '+'))$id
-    # labels_down <- (input_df %>% filter(class == '-'))$id
     
     cmd<-ggplot(data=input_df, aes(x=log2_FC, y=if(pval_fdr){p_adj}else{p_val}, col=class, text = paste('</br>Gene: ', id,
                                                                                                         '</br>Class: ', class,
@@ -1813,9 +1500,6 @@ if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
       geom_point(pch=20,cex=2) +
       geom_hline(yintercept=-log10(pval_thr), col="black") +
       geom_vline(xintercept=c(-fc_thr, fc_thr), col="black") +
-      # geom_text_repel(data = input_df %>% filter(id %in% labels),color="white") +
-      # geom_label_repel(data = input_df %>% filter(id %in% labels_up), label.padding = unit(0.1, "lines"), color="black",xlim = c(1.5, NA)) +
-      # geom_label_repel(data = input_df %>% filter(id %in% labels_down), label.padding = unit(0.1, "lines"), color="black",xlim = c(NA, -1.5)) +
       ggtitle(paste0("Volcano Plot of ",comp)) +
       ylab(if(pval_fdr){"-log10(fdr)"}else{"-log10(p_val)"}) +
       scale_color_manual(values=c("+"=color_constrast[comp,"color_constrast"], "-"=color_constrast[comp,"color_constrast_dark"],"="= "grey70")) +
@@ -1827,7 +1511,6 @@ if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
     labels <- c((input_df %>% filter(class == '+'))[order(-(input_df %>% filter(class == '+'))[,"log2_FC"], (input_df %>% filter(class == '+'))[,col]),][1:5,"id"],
                 (input_df %>% filter(class == '-'))[order((input_df %>% filter(class == '-'))[,"log2_FC"], (input_df %>% filter(class == '-'))[,col]),][1:5,"id"])
     
-    # input_df[[col]]<--log10(input_df[[col]])
     a <- list()
     for (i in seq_len(length(labels))) {
       m <- labels[i]
@@ -1843,11 +1526,8 @@ if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
         ay = -40
       )
     }
-    # cat("##### ",comp," \n")
     plotlist[[comp]] = ggplotly(cmd, tooltip = c("text"))
   }
-  
-  
   shiny::setProgress(0.63, detail = "Perform volcano plot...")
 }
 
@@ -1871,8 +1551,6 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
     input_df$id<-labels
     input_df$log2_FC <- round(input_df$log2_FC, digits = 2)
     input_df[,col] <- round(-log10(input_df[,col]), digits = 2)
-    # labels_up <- (input_df %>% filter(class == '+'))$id
-    # labels_down <- (input_df %>% filter(class == '-'))$id
     
     cmd<-ggplot(data=input_df, aes(x=log2_FC, y=if(pval_fdr){p_adj}else{p_val}, col=class, text = paste('</br>Gene: ', id,
                                                                                                         '</br>Class: ', class,
@@ -1881,26 +1559,17 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
       geom_point(pch=20,cex=2) +
       geom_hline(yintercept=-log10(pval_thr), col="black") +
       geom_vline(xintercept=c(-fc_thr, fc_thr), col="black") +
-      # geom_text_repel(data = input_df %>% filter(id %in% labels),color="white") +
-      # geom_label_repel(data = input_df %>% filter(id %in% labels_up, class == '+'),
-      #                  label.padding = unit(0.1, "lines"), color="black",xlim = c(1.5, NA)) +
-      # geom_label_repel(data = input_df %>% filter(id %in% labels_down, class == '-'),
-      #                  label.padding = unit(0.1, "lines"), color="black",xlim = c(NA, -1.5)) +
       ggtitle(paste0("Volcano Plot of ",comp)) +
       ylab(if(pval_fdr){"-log10(fdr)"}else{"-log10(p_val)"}) +
-      scale_color_manual(values=c(color_constrast[comp,"color_constrast"], color_constrast[comp,"color_constrast_dark"], "grey70")) +
+      scale_color_manual(values=c("+"=color_constrast[comp,"color_constrast"], "-"=color_constrast[comp,"color_constrast_dark"], "="="grey70")) +
       scale_x_continuous(limits = c(min(-max(abs(input_df$log2_FC)),-3), max(max(abs(input_df$log2_FC)),3))) +
       scale_y_continuous(limits = c(0, max(max(abs((if(pval_fdr){input_df$p_adj}else{input_df$p_val}))),4))) +
       theme_bw(base_size = bs, base_family = bf)
     
-    # cat("##### ",comp," \n")
-    # print(cmd)
-    # cat(" \n \n")
     col <- if(pval_fdr){"p_adj"}else{"p_val"}
     labels <- c((input_df %>% filter(class == '+'))[order(-(input_df %>% filter(class == '+'))[,"log2_FC"], (input_df %>% filter(class == '+'))[,col]),][1:5,"id"],
                 (input_df %>% filter(class == '-'))[order((input_df %>% filter(class == '-'))[,"log2_FC"], (input_df %>% filter(class == '-'))[,col]),][1:5,"id"])
     
-    # input_df[[col]]<--log10(input_df[[col]])
     a <- list()
     for (i in seq_len(length(labels))) {
       m <- labels[i]
@@ -1916,7 +1585,6 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
         ay = -40
       )
     }
-    # cat("##### ",comp," \n")
     plotlist[[comp]] = ggplotly(cmd, tooltip = c("text"))
   }
   shiny::setProgress(0.65, detail = "Perform volcano plot...")
@@ -1936,9 +1604,7 @@ if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   cat(" \n \n")  #Select only genes that are differentiated and print PCA of samples
   deps_vec_all<- deps_l_df %>% dplyr::filter(class!="=") %>% pull(id) %>% unique() %>% sort()
   
-  # sample_data<-t(dat_gene[toupper(deps_vec_all),])
   sample_data<-t(dat_gene[(deps_vec_all),])
-  
   sample_distances <- dist(sample_data, method = "euclidean")
   
   mds_cmdscale <- as.data.frame(cmdscale(as.matrix(sample_distances)))
@@ -1955,7 +1621,6 @@ if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
     names(cc)<-mds_cmdscale$condition
   }
   cmd<-ggplot(mds_cmdscale, aes(MDS_1, MDS_2, colour=condition)) + #plot according to the new coordinates
-    # ggtitle("samples")+
     geom_point(size=1.5,alpha=.9) + #colour=factor(df) to choose colour according to the condition
     geom_text_repel(aes(label=sample), size=0.3*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
     scale_colour_manual(values=cc[unique(names(cc))]) +
@@ -1969,17 +1634,13 @@ if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   ggsave(paste0(dirOutput,subfold_Fig,subfold_MDSPCA,"DE_mds_protein.pdf"), cmd, device=cairo_pdf, width = (3+(0.13*nrow(mds_cmdscale))), height = (3+(0.07*nrow(mds_cmdscale))), units = c("in"))
   
   shiny::setProgress(0.67, detail = "Perform MDS...")
-  
 }
 
 cat(" \n \n")
 if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   #Select only genes that are differentiated and print PCA of samples
   deps_vec_all<- deps_pep_l_df %>% dplyr::filter(class!="=") %>% pull(id) %>% unique() %>% sort()
-  
-  # sample_data<-t(dat_gene[toupper(deps_vec_all),])
   sample_data<-t(dat_pep[(deps_vec_all),])
-  
   sample_distances <- dist(sample_data, method = "euclidean")
   
   mds_cmdscale <- as.data.frame(cmdscale(as.matrix(sample_distances)))
@@ -1996,7 +1657,6 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
     names(cc)<-mds_cmdscale$condition
   }
   cmd<-ggplot(mds_cmdscale, aes(MDS_1, MDS_2, colour=condition)) + #plot according to the new coordinates
-    # ggtitle("samples")+
     geom_point(size=1.5,alpha=.9) + #colour=factor(df) to choose colour according to the condition
     geom_text_repel(aes(label=sample), size=0.3*bs, fontface = "bold",show.legend = F) + #geom_text_repel to add text within plot
     scale_colour_manual(values=cc[unique(names(cc))]) +
@@ -2073,7 +1733,6 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   deps_vec_all<- deps_pep_l_df %>% dplyr::filter(class!="=") %>%
     pull(id) %>% unique() %>% sort()
   
-  # sample_data<-t(dat_gene[toupper(deps_vec_all),])
   sample_data<-t(dat_pep[(deps_vec_all),])
   apca_prot <- sample_data %>% prcomp(scale = TRUE, center = TRUE)
   pc <- apca_prot$x[,1:2]
@@ -2110,7 +1769,6 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   cat(" \n \n")
   
   suppressMessages(ggsave(paste0(dirOutput,subfold_Fig,subfold_MDSPCA,"DE_pca_peptide.pdf"), p1, device=cairo_pdf, width = (3+(0.13*nrow(pc))), height = (3+(0.07*nrow(pc))), units = c("in")))
-  
   remove(sample_data,sample_distances,mds_cmdscale,p1)
 }
 
@@ -2170,8 +1828,8 @@ doNextChunk <- tryCatch({
   save(enrich_df, file=paste0(dirOutput,subfold_Dat,"enrichment_DE.RData"))
   
   #Prepare the README
-  readme_sheet <- data.frame("INFO"=c(   NA,
-                                         "Excel file containing a selection of enrichment results starting from differentially expressed proteins. 
+  readme_sheet <- data.frame("INFO"=c(NA,
+                                      "Excel file containing a selection of enrichment results starting from differentially expressed proteins. 
                                 Terms are selected according to significance thresholds specified in the input (Default: adj.P.Value < 0.05, Overlap Size >= 5)",
                                 NA,
                                 "Enrichment columns:",
@@ -2207,8 +1865,6 @@ error=function(cond){
 message("Enrichment DONE.")
 shiny::setProgress(0.77, detail = "Done Enrichment...")
 knitr::opts_chunk$set(comment = NA)
-
-# save(list = ls(), file="tmp.RData")
 ```
 
 
@@ -2232,7 +1888,6 @@ if(length(enrich_filter_DBs) > 0){
   
   #Select the ALL column (UP union DOWN)
   enr_sele_df <- enr_sele_df %>% dplyr::filter(str_ends(input_name,"_all"))
-  # knitr::opts_chunk$set(fig.height = max(min(20,length(unique(enr_sele_df$anno_name))*0.5),3))
 }
 ```
 
@@ -2270,7 +1925,6 @@ if(length(enrich_filter_DBs) > 0){
     for(db in names(plotlist)){
       cat(paste0("##### ",db," \n"))
       print(resize_plot(resizePlot = plotlist[[db]], resizeHeight = max(min(20,length(unique(enr_sele_df[which(enr_sele_df$anno_class %in% category_db[[db]][,1]), "anno_name"]))*0.3),3)))
-      # suppressWarnings(print(plotlist[[db]]))
       cat(" \n \n")
     }
     cat(" \n \n")
@@ -2317,7 +1971,6 @@ if(length(enrich_filter_DBs) > 0){
   #Select the results divided in up and down
   enr_sele_df <- enr_sele_df %>% dplyr::filter(!str_ends(input_name,"_all"))
   enr_sele_df$Group <- str_to_upper(str_remove_all(stri_extract_last_regex(str = enr_sele_df$input_name, pattern = "_up$|_down$|_all$"),"_"))
-  # knitr::opts_chunk$set(fig.height = max(min(20,length(unique(enr_sele_df$anno_name))*0.5),3))
 }
 ```
 
@@ -2326,14 +1979,10 @@ if(run_enrich_universe){hide_res<-p$read_output()}
 
 if(length(enrich_filter_DBs) > 0){
   #Print the plot
-  # col_vec<-color_base[sort(rep(c(1:length(color_base)),2))]
-  # if(length(as.vector(t(color_constrast)))>0){
   category_db <- lapply(dbs_category, function(x){filter(x, x[,1] %in% intersect(unique(enr_sele_df$anno_class), enrich_filter_DBs))})
-  # names(category_db)<-paste0(names(category_db),"_DB")
-  
+
   col_vec<-as.vector(t(color_constrast))
   names(col_vec)<-unique(enr_sele_df$input_name)
-  # }
   plotlist2 = list()
   
   for (db in names(category_db)) {
@@ -2347,7 +1996,6 @@ if(length(enrich_filter_DBs) > 0){
                                               shape_vec=c("DOWN"=25,"UP"=24,"ALL"=21),
                                               shape_col = "Group",
                                               fill_col = "Significant",
-                                              # color_vec=color_base[sort(rep(c(1:length(color_base)),2))],
                                               char_max=60) + 
         guides(color=F, shape = guide_legend(override.aes = list(shape = c(16,21),size=4), title = "Significant"), fill=F)
     }
@@ -2365,7 +2013,6 @@ if(length(enrich_filter_DBs) > 0){
       print(resize_plot(resizePlot = plotlist2[[db]], resizeHeight = max(min(20,length(unique(enr_sele_df[which(enr_sele_df$anno_class %in% category_db[[db]][,1]), "anno_name"]))*0.3),3)))
       cat(" \n \n")
     }
-    # suppressWarnings(in_tabs(plotlist2, labels = names(plotlist2), level = 4L))
     cat(" \n \n")
     name_list<-vector()
     for(db in names(plotlist2)){
@@ -2379,9 +2026,6 @@ if(length(enrich_filter_DBs) > 0){
     pdf_combine(input = name_list, output = paste0(dirOutput_enr,"enr_updown_keysources.pdf"))
     unlink(name_list)
     remove(plotlist2, name_list, enr_sele_df_db, category_db)
-    #   print(el +guides(color=F))
-    #   message(paste0(dirOutput_enr,"enr_updown_keysources.pdf"))
-    #   ggsave(paste0(dirOutput_enr,"enr_updown_keysources.pdf"), el, device=cairo_pdf, width = 7, height = max(min(20,length(unique(enr_sele_df$anno_name))*0.5),3), units = c("in"))
   },
   error=function(cond){
     print("Error: No enriched term found with current parameters\n")
@@ -2408,8 +2052,7 @@ if(length(enrich_filter_term) > 0){
   }
   
   enr_sele_df<-suppressMessages(inner_join(enr_df,enr_sele_names))
-  # write_tsv(enr_sele_df ,file=paste(dirOutput,dirOutput_ev,"enrich_myc_v1_all.txt",sep=""))
-  
+
   enr_sele_df <- enr_sele_df %>% dplyr::filter(str_ends(input_name,"_all"))
   knitr::opts_chunk$set(fig.height = max(min(20,length(unique(enr_sele_df$anno_name))*0.5),3))
 }
@@ -2419,14 +2062,10 @@ if(length(enrich_filter_term) > 0){
 if(run_enrich_universe){hide_res<-p$read_output()}
 
 if(length(enrich_filter_term) > 0){
-  # col_vec<-color_base
-  #   if(length(as.vector(t(color_constrast)))>0){
   category_db <- lapply(dbs_category, function(x){filter(x, x[,1] %in% unique(enr_sele_df$anno_class))})
-  # names(category_db)<-paste0(names(category_db),"_TERM_ALL")
-  
+
   col_vec<-as.vector((color_constrast))
   names(col_vec)<-unique(enr_sele_df$input_name)
-  # }
   plotlist3 = list()
   
   for (db in names(category_db)) {
@@ -2455,10 +2094,8 @@ if(length(enrich_filter_term) > 0){
     for(db in names(plotlist3)){
       cat(paste0("##### ",db," \n"))
       print(resize_plot(resizePlot = plotlist3[[db]], resizeHeight = max(min(20,length(unique(enr_sele_df[which(enr_sele_df$anno_class %in% category_db[[db]][,1]), c("anno_name","anno_class")])[,"anno_name"])*0.3),3)))
-      # suppressWarnings(print(plotlist3[[db]]))
       cat(" \n \n")
     }
-    # suppressWarnings(in_tabs(plotlist3, labels = names(plotlist3), level = 4L))
     cat(" \n \n")
     name_list<-vector()
     for(db in names(plotlist3)){
@@ -2472,8 +2109,6 @@ if(length(enrich_filter_term) > 0){
     pdf_combine(input = name_list, output = paste0(dirOutput_enr,"enr_DE_keywords.pdf"))
     unlink(name_list)
     remove(plotlist3, name_list, enr_sele_df_db, category_db)
-    # ggsave(paste0(dirOutput_enr,"enr_DE_keywords.pdf"), el, device=cairo_pdf, width = 7, height =
-    #          max(min(20,length(unique(enr_sele_df$anno_name))*0.5),3), units = c("in"))
   },
   error=function(cond){
     print("Error: No enriched term found with current parameters\n")
@@ -2488,9 +2123,7 @@ shiny::setProgress(0.82, detail = "Plotting enrichment results...")
 if(run_enrich_universe){hide_res<-p$read_output()}
 
 if(length(enrich_filter_term) > 0){
-  
   lookup_words<-enrich_filter_term
-  
   enr_sele_names<-NULL
   
   #For each patter we want, search in each DEPs name to find it
@@ -2503,11 +2136,9 @@ if(length(enrich_filter_term) > 0){
   }
   
   enr_sele_df<-suppressMessages(inner_join(enr_df,enr_sele_names))
-  # write_tsv(enr_sele_df ,file=paste(dirOutput,dirOutput_ev,"enrich_myc_v1_all.txt",sep=""))
-  
+
   enr_sele_df <- enr_sele_df %>% dplyr::filter(!str_ends(input_name,"_all"))
   enr_sele_df$Group <- str_to_upper(str_remove_all(stri_extract_last_regex(str = enr_sele_df$input_name, pattern = "_up$|_down$|_all$"),"_"))
-  # enr_sele_df$Group <- str_c(enr_sele_df$Significant, enr_sele_df$Group)
   knitr::opts_chunk$set(fig.height = max(min(20,length(unique(enr_sele_df$anno_name))*0.5),3))
 }
 ```
@@ -2516,14 +2147,10 @@ if(length(enrich_filter_term) > 0){
 if(run_enrich_universe){hide_res<-p$read_output()}
 
 if(length(enrich_filter_term) > 0){
-  # col_vec<-color_base[sort(rep(c(1:length(color_base)),2))]
-  # if(length(as.vector(t(color_constrast)))>0){
   category_db <- lapply(dbs_category, function(x){filter(x, x[,1] %in% unique(enr_sele_df$anno_class))})
-  # names(category_db)<-paste0(names(category_db),"_TERM")
-  
+
   col_vec<-as.vector(t(color_constrast))
   names(col_vec)<-unique(enr_sele_df$input_name)
-  # }  
   plotlist4 = list()
   
   for (db in names(category_db)) {
@@ -2551,10 +2178,8 @@ if(length(enrich_filter_term) > 0){
     for(db in names(plotlist4)){
       cat(paste0("##### ",db," \n"))
       print(resize_plot(resizePlot = plotlist4[[db]], resizeHeight = max(min(20,length(unique(enr_sele_df[which(enr_sele_df$anno_class %in% category_db[[db]][,1]), c("anno_name","anno_class")])[,"anno_name"])*0.3),3)))
-      # suppressWarnings(print(plotlist4[[db]]))
       cat(" \n \n")
     }
-    # suppressWarnings(in_tabs(plotlist4, labels = names(plotlist4), level = 4L))
     cat(" \n \n")
     name_list<-vector()
     for(db in names(plotlist4)){
@@ -2568,7 +2193,6 @@ if(length(enrich_filter_term) > 0){
     pdf_combine(input = name_list, output = paste0(dirOutput_enr,"enr_updown_keywords.pdf"))
     unlink(name_list)
     remove(plotlist4, name_list, enr_sele_df_db, category_db)
-    # ggsave(paste0(dirOutput_enr,"enr_updown_keywords.pdf"), el, device=cairo_pdf, width = 7, height = max(min(20,length(unique(enr_sele_df$anno_name))*0.5),3), units = c("in"))
   },
   error=function(cond){
     print("Error: No enriched term found with current parameters\n")
@@ -2580,15 +2204,13 @@ shiny::setProgress(0.85, detail = "Plotting enrichment results...")
 ```
 
 
-
-
 ```{r enrichment_universe_get, message=F, warning=F,echo=F, eval=run_enrich_universe, results='asis'}
 shiny::setProgress(0.75, detail = "Enrichment in progress whole Universe in background... \n Can require several minutes...")
 
 #Wait 10 minutes. If do not end in 10 minutes, kill the process
 hide_res<-p$read_output()
 p$wait(30000)
-for (i in 1:10) {
+for (i in 1:15) {
   p$read_output()
   p$wait(1000*60)  
 }
@@ -2608,17 +2230,13 @@ if(p$is_alive() | is.null(p$get_result())){
                       path = paste0(dirOutput,subfold_Tab,"enrichment_allproteins.xlsx"))
   remove(enrich_all_df)
   
-  # dir.create(file.path(dirOutput,subfold_Fig,"enrich/"), showWarnings = FALSE)
-  # dirOutput_enr=paste0(dirOutput,subfold_Fig,"enrich/")
   message("Enrichment whole universe DONE.")
 }
-#save(list = ls(), file="tmp.RData")
 
 shiny::setProgress(0.75, detail = "Done Enrichment of universe...")
 ```
 
 ```{r enrichment_plots_all_vsUniverse, echo=F, message=F, warning=F, eval = (doNextChunk&run_enrich_universe), results='asis'}
-
 if(length(enrich_filter_DBs) > 0){
   #Select DEPs in the DBs of interest
   annos<- enrich_filter_DBs
@@ -2677,7 +2295,6 @@ if(length(enrich_filter_DBs) > 0){
     for(db in names(plotlist)){
       cat(paste0("##### ",db," \n"))
       print(resize_plot(resizePlot = plotlist[[db]], resizeHeight = max(min(20,length(unique(enr_sele_df[which(enr_sele_df$anno_class %in% category_db[[db]][,1]), "anno_name"]))*0.3),3)))
-      # suppressWarnings(print(plotlist[[db]]))
       cat(" \n \n")
     }
     cat(" \n \n")
@@ -2699,19 +2316,12 @@ if(length(enrich_filter_DBs) > 0){
   })
 }
 
-
 shiny::setProgress(0.77, detail = "Plotting enrichment results...")
 ```
 
 ```{r enrichment_plots_vsUniverse, echo=F, message=FALSE, warning=FALSE, eval = (doNextChunk&run_enrich_universe), results='asis'}
 
 if(length(enrich_filter_DBs) > 0){
-  # cat("#### 3.2. Top enrichments in selected annotation databases with Universe background (UP,DOWN).\n")
-  # cat("Significant enrichments (FDR<0.05) are displayed as filled dots, non-significant as empty dots. Point size is proportional to log2 Odds Ratio. \n ")
-  # cat("The dot plots shows the top significant terms considering selected annotation databases. \n ")
-  # cat("**Up-regulated and down-regulated proteins (UP,DOWN)** \n ")
-  # 
-  #Filter the DEPs taking only the ones from the desired DBs
   annos<- enrich_filter_DBs
   
   enr_sele_names <- enr_df %>%
@@ -2738,14 +2348,10 @@ if(length(enrich_filter_DBs) > 0){
 
 if(length(enrich_filter_DBs) > 0){
   #Print the plot
-  # col_vec<-color_base[sort(rep(c(1:length(color_base)),2))]
-  # if(length(as.vector(t(color_constrast)))>0){
   category_db <- lapply(dbs_category, function(x){filter(x, x[,1] %in% intersect(unique(enr_sele_df$anno_class), enrich_filter_DBs))})
-  # names(category_db)<-paste0(names(category_db),"_DB")
-  
+
   col_vec<-as.vector(c(t(color_constrast), "grey50"))
   names(col_vec)<-unique(enr_sele_df$input_name)
-  # }
   plotlist2 = list()
   
   for (db in names(category_db)) {
@@ -2759,7 +2365,6 @@ if(length(enrich_filter_DBs) > 0){
                                               shape_vec=c("DOWN"=25,"UP"=24,"ALL"=21),
                                               shape_col = "Group",
                                               fill_col = "Significant",
-                                              # color_vec=color_base[sort(rep(c(1:length(color_base)),2))],
                                               char_max=60) + 
         guides(color=F, shape = guide_legend(override.aes = list(shape = if("Universe_all" %in% enr_sele_df$input_name){c(17,24,16)}else{c(17,24)},size=4), title = "Significant"), fill=F)
     }
@@ -2774,11 +2379,8 @@ if(length(enrich_filter_DBs) > 0){
     for(db in names(plotlist2)){
       cat(paste0("##### ",db," \n"))
       print(resize_plot(resizePlot = plotlist2[[db]], resizeHeight = max(min(20,length(unique(enr_sele_df[which(enr_sele_df$anno_class %in% category_db[[db]][,1]), "anno_name"]))*0.3),3)))
-
-      # suppressWarnings(print(plotlist2[[db]]))
       cat(" \n \n")
     }
-    # suppressWarnings(in_tabs(plotlist2, labels = names(plotlist2), level = 4L))
     cat(" \n \n")
     name_list<-vector()
     for(db in names(plotlist2)){
@@ -2792,21 +2394,16 @@ if(length(enrich_filter_DBs) > 0){
     pdf_combine(input = name_list, output = paste0(dirOutput_enr,"enr_updown_keysources.pdf"))
     unlink(name_list)
     remove(plotlist2, name_list, enr_sele_df_db, category_db)
-    #   print(el +guides(color=F))
-    #   message(paste0(dirOutput_enr,"enr_updown_keysources.pdf"))
-    #   ggsave(paste0(dirOutput_enr,"enr_updown_keysources.pdf"), el, device=cairo_pdf, width = 7, height = max(min(20,length(unique(enr_sele_df$anno_name))*0.5),3), units = c("in"))
   },
   error=function(cond){
     print("Error: No enriched term found with current parameters\n")
   })
 }
 
-
 shiny::setProgress(0.79, detail = "Plotting enrichment results...")
 ```
 
 ```{r enrichment_plots_all_terms_vsUniverse, echo=F, message=F, warning=F, eval = (doNextChunk&run_enrich_universe), results='asis'}
-
 if(length(enrich_filter_term) > 0){
 
   lookup_words<-enrich_filter_term
@@ -2824,8 +2421,6 @@ if(length(enrich_filter_term) > 0){
   enr_sele_df<-suppressMessages(inner_join(enr_df,enr_sele_names))
   enr_sele_df <- rbind(enr_sele_df, suppressMessages(inner_join(enr_df_universe,enr_sele_names)))
   
-  # write_tsv(enr_sele_df ,file=paste(dirOutput,dirOutput_ev,"enrich_myc_v1_all.txt",sep=""))
-  
   enr_sele_df <- enr_sele_df %>% dplyr::filter(str_ends(input_name,"_all"))
   knitr::opts_chunk$set(fig.height = max(min(20,length(unique(enr_sele_df$anno_name))*0.5),3))
 }
@@ -2834,15 +2429,11 @@ if(length(enrich_filter_term) > 0){
 ```{r enrichment_plots_all_terms_2_vsUniverse, echo=F, message=FALSE, warning=FALSE, eval = (doNextChunk&run_enrich_universe), results='asis'}
 
 if(length(enrich_filter_term) > 0){
-  # col_vec<-color_base
-  #   if(length(as.vector(t(color_constrast)))>0){
   category_db <- lapply(dbs_category, function(x){filter(x, x[,1] %in% intersect(unique(enr_sele_df$anno_class), enrich_filter_DBs))})
-  # names(category_db)<-paste0(names(category_db),"_TERM_ALL")
-  
+
   col_vec<-as.vector(c((color_constrast), "grey30", "grey70"))
   names(col_vec)<-unique(enr_sele_df$input_name)
   col_vec["Universe_all"]<-"grey50"
-  # }
   plotlist3 = list()
   
   for (db in names(category_db)) {
@@ -2871,10 +2462,8 @@ if(length(enrich_filter_term) > 0){
     for(db in names(plotlist3)){
       cat(paste0("##### ",db," \n"))
       print(resize_plot(resizePlot = plotlist3[[db]], resizeHeight = max(min(20,length(unique(enr_sele_df[which(enr_sele_df$anno_class %in% category_db[[db]][,1]), c("anno_name","anno_class")])[,"anno_name"])*0.3),3)))
-      # suppressWarnings(print(plotlist3[[db]]))
       cat(" \n \n")
     }
-    # suppressWarnings(in_tabs(plotlist3, labels = names(plotlist3), level = 4L))
     cat(" \n \n")
     name_list<-vector()
     for(db in names(plotlist3)){
@@ -2888,15 +2477,12 @@ if(length(enrich_filter_term) > 0){
     pdf_combine(input = name_list, output = paste0(dirOutput_enr,"enr_DE_keywords.pdf"))
     unlink(name_list)
     remove(plotlist3, name_list, enr_sele_df_db, category_db)
-    # ggsave(paste0(dirOutput_enr,"enr_DE_keywords.pdf"), el, device=cairo_pdf, width = 7, height =
-    #          max(min(20,length(unique(enr_sele_df$anno_name))*0.5),3), units = c("in"))
   },
   error=function(cond){
     print("Error: No enriched term found with current parameters\n")
   })
   
 }
-
 
 shiny::setProgress(0.82, detail = "Plotting enrichment results...")
 ```
@@ -2921,8 +2507,6 @@ if(length(enrich_filter_term) > 0){
   enr_sele_df<-suppressMessages(inner_join(enr_df,enr_sele_names))
   enr_sele_df <- rbind(enr_sele_df, suppressMessages(inner_join(enr_df_universe,enr_sele_names)))
   
-  # write_tsv(enr_sele_df ,file=paste(dirOutput,dirOutput_ev,"enrich_myc_v1_all.txt",sep=""))
-  
   enr_sele_df <- enr_sele_df %>% dplyr::filter(!str_ends(input_name,"_all") | str_ends(input_name,"Universe_all"))
   enr_sele_df$Group <- str_to_upper(str_remove_all(stri_extract_last_regex(str = enr_sele_df$input_name, pattern = "_up$|_down$|_all$"),"_"))
   knitr::opts_chunk$set(fig.height = max(min(20,length(unique(enr_sele_df$anno_name))*0.5),3))
@@ -2932,14 +2516,10 @@ if(length(enrich_filter_term) > 0){
 ```{r enrichment_plots_terms_2_vsUniverse, echo=F, message=FALSE, warning=FALSE, eval = (doNextChunk&run_enrich_universe), results='asis'}
 
 if(length(enrich_filter_term) > 0){
-  # col_vec<-color_base[sort(rep(c(1:length(color_base)),2))]
-  # if(length(as.vector(t(color_constrast)))>0){
   category_db <- lapply(dbs_category, function(x){filter(x, x[,1] %in% unique(enr_sele_df$anno_class))})
-  # names(category_db)<-paste0(names(category_db),"_TERM")
-  
+
   col_vec<-as.vector(c(t(color_constrast), "grey50"))
   names(col_vec)<-unique(enr_sele_df$input_name)
-  # }  
   plotlist4 = list()
   
   for (db in names(category_db)) {
@@ -2969,10 +2549,8 @@ if(length(enrich_filter_term) > 0){
     for(db in names(plotlist4)){
       cat(paste0("##### ",db," \n"))
       print(resize_plot(resizePlot = plotlist4[[db]], resizeHeight = max(min(20,length(unique(enr_sele_df[which(enr_sele_df$anno_class %in% category_db[[db]][,1]), c("anno_name","anno_class")])[,"anno_name"])*0.3),3)))
-      # suppressWarnings(print(plotlist4[[db]]))
       cat(" \n \n")
     }
-    # suppressWarnings(in_tabs(plotlist4, labels = names(plotlist4), level = 4L))
     cat(" \n \n")
     name_list<-vector()
     for(db in names(plotlist4)){
@@ -2986,7 +2564,6 @@ if(length(enrich_filter_term) > 0){
     pdf_combine(input = name_list, output = paste0(dirOutput_enr,"enr_updown_keywords.pdf"))
     unlink(name_list)
     remove(plotlist4, name_list, enr_sele_df_db, category_db)
-    # ggsave(paste0(dirOutput_enr,"enr_updown_keywords.pdf"), el, device=cairo_pdf, width = 7, height = max(min(20,length(unique(enr_sele_df$anno_name))*0.5),3), units = c("in"))
   },
   error=function(cond){
     print("Error: No enriched term found with current parameters\n")
@@ -2996,9 +2573,6 @@ if(length(enrich_filter_term) > 0){
 
 shiny::setProgress(0.85, detail = "Plotting enrichment results...")
 ```
-
-
-
 
 
 ```{r selection_genes, echo=F, message=F, warning=F, eval=run_STRING, results='asis'}
@@ -3055,9 +2629,6 @@ string_gene_df<-data_frame("gene1"=links_string$from,"gene2"=links_string$to,"we
 
 
 if(nrow(string_gene_df) > 0){
-  # cat(" \n")
-  # cat("#### 5.1. Number of proteins in each communities discovered \n")
-  # cat("Each image is a different contrast analysis \n")
   data_comms_df<-list()
   data_comms_list<-list()
   data_dt_links<-list()
@@ -3066,7 +2637,6 @@ if(nrow(string_gene_df) > 0){
   for (comp in names(doComp)){
     # params ----
     thr_score <- 150 # define max strength of interaction
-    
     #Select genes that are up or down regulated
     g_sel <- g_sel_comp[[comp]]
     if(all(unique(!grepl("[[:lower:]]",string_gene_df$gene1)))){
@@ -3083,17 +2653,13 @@ if(nrow(string_gene_df) > 0){
     dt_links <- comm[["dt_links"]]
     data_dt_links[[comp]]<-dt_links
     
-    # colour_vector[[comp]] <- c(c(brewer.pal(n = 8, name = "Dark2")), "#680000", "#ae0001", "#eb8c00", "#680000", "#001080", "#999999", "#434343")
     colour_vector[[comp]] <- c(c(brewer.pal(n = 8, name = "Dark2")), color_base)
     colour_vector[[comp]] <- colour_vector[[comp]][1:length(i_comms_list)]
-    
-    cat("\n")
   }
   
   i_comms_df<-data_comms_df
   i_comms_list<-data_comms_list
   dt_links<-data_dt_links
-  
   message("Network DONE.")
 }else{
   print("WARNING: No strong interaction detected beetween the proteins. Usually too few proteins.")
@@ -3109,14 +2675,10 @@ message("Plotting STRING network in progress...")
 cat("#### 4.1. Size of protein communities within PPI networks  {.tabset}  \n")
 cat(" \n \n")
 
-
-
-
 for (comp in names(doComp)){
   scr_thr <-  200# visual
   links <- 2
   # Filter genes and links ----
-  # net_genes <- toupper(g_sel_comp[[comp]])
   net_genes <- g_sel_comp[[comp]]
   if(all(unique(!grepl("[[:lower:]]",string_gene_df$gene1)))){
     net_genes<-toupper(net_genes)
@@ -3125,10 +2687,6 @@ for (comp in names(doComp)){
   }
   net_edges <- subset(dt_links[[comp]], from%in%net_genes & to%in%net_genes) #select genes with weight>scr_thr
   net_edges<-net_edges[which(net_edges$weight > mean(net_edges$weight)*0.7),]
-  
-  # gene_links<-table(c(net_edges$from,net_edges$to))
-  # filt_genes<-names(gene_links)[which(gene_links > links)] #select genes with link > links
-  # net_edges<-subset(net_edges,from %in% filt_genes & to %in% filt_genes)
   
   gene_links<-table(c(net_edges$from,net_edges$to))
   filt_genes<-names(gene_links)[which(gene_links >= 2)] #remove isolated genes (leaves)
@@ -3149,8 +2707,10 @@ for (comp in names(doComp)){
       scale_fill_manual(values=colour_vector[[comp]], drop=FALSE)+
       theme_bw(base_size = bs) +
       labs(x = "Community", y = "# genes") +
-      theme(legend.position = "none", panel.grid.major.x = element_blank(),
-            panel.grid.minor.x = element_blank(), panel.grid.minor.y = element_blank())+
+      theme(legend.position = "none", 
+            panel.grid.major.x = element_blank(),
+            panel.grid.minor.x = element_blank(), 
+            panel.grid.minor.y = element_blank())+
       ggtitle("Number of genes in each community", subtitle = paste0("Communities of condition: ",comp))
     
     cat("##### ",comp," \n")
@@ -3179,16 +2739,14 @@ for (comp in names(doComp)){
       stderr = "|",
       error = getOption("callr.error", "error")
     )
-    
     p$wait()
-    
+  
     cat(" \n \n")
     rm(net_genes, net_edges, gene_links, filt_genes, net_edges, gene_vertices, nc, net_net, 
        node_list_from, node_list_to, node_list, edge_list, g, name_list, l_list)
     gc()
   }
 }
-# save(list = ls(), file="tmp.RData")
 
 net_pdf<-list.files(dirOutput_net, pattern = "network.pdf", full.names = T)
 if(length(net_pdf) > 0){
@@ -3212,7 +2770,6 @@ shiny::setProgress(0.98, detail = "Network figures generated...")
 ```
 
 ```{r save_df, echo=F, message=F, warning=F, results='hide'}
-# save(list = ls(), file="tmp.RData")
 if(!(eval_single_Cond)){
   save(c_anno,
        dat_gene,

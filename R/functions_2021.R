@@ -1437,7 +1437,5 @@ resize_plot <- function(resizePlot, resizeHeight) {
   resizePlot <- resizePlot
   resizeHeight <- resizeHeight
   res <- rmarkdown::render("enrich_plot.Rmd", quiet = T)
-  # res <- knitr::knit_child('enrich_plot.Rmd')
-  # cat(file = res, sep = '\n')
   htmltools::includeHTML(res)
 }
