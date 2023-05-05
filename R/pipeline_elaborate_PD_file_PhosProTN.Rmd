@@ -1179,7 +1179,7 @@ cat("##### Proteomics \n")
 print(hs)
 cat("\n \n")
 remove(hs,numeric_df)
-shiny::setProgress(0.34, detail = "Doing normalizations...")
+shiny::setProgress(0.34, detail = "Doing imputation...")
 ```
 
 #### 1.3. Phosphosite residues
@@ -1219,8 +1219,6 @@ print(hs)
 cat("\n \n")
 
 remove(hs,numeric_df,active_sites)
-
-shiny::setProgress(0.34, detail = "Doing normalizations...")
 ```
 
 #### 1.4. Imputation, normalization, peptide-to-protein summarization 
@@ -1250,7 +1248,6 @@ hs<-ggplot(data=numeric_df, aes(x=N,y=NPeptides, color = NPeptides, fill = NPept
 hs
 
 remove(hs,numeric_df)
-shiny::setProgress(0.34, detail = "Doing normalizations...")
 ```
 
 ```{r imputation, echo=F, message=F, warning=F, results='asis'}
@@ -1314,7 +1311,7 @@ psm_log_pet_df<-tryCatch(
 
 remove(ppe,grps)
 
-shiny::setProgress(0.42, detail = "Done normalization and imputation...")
+shiny::setProgress(0.38, detail = "Done normalization...")
 ```
 
 ```{r prot_summarization, warning=F, message=F, echo=F}
@@ -1329,7 +1326,7 @@ dat_pep = DEqMS::equalMedianNormalization(psm_log_pet_df)
 
 message("Normalization DONE.")
 
-shiny::setProgress(0.38, detail = "Doing imputation...")
+shiny::setProgress(0.42, detail = "Done normalization and imputation...")
 ```
 
 ```{r batch_correction, warning=F, message=F, echo=F, eval=batch_corr_exe, results='asis'}
@@ -1473,13 +1470,12 @@ shiny::setProgress(0.47, detail =  "Calculate post-norm distribution...")
 ```
 
 ```{r check_number_sample, warning=FALSE, echo=F, message=FALSE}
-#TODO: better control
 design = model.matrix(~0+str_remove(c_anno_phos$condition, "_p\\b")) 
 colnames(design) = levels(as.factor(str_remove(c_anno_phos$condition, "_p\\b")))
 rownames(design)<-c_anno_phos$sample
 filt_contro_list <- list()
 for (i in 1:length(formule_contrast)) {
-  if(all(str_extract_all(formule_contrast[i], "\\[a-zA-Z]+")[[1]] %in% colnames(design))){
+  if(all(stri_remove_empty(str_remove_all(str_extract_all(formule_contrast[i], "\\w+")[[1]], "^\\d+$")) %in% colnames(design))){
     filt_contro_list<-c(filt_contro_list,i)
   }
 }
@@ -2490,7 +2486,7 @@ shiny::setProgress(0.85, detail = "Plotting enrichment results...")
 
 
 ```{r enrichment_universe_get, message=F, warning=F,echo=F, eval=run_enrich_universe, results='asis'}
-shiny::setProgress(0.75, detail = "Enrichment in progress whole Universe in background... \n Can require several minutes...")
+shiny::setProgress(0.77, detail = "Enrichment in progress whole Universe in background... \n Can require several minutes...")
 
 #Wait 10 minutes. If do not end in 10 minutes, kill the process
 hide_res<-p$read_output()
@@ -2517,7 +2513,7 @@ if(p$is_alive() | is.null(p$get_result())){
 
   message("Enrichment whole universe DONE.")
 }
-shiny::setProgress(0.75, detail = "Done Enrichment of universe...")
+shiny::setProgress(0.79, detail = "Done Enrichment of universe...")
 
 ```
 
@@ -2600,7 +2596,7 @@ if(length(enrich_filter_DBs) > 0){
 }
 
 
-shiny::setProgress(0.77, detail = "Plotting enrichment results...")
+shiny::setProgress(0.79, detail = "Plotting enrichment results...")
 ```
 
 ```{r enrichment_plots_vsUniverse, echo=F, message=FALSE, warning=FALSE, eval = (doNextChunk&run_enrich_universe), results='asis'}
@@ -3094,6 +3090,7 @@ shiny::setProgress(0.95, detail = "Kinase analysis done...")
 ```
 
 ```{r save_df, echo=F, message=F, warning=F, results='hide'}
+tryCatch(unlink("enrich_plot.html"))
 if(!(eval_single_Cond)){
 save(c_anno_phos,
      c_anno,

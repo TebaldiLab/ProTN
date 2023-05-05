@@ -811,7 +811,7 @@ hs<-ggplot(data=numeric_df, aes(x=factor(sample, levels=unique(psm_long_df$sampl
 hs
 
 remove(hs,numeric_df)
-shiny::setProgress(0.34, detail = "Doing normalizations...")
+shiny::setProgress(0.34, detail = "Doing imputation...")
 ```
 
 
@@ -842,7 +842,6 @@ hs<-ggplot(data=numeric_df, aes(x=N,y=NPeptides, color = NPeptides, fill = NPept
 hs
 
 remove(hs,numeric_df)
-shiny::setProgress(0.34, detail = "Doing normalizations...")
 ```
 
 ```{r imputation, echo=F, message=F, warning=F, results='asis'}
@@ -905,10 +904,10 @@ psm_log_pet_df<-tryCatch(
 )
 
 remove(ppe,grps)
-shiny::setProgress(0.42, detail = "Done normalization and imputation...")
 ```
 
 ```{r prot_summarization, warning=F, message=F, echo=F}
+shiny::setProgress(0.38, detail = "Doing normalizations...")
 message("Median normalization in progress...")
 #Summarize into proteins and normalize by median
 dat_psm <- cbind(psm_anno_df[,c("id","symbol")],psm_log_prot_df)
@@ -918,7 +917,7 @@ dat_gene = DEqMS::medianSweeping(dat_psm,group_col = 2)
 dat_pep = DEqMS::equalMedianNormalization(psm_log_pet_df)
 
 message("Normalization DONE.")
-shiny::setProgress(0.38, detail = "Doing imputation...")
+shiny::setProgress(0.42, detail = "Done normalization and imputation...")
 ```
 
 ```{r batch_correction, warning=F, message=F, echo=F, eval=batch_corr_exe, results='asis'}
@@ -1062,18 +1061,17 @@ shiny::setProgress(0.47, detail =  "Calculate post-norm distribution...")
 ```
 
 ```{r check_number_sample, warning=FALSE, echo=F, message=FALSE}
-#TODO: better control
 design = model.matrix(~0+c_anno$condition) 
 colnames(design) = levels(as.factor(c_anno$condition))
 rownames(design)<-c_anno$sample
 filt_contro_list <- list()
 for (i in 1:length(formule_contrast)) {
-  if(all(str_extract_all(formule_contrast[i], "\\[a-zA-Z]+")[[1]] %in% colnames(design))){
+  if(all(stri_remove_empty(str_remove_all(str_extract_all(formule_contrast[i], "\\w+")[[1]], "^\\d+$")) %in% colnames(design))){
     filt_contro_list<-c(filt_contro_list,i)
   }
 }
 contro_list<-formule_contrast[unlist(filt_contro_list)]
-if(length(contro_list) == 0){ stop("Error: No valid contrast design given. Check the match between the spell of Condition and contrast design.")}
+if(length(contro_list) == 0){stop("Error: No valid contrast design given. Check the match between the spell of Condition and contrast design.")}
 contrast =  limma::makeContrasts(contrasts=contro_list,levels=design)
 colnames(contrast)<-names(contro_list)
 
@@ -1084,7 +1082,7 @@ formule_contrast<- contro_list[!res]
 
 eval_single_Cond <- if(all(res)){FALSE}else{TRUE}
 if(!eval_single_Cond | length(formule_contrast) > 0){
-  cat("*WARNING*: Some comparisons cannot be done since have only two samples. The comparison are removed.")
+  cat("*WARNING*: Some comparisons cannot be done since have only two samples or has wrong condition. The comparison are removed.")
 }
 ```
 
@@ -1104,7 +1102,7 @@ mds_cmdscale$sample <- rownames(mds_cmdscale)
 mds_cmdscale <- suppressMessages(left_join(mds_cmdscale,c_anno))
 
 #Take correct order of color
-c<-mds_cmdscale$color
+cc<-mds_cmdscale$color
 if(is.null(cc)){
   cc<-colour_vec[1:length(unique(mds_cmdscale$condition))]
   names(cc)<-unique(mds_cmdscale$condition)
@@ -1417,6 +1415,7 @@ message("Differentation analysis DONE.")
 ```
 
 ```{r number_deps, warning=FALSE, echo=FALSE, results='asis', eval=eval_single_Cond, fig.height=max(min(20,length(unique(deps_l_df$comp))*0.75),2)}
+shiny::setProgress(0.60, detail = "Count DEPs...")
 cat("In the plot are represented graphically the number of DEPs for each contrast. Tab **Proteins** for the differentially expressed proteins, **Peptides** for the number of the differentially expressed peptides. \n \n")
 cat(" \n \n")
 cat("#### 2.2. Number of differentially expressed proteins and peptides for each comparison {.tabset}  \n")
@@ -1471,11 +1470,11 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   message("No gene differentiated discovered.")
   cat("No gene differentiated discovered.")
 }
-shiny::setProgress(0.60, detail = "Count DEPs...")
 ```
 
 ```{r volcano_protein, fig.height=6, fig.width=6, warning=FALSE, echo=FALSE, results='asis', eval=(eval_single_Cond & (deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0))}
 cat(" \n \n")
+shiny::setProgress(0.63, detail = "Perform volcano plot...")
 if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   cat("#### 2.3. Volcano plots  \n")
   cat("Differentially expressed proteins/peptides are displayes according to the thresholds set in the input. \n \n ")
@@ -1528,7 +1527,6 @@ if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
     }
     plotlist[[comp]] = ggplotly(cmd, tooltip = c("text"))
   }
-  shiny::setProgress(0.63, detail = "Perform volcano plot...")
 }
 
 cat("#### 2.3.1. Volcano plots of Proteins {.tabset}  \n")
@@ -1540,6 +1538,7 @@ cat(" \n \n")
 
 ```{r volcano_pep, fig.height=6, fig.width=6, warning=FALSE, echo=FALSE, results='asis', eval=(eval_single_Cond & (deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0))}
 cat(" \n \n")
+shiny::setProgress(0.65, detail = "Perform volcano plot...")
 if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   
   plotlist = list()
@@ -1587,7 +1586,6 @@ if(deps_pep_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
     }
     plotlist[[comp]] = ggplotly(cmd, tooltip = c("text"))
   }
-  shiny::setProgress(0.65, detail = "Perform volcano plot...")
 }
 
 cat("#### 2.3.2. Volcano plot of Peptides {.tabset}  \n")
@@ -1598,6 +1596,7 @@ cat(" \n \n")
 ```
 
 ```{r MDS_prot_deps, warning=F, message=F, echo=F, results='asis', eval=eval_single_Cond}
+  shiny::setProgress(0.67, detail = "Perform MDS...")
 if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   cat("#### 2.4. MDS based on differentially expressed proteins and peptides {.tabset}  \n " )
   cat("Multidimensional scaling (MDS) are performed on normalized abundances of differentially expressed Proteins and Peptides. \n")
@@ -1633,7 +1632,6 @@ if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   
   ggsave(paste0(dirOutput,subfold_Fig,subfold_MDSPCA,"DE_mds_protein.pdf"), cmd, device=cairo_pdf, width = (3+(0.13*nrow(mds_cmdscale))), height = (3+(0.07*nrow(mds_cmdscale))), units = c("in"))
   
-  shiny::setProgress(0.67, detail = "Perform MDS...")
 }
 
 cat(" \n \n")
@@ -2205,7 +2203,7 @@ shiny::setProgress(0.85, detail = "Plotting enrichment results...")
 
 
 ```{r enrichment_universe_get, message=F, warning=F,echo=F, eval=run_enrich_universe, results='asis'}
-shiny::setProgress(0.75, detail = "Enrichment in progress whole Universe in background... \n Can require several minutes...")
+shiny::setProgress(0.77, detail = "Enrichment in progress whole Universe in background... \n Can require several minutes...")
 
 #Wait 10 minutes. If do not end in 10 minutes, kill the process
 hide_res<-p$read_output()
@@ -2233,7 +2231,7 @@ if(p$is_alive() | is.null(p$get_result())){
   message("Enrichment whole universe DONE.")
 }
 
-shiny::setProgress(0.75, detail = "Done Enrichment of universe...")
+shiny::setProgress(0.79, detail = "Done Enrichment of universe...")
 ```
 
 ```{r enrichment_plots_all_vsUniverse, echo=F, message=F, warning=F, eval = (doNextChunk&run_enrich_universe), results='asis'}
@@ -2316,7 +2314,7 @@ if(length(enrich_filter_DBs) > 0){
   })
 }
 
-shiny::setProgress(0.77, detail = "Plotting enrichment results...")
+shiny::setProgress(0.79, detail = "Plotting enrichment results...")
 ```
 
 ```{r enrichment_plots_vsUniverse, echo=F, message=FALSE, warning=FALSE, eval = (doNextChunk&run_enrich_universe), results='asis'}
@@ -2770,6 +2768,7 @@ shiny::setProgress(0.98, detail = "Network figures generated...")
 ```
 
 ```{r save_df, echo=F, message=F, warning=F, results='hide'}
+tryCatch(unlink("enrich_plot.html"))
 if(!(eval_single_Cond)){
   save(c_anno,
        dat_gene,
