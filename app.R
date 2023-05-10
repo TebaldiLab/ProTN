@@ -723,10 +723,15 @@ server <- function(input, output, session) {
           })
         },
         error = function(e) {
-          showNotification(paste0("ERROR: ", e), type = "error")
+          showNotification(paste0("ERROR: ", e), type = "error", duration = 30)
           shinyjs::enable("report")
           shinyjs::enable("case_study")
           js$pageDisable("all")
+          html_text<-str_replace(read_file("R/error.html"), 
+                                 pattern = "The page you’re looking for doesn’t exist.</p>", 
+                                 replacement = paste0("Description:", e, "</p>"))
+          write_file(html_text, file = paste0(tempdir(), "/error.html"))
+          zip(zipfile = file, files = paste0(tempdir(), "/error.html"), extra = "-j")
         }
       )
     }
@@ -815,9 +820,14 @@ server <- function(input, output, session) {
           })
         },
         error = function(e) {
-          showNotification(paste0("ERROR: ", e), type = "error")
+          showNotification(paste0("ERROR: ", e), type = "error", duration = 30)
           shinyjs::enable("report_phos")
           js$pageDisable("all")
+          html_text<-str_replace(read_file("R/error.html"), 
+                                 pattern = "The page you’re looking for doesn’t exist.</p>", 
+                                 replacement = paste0("Description:", e, "</p>"))
+          write_file(html_text, file = paste0(tempdir(), "/error.html"))
+          zip(zipfile = file, files = paste0(tempdir(), "/error.html"), extra = "-j")
         }
       )
     }
@@ -888,7 +898,7 @@ server <- function(input, output, session) {
             
             
             rmarkdown::render("R/pipeline_elaborate_PD_files.Rmd",
-                              output_file = "protn_cas_study_report.html",
+                              output_file = "protn_case_study_report.html",
                               output_dir = dirOutput_Server,
                               params = params,
                               envir = new.env(parent = globalenv())
@@ -905,15 +915,19 @@ server <- function(input, output, session) {
           })
         },
         error = function(e) {
-          showNotification(paste0("ERROR: ", e), type = "error")
+          showNotification(paste0("ERROR: ", e), type = "error", duration = 30)
           shinyjs::enable("report")
           shinyjs::enable("case_study")
           js$pageDisable("all")
+          html_text<-str_replace(read_file("R/error.html"), 
+                                 pattern = "The page you’re looking for doesn’t exist.</p>", 
+                                 replacement = paste0("Description:", e, "</p>"))
+          write_file(html_text, file = paste0(tempdir(), "/error.html"))
+          zip(zipfile = file, files = paste0(tempdir(), "/error.html"), extra = "-j")
         }
       )
     }
   )
-  
   
   # ----------------- DELETE TEMP FILES WHEN SESSION ENDS ---------------- #
   

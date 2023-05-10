@@ -94,6 +94,7 @@ suppressMessages(suppressWarnings({
   library(magick)
   library(extrafont)
   library(plotly)
+  library(knitr)
 }))
 
 options(dplyr.summarise.inform = FALSE)
@@ -1401,7 +1402,7 @@ prot_id <- unique(psm_peptide_table[,c("Accession","GeneName")]) %>% group_by(Ge
                                                                                                                                   multiple = "first",
                                                                                                                                   suffix = c(".id", ".old"))
 protein_DE <- unique(left_join(prot_id[,c("Accession.id","Description","GeneName")], toPrint, by=c("GeneName" = "GeneSymbol")))
-colnames(protein_DE)[1:7] <- c("Accession","Description","GeneName")
+colnames(protein_DE)[1:3] <- c("Accession","Description","GeneName")
 peptide_DE <- left_join(rownames_to_column(psm_peptide_table), toPrint_pep, by=c("rowname" = "id"))[,-c(1)]
 colnames(peptide_DE)[1:7] <- c("Accession","Description","GeneName","Peptide_Sequence","Peptide_Modifications","Peptide_Position","Peptide_Tryptic")
 df_to_save<-list("README"=readme_sheet,
@@ -1430,8 +1431,8 @@ if(deps_l_df %>% dplyr::filter(class!="=") %>% nrow() > 0){
   names(col_vec)[(1:length(lolli_df$comp))[(1:length(lolli_df$comp))%%2 == 1]]<-paste0(lolli_df$comp[(1:length(lolli_df$comp))[(1:length(lolli_df$comp))%%2 == 1]], "_+")
   names(col_vec)[(1:length(lolli_df$comp))[(1:length(lolli_df$comp))%%2 == 0]]<-paste0(lolli_df$comp[(1:length(lolli_df$comp))[(1:length(lolli_df$comp))%%2 == 1]], "_-")
   
-  pDEPs<-deps_b2b_lollipop(input_df=lolli_df, break_vec=seq(0,plyr::round_any(max(lolli_df$N)*1.1, if(max(lolli_df$N)>90){100}else{10}, f = ceiling),
-                                                            round((plyr::round_any(max(lolli_df$N)*1.1, if(max(lolli_df$N)>90){100}else{10}, f = ceiling))/5, 0)), 
+  pDEPs<-deps_b2b_lollipop(input_df=lolli_df, break_vec=seq(0,plyr::round_any(max(lolli_df$N)*1.2, if(max(lolli_df$N)>90){100}else{10}, f = ceiling),
+                                                            round((plyr::round_any(max(lolli_df$N)*1.2, if(max(lolli_df$N)>90){100}else{10}, f = ceiling))/5, 0)), 
                            fill_vec = col_vec, color_vec = col_vec, char_max = 30, position_dodge = if(length(unique(deps_l_df$comp))>1){0.08}else{0.05})
   
   cat("##### Proteins \n")
