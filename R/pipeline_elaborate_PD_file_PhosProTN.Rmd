@@ -49,7 +49,7 @@ shiny::setProgress(0, detail = "Initialize...")  # set progress to 50%
 dirOutput = params$dirOutput
 #Auto-install needed library
 list.of.packages <- c("ggrepel","tidyr","ggraph","graphlayouts","RColorBrewer",
-                      "scales","igraph","data.table","qpdf","devtools",
+                      "scales","igraph","data.table","qpdf","devtools","enrichR",
                       "corrplot", "data.table", "ggplot2", "ggfortify","lazyeval",
                       "lubridate", "pheatmap", "reshape2","readr", "rlang", "rmdformats","data.tree",
                       "tibble", "dplyr", "tidyr", "wesanderson","WGCNA","ggbeeswarm","ggthemes", 
