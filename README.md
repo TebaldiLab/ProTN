@@ -11,14 +11,13 @@ The app should automatically started installing all the required package.
 ## Workflow ProTN
 ProTN is an integrative pipeline that analyze DDA proteomics data obtained from MS. It perform a complete analysis of the raw files from Proteome Discoverer (PD) or MaxQuant (MQ), with their biological interpretation with enrichement and network analysis. ProTN executes a dual level analysis, at protein and peptide level.
 
-![image](https://github.com/TebaldiLab/ProTN/assets/39188419/40131264-f8a1-418e-a5f9-588f1c7c037c)
+![image](https://github.com/TebaldiLab/ProTN/assets/39188419/5ce589c6-64f4-4af4-b708-538b05e983c5)
 
 ## Workflow PhosProTN
 PhosProTN is an integrative pipeline for phosphoproteomic analysis of DDA experimental data obtained from MS. It perform a complete analysis of the raw files from Proteome Discoverer (PD) or MaxQuant (MQ), with their biological interpretation, enrichement and network analysis. 
 PhosProTN analyse the phosphoproteomic data at peptide level, with background the proteomic analysis.
 
-![image](https://github.com/TebaldiLab/ProTN/assets/39188419/bc895884-80c7-406f-bf07-f310ef95055c)
-
+![image](https://github.com/TebaldiLab/ProTN/assets/39188419/147a2fc3-233a-4237-b37c-261e3e3d4bb3)
 
 ## Contacts
 gabriele.tome@unitn.it
