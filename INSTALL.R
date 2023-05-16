@@ -14,9 +14,15 @@ install.packages("dplyr", dependencies = T)
 install.packages("stringr", dependencies = T)
 install.packages("shinyBS", dependencies = T)
 install.packages("rmdformats", dependencies = T)
+install.packages("parallel", dependencies = T)
+install.packages("doParallel", dependencies = T)
+install.packages("foreach", dependencies = T)
+install.packages("extrafont", dependencies = T)
+
 
 #Install packages for ProTN
 install.packages("devtools", dependencies = T)
+install.packages("enrichR", dependencies = T)
 install.packages("data.table", dependencies = T)
 install.packages("ggplot2", dependencies = T)
 install.packages("ggrepel", dependencies = T)
