@@ -1,3 +1,9 @@
+list.of.packages <- c("shiny","tidyverse","markdown","knitr","shinydashboard",
+                      "shinydashboardPlus","shinymaterial","shinyjs","magrittr",
+                      "dplyr","stringr","shinyBS")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) suppressMessages(suppressWarnings({install.packages(new.packages, dependencies = T)}))
+
 library(shiny)
 library(tidyverse)
 library(markdown)
