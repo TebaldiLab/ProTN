@@ -520,7 +520,6 @@ for (f in template_files){
 names(input_files)<-c("dir","Input","PEP","PROT")
 message("Data acquired")
 
-
 #Clean files and merge
 colToKeep<-intersect(colnames(input_files$Input), c("Condition","Color","Sample"))
 input_files$Input <- input_files$Input[,colToKeep]
@@ -543,25 +542,56 @@ if(any(str_starts(input_files$Input$Condition, "[0-9]"))){
 }
 #Prepare PROT table with only column Accession and Dscription, extract fro Description the GeneName and remove contaminants
 input_files$PROT <- input_files$PROT[-which(grepl("Keratin|keratin",input_files$PROT$`Fasta headers`) |
-                                              grepl("CON_",input_files$PROT$`Majority protein IDs`))
+                                              grepl("CON_|Keratin|keratin",input_files$PROT$`Majority protein IDs`))
                                      ,c("Majority protein IDs","Fasta headers")]
-input_files$PROT$GeneName<-lapply(input_files$PROT$`Fasta headers`, function(x){gsub(".*GN=(.+) PE=.*", "\\1", x)}) %>% unlist()
-input_files$PROT$GeneName[which(str_detect(input_files$PROT$GeneName,";"))] <- lapply(
-  input_files$PROT$GeneName[which(str_detect(input_files$PROT$GeneName,";"))],
-  function(x){unlist(str_split(x, ";"))[1]}) %>% unlist()
 
-taxonomy_NCBI<-lapply(input_files$PROT$`Fasta headers`, function(x){gsub(".*OX=(.+) GN=.*", "\\1", x)}) %>% unlist()
-taxonomy_NCBI<-strtoi(names(sort(table(taxonomy_NCBI), decreasing = T))[1])
-if(is.na(taxonomy_NCBI)){
-  taxonomy_NCBI<-9606
+taxonomy_NCBI<-9606
+if(any(grepl(".*GN=(.+) PE=.*", input_files$PROT$`Fasta headers`))){
+  input_files$PROT$GeneName<-lapply(input_files$PROT$`Fasta headers`, function(x){gsub(".*GN=(.+) PE=.*", "\\1", x)}) %>% unlist()
+  input_files$PROT$GeneName[which(str_detect(input_files$PROT$GeneName,";"))] <- lapply(
+    input_files$PROT$GeneName[which(str_detect(input_files$PROT$GeneName,";"))],
+    function(x){unlist(str_split(x, ";"))[1]}) %>% unlist()
+  
+  taxonomy_NCBI2<-lapply(input_files$PROT$`Fasta headers`, function(x){gsub(".*OX=(.+) GN=.*", "\\1", x)}) %>% unlist()
+  taxonomy_NCBI2<-strtoi(names(sort(table(taxonomy_NCBI2), decreasing = T))[1])
+  if(!is.na(taxonomy_NCBI2)){
+    taxonomy_NCBI<-9606
+  }
+} else if(any(grepl("ENS\\w+\\||ENS\\w+\\.\\w+\\|", input_files$PROT$`Fasta headers`))){
+  input_files$PROT$GeneName<-lapply(input_files$PROT$`Fasta headers`, 
+                                    function(x){
+                                      tail(
+                                        strsplit(
+                                          stri_split_regex(x, ";")[[1]][1], 
+                                          split = "\\|")[[1]], 
+                                        n=2)[1]}) %>% unlist()
+  
+  taxonomy_NCBI2<-unlist(stri_extract_all_regex(input_files$PROT$`Fasta headers`, "^\\w+P"))
+  taxonomy_NCBI2<-names(sort(table(taxonomy_NCBI2), decreasing = T))[1]
+  if(taxonomy_NCBI2 == "ENSMUSP|ENSMUS"){
+    taxonomy_NCBI<-10090
+  }
+  
+  input_files$PROT$`Majority protein IDs` <- lapply(input_files$PROT$`Majority protein IDs`, 
+                                                    function(x){strsplit(x, ";")[[1]][1]}) %>% unlist()
+} else{
+  input_files$PROT$GeneName<-input_files$PROT$`Fasta headers`
 }
+
 #Mantain only the first UNIPROT code
-input_files$PEP<-input_files$PEP[,c("Proteins","Sequence","Start position","End position",
+colPep <- if(length(intersect(input_files$PROT$`Majority protein IDs`, 
+                              input_files$PEP$`Leading razor protein`)) >
+             length(intersect(input_files$PROT$`Majority protein IDs`,
+                              input_files$PEP$Proteins))){"Leading razor protein"}else{"Proteins"}
+input_files$PEP<-input_files$PEP[,c(colPep,"Sequence","Start position","End position",
                                     grep("Intensity ",colnames(input_files$PEP)[grepl(paste(input_files$Input$Sample, collapse = "|"), colnames(input_files$PEP))], value = T))]
 
 
 #merge by uniprot the prot description and the pep table
-input_files$PD_PEP_matrix<-merge(input_files$PROT, input_files$PEP, by.x = "Majority protein IDs", by.y = "Proteins")
+input_files$PD_PEP_matrix<-merge(input_files$PROT, 
+                                 input_files$PEP, 
+                                 by.x = "Majority protein IDs", 
+                                 by.y = colPep)
 
 input_files$PD_PEP_matrix$`End position` <- str_c(input_files$PD_PEP_matrix$GeneName,input_files$PD_PEP_matrix$`Start position`, input_files$PD_PEP_matrix$`End position`, sep = "_")
 input_files$PD_PEP_matrix$`Start position` <- c(NA)
@@ -724,7 +754,7 @@ psm_log_pet_df <- psm_sig_pet_df
 psm_log_pet_df <- psm_sig_pet_df %>% log2()
 
 #Filter proteins with only 1 peptides
-filter_df_single_pep<-psm_anno_df %>% dplyr::group_by(symbol) %>% dplyr::summarise(N=n()) %>% ungroup() %>% filter(N > 1)
+filter_df_single_pep<-psm_anno_df %>% dplyr::group_by(symbol) %>% dplyr::summarise(N=n()) %>% ungroup() %>% filter(N > 0)
 filter_df_single_pep <- left_join(filter_df_single_pep, psm_anno_df) %>% pull(symbol)
 filter_df_single_pep <- rownames(psm_peptide_table[which(psm_peptide_table$GeneName %in% filter_df_single_pep),])
 psm_log_pet_df <-psm_log_pet_df[intersect(rownames(psm_log_pet_df), filter_df_single_pep),]
@@ -831,7 +861,7 @@ shiny::setProgress(0.34, detail = "Doing imputation...")
 numeric_df <- as.data.table(table(psm_anno_df$symbol))
 numeric_df[which(numeric_df$N > 20), "N"] <- 20
 numeric_df <- numeric_df[order(numeric_df$N) , .(NPeptides = .N), by = c("N")]
-numeric_df$N <- factor(str_sort(str_replace(as.character(numeric_df$N), pattern = "20", replacement = "20+"), numeric = T), levels = c(2:19, "20+"))
+numeric_df$N <- factor(str_sort(str_replace(as.character(numeric_df$N), pattern = "20", replacement = "20+"), numeric = T), levels = c(1:19, "20+"))
 
 hs<-ggplot(data=numeric_df, aes(x=N,y=NPeptides, color = NPeptides, fill = NPeptides))+
   geom_bar(stat="identity",width=.7,alpha=.8)+
