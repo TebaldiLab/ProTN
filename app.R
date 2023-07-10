@@ -219,7 +219,7 @@ server <- function(input, output, session) {
         ),
         fluidRow(
           selectizeInput("DB_enrich", "DB to analyse",
-                         choices = as.vector(read_tsv("R/dbs_enrichR.txt", col_names = FALSE)[,1] ),
+                         choices = lapply(split(read_tsv("R/dbs_enrichR.txt", col_names = FALSE)$X1,read_tsv("R/dbs_enrichR.txt", col_names = FALSE)[,2]), as.list),
                          selected = NULL, multiple = TRUE
           ),
           uiOutput("help15")
@@ -316,7 +316,7 @@ server <- function(input, output, session) {
         ),
         fluidRow(
           selectizeInput("DB_enrich_phos", "DB to analyse",
-                         choices = as.vector(read_tsv("R/dbs_enrichR.txt", col_names = FALSE)[,1] ),
+                         choices = lapply(split(read_tsv("R/dbs_enrichR.txt", col_names = FALSE)$X1,read_tsv("R/dbs_enrichR.txt", col_names = FALSE)[,2]), as.list),
                          selected = NULL, multiple = TRUE
           ),
           uiOutput("help18_P")
