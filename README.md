@@ -47,7 +47,7 @@ ProTN analyse the results of Proteome Discoverer and MaxQuant. The essential par
     *   **MS\_batch** columns: define the groups of batch in the samples. `REQUIRED FOR BATCH EFFECT CORRECTION`.
     *   **Sample** column: define the names for the samples.
         *   In case of **PD** files use the _Sample\_Annotation_ file obtained from PD, the **Sample** column in optional, if is not present the software extract the names for the **File Name** column.
-        *   In case of **MQ** analysis the this column is `REQUIRED`
+        *   In case of **MQ** analysis the this column is `REQUIRED`. **`ATTENTION`****: SAMPLE NAME MUST BE EQUAL TO THE NAME INSERTED IN MAXQUANT (name of the column in peptide file).**
 - **Peptides file**: raw file of peptides obtained from PD or MQ (file peptides.txt).
 - **Proteins file**: raw file of protein groups obtained from PD or MQ (file proteinGroups.txt).
 - **Design for the comparison file**: Excel file containing the formulas of the contrast comparison you want to analyse. [Example of Design file in Data folder] The table can have 3 columns:
@@ -173,7 +173,7 @@ ProTN analyse the results of Proteome Discoverer and MaxQuant. The essential par
         *   `Sample Annotation file`: file with the information about the samples and the correlation between replicate ID and condition of the proteomic (WARNING: Condition name MUST contain at least 1 character!). The **Sample\_Annotation** file is an Excel file with the following column:
             
             *   **Condition** column (`REQUIRED`): define the condition of each sample that divide the samples in groups. The conditions need to be the same of the the Contrast Design and the same of the phospho-proteomics. (WARNING: Condition name MUST contain at least 1 character!)
-            *   **Sample** column (`REQUIRED`): define the names for the samples.
+            *   **Sample** column (`REQUIRED`): define the names for the samples. **`ATTENTION`****: SAMPLE NAME MUST BE EQUAL TO THE NAME INSERTED IN MAXQUANT (name of the column in peptide file).**
             *   **Color** columns (`OPTIONAL`): define a color for the samples in the graphs. If not present use a default palette.
             *   **MS\_batch** columns: define the groups of batch in the samples. `REQUIRED FOR BATCH EFFECT CORRECTION`.
         *   `Evidence file`: raw file of peptides. The file required is the **evidence.txt** file.
@@ -182,7 +182,7 @@ ProTN analyse the results of Proteome Discoverer and MaxQuant. The essential par
         *   `Sample Annotation file`: file with the information about the samples and the correlation between replicate ID and condition of the phospho-proteomics (WARNING: Condition name MUST contain at least 1 character!). The **Sample\_Annotation** file is an Excel file with the following column:
             
             *   **Condition** column (`REQUIRED`): define the condition of each sample that divide the samples in groups. The conditions need to be the same of the the Contrast Design and the same of the proteomics. (WARNING: Condition name MUST contain at least 1 character!)
-            *   **Sample** column (`REQUIRED`): define the names for the samples.
+            *   **Sample** column (`REQUIRED`): define the names for the samples. **`ATTENTION`****: SAMPLE NAME MUST BE EQUAL TO THE NAME INSERTED IN MAXQUANT (name of the column in peptide file).**
             *   **Color** columns (`OPTIONAL`): define a color for the samples in the graphs. If not present use a default palette.
             *   **MS\_batch** columns: define the groups of batch in the samples. `REQUIRED FOR BATCH EFFECT CORRECTION`.
         *   `Evidence file`: raw file of peptides. The file required is the **evidence.txt** file
