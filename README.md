@@ -65,6 +65,9 @@ After the normalization the intensities from Mass Spectrometer need to be impute
 
 In this step, two MDSs and two PCAs (proteins and peptides) are generated.
 
+![image](www/images/figures/pca_proteins.png)
+![image](www/images/figures/mds_proteins.png)
+
 #### Statistical differential analysis
 The workflow continue with the differential analysis. This phase is applied to proteins and peptides, to obtain the significant proteins and peptides. Two slightly different methodologies are applyed since for proteins is used the DEqMS package (Zhu 2022), instead, for peptides is used the usual Limma package (Ritchie et al. 2015). DEqMS is developed on top of Limma, but the method estimates different prior variances for proteins quantified by different numbers of PSMs/peptides per protein, therefore achieving better accuracy.
 
@@ -84,8 +87,13 @@ In the output, for each comparison, this distinction is reported in the “class
 
 Various figures are generated, first a bar plot that graphically represents the DEPs identified. Followed by comparison-specific volcano plots.
 
+![image](www/images/figures/DE_protein_barplot.png)
+![image](www/images/figures/volcano_plot.png)
+
 #### Report creation and download of the results
 The results are summarized in a web-page HTML report. Other than this, the experiment is described by a large number of files, a description of each file generated can be found in section 4. Details on the output files. All the files are group in a zip file and downloaded.
+
+![image](www/images/figures/protn_report.html(screen).png)
 
 #### ADDITIONAL STEPS:
 ##### B1. Batch Effect correction
@@ -104,6 +112,8 @@ A term to be significative need to have:
 
 Besides that, the pipeline plots the enrichment results in different figures. The 4 plots can be split into 2 categories. The first two are filtered on the data-sets, they illustrate only the data-sets written in the column DB to analyse of the options file. The other 2 are filtered on words to search on the term description, it uses the list of words in column Terms to search.
 
+![image](www/images/figures/enrichment.png)
+
 ###### E1.1. Enrichment analysis of the whole set of proteins discovered by the experiment
 In same cases can be usefull have the enrichment of the whole proteome discovered by the experiment. For example it can be used as negative control of the differentially expressed proteins. So, the entire proteome is analysed with EnrichR, and saved in an RData and in an Excel file. Also, as before, 4 plots can be generated, in this case adding as last dot column the negative control provided by the whole proteome.
 
@@ -114,6 +124,7 @@ The species-specific database is retrieved from STRING server, an accurate analy
 
 Since the network can vary a lot on composition, two ggplot layout are used: Fruchterman-Reingold algorithm and the Kamada-Kawai algorithm.
 
+![image](www/images/figures/Risorsa%203.svg)
 
 ### PhosProTN
 PhosProTN is an integrative pipeline for phosphoproteomic analysis of DDA experimental data obtained from MS. It perform a complete analysis of the raw files from Proteome Discoverer (PD) or MaxQuant (MQ), with their biological interpretation, enrichement and network analysis. 
@@ -182,7 +193,9 @@ Last analitical step is the kinase tree analysis. In phospho-proteomic it extrem
 
 The activity score provide by PhosR is used to generated a graphical versione of the human kinome tree using CORAL (Metz K.S. et al. 2018), a web shiny app for visualizing both quantitative and qualitative data. It generates high-resolution scalable vector graphic files suitable for publication without the need for refinement in graphic editing software.
 
+![image](www/images/figures/TA_kinase_Tree_CORAL-cropped.svg)
+
 ## Contacts
-Gabriele Tomè, Developer: gtome@fbk.eu gabriele.tome@unitn.it
+Gabriele Tomè, Developer: gtome@fbk.eu; gabriele.tome@unitn.it
 
 Dr. Toma Tebaldi, PI: toma.tebaldi@unitn.it
