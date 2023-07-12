@@ -5250,6 +5250,9 @@ small {
   background-color: #26a69a;
   text-align: center;
   letter-spacing: .5px;
+  white-space: normal;
+  width: 90%;
+  height: auto;
   -webkit-transition: background-color .2s ease-out;
   transition: background-color .2s ease-out;
   cursor: pointer;
