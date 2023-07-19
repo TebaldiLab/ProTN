@@ -1,4 +1,14 @@
-<img src="images/logo_scritta.svg"width="25%" style="display:block;margin-left:auto;margin-right:auto">
+<!--
+################################################################################
+# ProTN: an integrative pipeline for complete analysis of proteomics           # 
+# data from mass spectrometry                                                  #
+# Laboratory of RNA and Disease Data Science, University of Trento             #
+# Developer: Gabriele Tomè                                                     #
+# Issue at: https://github.com/TebaldiLab/ProTN/issues                         #
+# PI: Dr. Toma Tebaldi, PhD                                                    #
+################################################################################
+-->
+<img src="images/logo_scritta.svg" width="25%" style="display:block;margin-left:auto;margin-right:auto">
 
 <p>ProTN is an integrative pipeline that analyze DDA proteomics data
 	obtained from MS. It perform a complete analysis of the raw files from
@@ -24,7 +34,8 @@
 				<p>Later in this section we describes in details the workflow of the
 					pipeline. In the first phases it imputes and normalizes the data
 					obtaining the normalized matrix. On that is perfomed the enrichment, the PPI network
-					analysis and the kinase tree analysis. During the enrichment steps, the only protein analyzed are the
+					analysis and the kinase tree analysis. During the enrichment steps, the only protein analyzed are
+					the
 					up- or down-regulated, discriminated by the parameters set.
 				</p>
 				<img src="images/Workflow_ProTN.svg" width="100%" alt="">
@@ -51,7 +62,8 @@
 						</li>
 						<li>
 							<p><code>Sample Annotation file</code>: file with the information about the
-								samples and the correlation between replicate ID and condition. (WARNING: Condition name MUST contain at least 1 character!)
+								samples and the correlation between replicate ID and condition. (WARNING: Condition name
+								MUST contain at least 1 character!)
 								<button id="preview_input" type="button" class="btn_example" data-toggle="modal"
 									data-target="#modal_Input_Example">[Example of an Sample_Annotation file
 									HERE...]</button>
@@ -100,8 +112,8 @@
 					<p>In this step, two MDSs and two PCAs (proteins and peptides) are
 						generated.
 					</p>
-					<img src="images/figures/pca_proteins.png" width="49%" style="margin-left:auto;margin-right:auto"/>
-					<img src="images/figures/mds_proteins.png" width="49%" style="margin-left:auto;margin-right:auto"/>
+					<img src="images/figures/pca_proteins.png" width="49%" style="margin-left:auto;margin-right:auto" />
+					<img src="images/figures/mds_proteins.png" width="49%" style="margin-left:auto;margin-right:auto" />
 
 				</div>
 				<div id="statistical-differential-analysis" class="section level3">
@@ -166,8 +178,9 @@
 						represents the DEPs identified. Followed by comparison-specific volcano
 						plots.
 					</p>
-					<img src="images/figures/DE_protein_barplot.png" width="49%" style="margin-left:auto;margin-right:auto"/>
-					<img src="images/figures/volcano_plot.png" width="49%" style="margin-left:auto;margin-right:auto"/>
+					<img src="images/figures/DE_protein_barplot.png" width="49%"
+						style="margin-left:auto;margin-right:auto" />
+					<img src="images/figures/volcano_plot.png" width="49%" style="margin-left:auto;margin-right:auto" />
 				</div>
 				<div id="report-creation-and-download-of-the-results" class="section level3">
 					<h3>04. Report creation and download of the results</h3>
@@ -177,7 +190,8 @@
 							href="#details-on-the-output-files">4. Details on the output files</a>.
 						All the files are group in a <em>zip</em> file and downloaded.
 					</p>
-					<img src="images/figures/protn_report.html(screen).png" width="75%" style="display:block;margin-left:auto;margin-right:auto"/>
+					<img src="images/figures/protn_report.html(screen).png" width="75%"
+						style="display:block;margin-left:auto;margin-right:auto" />
 
 				</div>
 				<h2>ADDITIONAL STEPS:</h2>
@@ -205,8 +219,9 @@
 							Transcription, Pathways, Ontologies, Diseases/Drugs, Cell Types, Misc,
 							Legacy, and Crowd.
 						</p>
-						
-						<p><a href="https://maayanlab.cloud/Enrichr/"><img src="images/enrichr_logo.png" width="200px" alt=""/></a></p>
+
+						<p><a href="https://maayanlab.cloud/Enrichr/"><img src="images/enrichr_logo.png" width="200px"
+									alt="" /></a></p>
 					</div>
 					<p>Since the analysis that a user wants to perform can be different,
 						each comparison has 3 sets of proteins: the Up-regulated (called Up),
@@ -244,7 +259,8 @@
 						on words to search on the term description, it uses the list of words in
 						column Terms to search.
 					</p>
-					<img src="images/figures/enrichment.png" width="50%" style="display:block;margin-left:auto;margin-right:auto"/>
+					<img src="images/figures/enrichment.png" width="50%"
+						style="display:block;margin-left:auto;margin-right:auto" />
 					<h4>E1.1. Enrichment analysis of the whole set of proteins discovered by the experiment</h4>
 					<p>In same cases can be usefull have the enrichment of the whole proteome discovered by the
 						experiment.
@@ -270,7 +286,8 @@
 							using <a href="https://string-db.org/">STRING</a> <span class="citation">(Szklarczyk et al.
 								2021)</span>.
 						</p>
-						<p><a href="https://string-db.org/"><img src="images/string_logo_2015.png" width="200" alt=""></a></p>
+						<p><a href="https://string-db.org/"><img src="images/string_logo_2015.png" width="200"
+									alt=""></a></p>
 					</div>
 					<p>The species-specific database is retrieved from STRING server, an
 						accurate analysis discover all the interactions and an iGraph <span class="citation">(Csardi and
@@ -282,7 +299,8 @@
 						are used: Fruchterman-Reingold algorithm and the Kamada-Kawai
 						algorithm.
 					</p>
-					<img src="images/figures/Risorsa 3.svg" width="75%" style="display:block;margin-left:auto;margin-right:auto"/>
+					<img src="images/figures/Risorsa 3.svg" width="75%"
+						style="display:block;margin-left:auto;margin-right:auto" />
 				</div>
 			</div>
 		</li>
@@ -319,7 +337,8 @@
 					</li>
 					<li>
 						<p><code>Sample Annotation file</code>: file with the information about the
-							samples and the correlation between replicate ID and condition (WARNING: Condition name MUST contain at least 1 character!). The
+							samples and the correlation between replicate ID and condition (WARNING: Condition name MUST
+							contain at least 1 character!). The
 							<strong>Sample_Annotation</strong> file is an Excel file with the following column
 							<button id="preview_input" type="button" class="btn_example" data-toggle="modal"
 								data-target="#modal_Input_Example">[Example of an Sample_Annotation file
@@ -328,7 +347,8 @@
 						<ul>
 							<li><strong>Condition</strong> column (<code>REQUIRED</code>): define
 								the condition of each sample that divide the samples in groups. The
-								conditions need to be the same of the the Contrast Design. (WARNING: Condition name MUST contain at least 1 character!)
+								conditions need to be the same of the the Contrast Design. (WARNING: Condition name MUST
+								contain at least 1 character!)
 							</li>
 							<li><strong>Color</strong> columns (<code>OPTIONAL</code>): define a
 								color for the samples in the graphs. If not present use a default
@@ -347,7 +367,8 @@
 									</li>
 									<li>In case of <strong>MQ</strong> analysis the this column is
 										<code>REQUIRED</code>
-									</li><strong><code>ATTENTION</code></strong> <strong>: SAMPLE NAME MUST BE EQUAL TO THE NAME INSERTED IN MAXQUANT (name of the column in peptide file).</strong>
+									</li><strong><code>ATTENTION</code></strong> <strong>: SAMPLE NAME MUST BE EQUAL TO
+										THE NAME INSERTED IN MAXQUANT (name of the column in peptide file).</strong>
 								</ul>
 							</li>
 						</ul>
@@ -511,118 +532,163 @@
 				<ul>
 					<li><code>report.html</code>: complete report of the analysis with all pics and results of the
 						enrichment.</li>
-					<li><code>database_env_R.RData</code>: RData containing the essential variables for further
-						analysis.</li>
-					<li><code>normalised_intensity_table.xlsx</code>: excel file with the matrix used in the analysis.
-						In sheet <em>Normalized proteins matrix intensity</em> is written the normalized and imputed
-						version of the original intensities of each protein in each sample. In sheet <em>Normalized
-							peptides matrix intensity</em> is written the normalized and imputed version of the original
-						intensities of each peptide in each sample. In sheet <em>Normalized proteins intensity group
-							by</em> is written the average and the standard deviation of each condition described in the
-						Sample Annotation file for each protein. In sheet <em>Normalized peptides intensity group
-							by</em> is written the average and the standard deviation of each condition described in the
-						Sample Annotation file for each peptide.
-					</li>
-					<li>
-						<code>DEPs_table.xlsx</code>: summary of the result of Limma. In
-						sheet <em>DEPs_proteins</em>, Column <em>id</em> is the name of the
-						protein. In sheet <em>DEPs_peptides</em>, column <em>Accession</em> is
-						the UniprotID of protein, column <em>Description</em> is the description
-						of protein, <em>GeneName</em> is Gene Symbol, <em>Annotated
-							Sequence</em> is the sequence of peptides, <em>Modifications</em> is the
-						modification that affect the peptides, <em>Position in Master
-							Proteins</em> is the UniprotID with the position on the sequence, <em>tryptic_cond</em> is
-						the status of the tryptic for each peptide. For
-						each contrast rule are present 5 columns:
+					<li><strong>Data folder</strong>
 						<ul>
-							<li><em>class</em>: is “+” if the protein is up-regulated following the parameters set, “-”
-								if the protein is down-regulated, “=” otherwise</li>
-							<li><em>log2_FC</em>: is the log2 Fold Change of the contrast</li>
-							<li><em>p_val</em>: is the p. value</li>
-							<li><em>p_adj</em>: is the adjusted p. value</li>
-							<li><em>log2_expr</em>: is the signal log2 expression</li>
-						</ul>
-					</li>
-					<li><code>MDS</code>
-						<ul>
-							<li><code>general_mds_proteins.pdf</code>: MDS of the samples by proteins.</li>
-							<li><code>general_mds_peptides.pdf</code>: MDS of the samples by peptides.</li>
-							<li><code>corrected_mds_proteins.pdf</code>: MDS of the samples by proteins after the bacth
-								effect correction.</li>
-							<li><code>corrected_mds_peptides.pdf</code>: MDS of the samples by peptides after the bacth
-								effect correction.</li>
-							<li><code>DEPs_proteins_mds.pdf</code>: MDS of the DEPs discovered based on proteins.</li>
-							<li><code>DEPs_peptides_mds.pdf</code>: MDS of the DEPs discovered based on peptides.</li>
-						</ul>
-					</li>
-					<li><code>PCA</code>
-						<ul>
-							<li><code>general_pca_proteins.pdf</code>: PCA of the samples by proteins.</li>
-							<li><code>general_pca_peptides.pdf</code>: PCA of the samples by peptides.</li>
-							<li><code>corrected_pca_proteins.pdf</code>: PCA of the samples by proteins after the bacth
-								effect correction.</li>
-							<li><code>corrected_pca_peptides.pdf</code>: PCA of the samples by peptides after the bacth
-								effect correction.</li>
-							<li><code>DEPs_proteins_pca.pdf</code>: PCA of the DEPs discovered based on proteins.</li>
-							<li><code>DEPs_peptides_pca.pdf</code>: PCA of the DEPs discovered based on peptides.</li>
-						</ul>
-					</li>
-					<li><code>boxplot_control_intensity.pdf</code>: boxplot for the control of the intensities of
-						selected proteins.</li>
-					<li><code>DEPs_proteins_count_barplot.pdf</code>: number of DEPs find for each contrast design based
-						on proteins. Light grey are the
-						down-regulated, dark grey are the up-regulated genes.</li>
-					<li><code>DEPs_peptides_count_barplot.pdf</code>: number of DEPs find for each contrast design based
-						on peptides. Light grey are the
-						down-regulated, dark grey are the up-regulated genes.</li>
-					<li><code>DEPs_enrichment_data.RData</code>: result of the enrichment made with EnrichR.</li>
-					<li><code>DEPs_enrichment_table.xlsx</code>: excel with only the enriched terms with an high
-						significance (Default: adj.P.Value &lt; 0.05, Overlap Size &gt;= 5).</li>
-					<li><code>DEPs_enrichment_data_universe.RData</code>: result of the enrichment on the whole universe
-						of the experiment made with EnrichR.</li>
-					<li><code>DEPs_enrichment_table_universe.xlsx</code>: excel with only the enriched terms with an
-						high significance (Default: adj.P.Value &lt; 0.05, Overlap Size &gt;= 5).</li>
-					<li>
-						<code>enrich</code> directory: plots of the enrichment data under the parameters selected
-						<ul>
-							<li><code>enrichment_database_filter.pdf</code>: dot matrix of the enrichment result divided
-								in up- and down-regulated genes. Filtered by the datasets choose.</li>
-							<li><code>enrichment_terms_filter.pdf</code>: dot matrix of the enrichment result divided in
-								up- and down-regulated genes. Filtered by the terms written.</li>
-							<li><code>enrichment_database_filter_all.pdf</code>: dot matrix of the enrichment result
-								combining the up- and down- regulated genes in a single list.
-								Filtered by the datasets choose</li>
-							<li><code>enrichment_terms_filter_all.pdf</code>: dot matrix of the enrichment result
-								combining the up- and down- regulated genes in a single list.
-								Filtered by the terms written.</li>
-							<li><code>enrichment_database_filter_universe.pdf</code>: dot matrix of the enrichment
-								result divided in up- and down-regulated genes of the comparisons compared with the
-								universe. Filtered by the datasets choose in the advanced options.</li>
-							<li><code>enrichment_terms_filter_universe.pdf</code>: dot matrix of the enrichment result
-								divided in up- and down-regulated genes of the comparisons compared with the universe.
-								Filtered by the terms written in the advanced options.</li>
-							<li><code>enrichment_database_filter_all_universe.pdf</code>: dot matrix of the enrichment
-								result combining the up- and down- regulated genes in a single list, comparisons versus
-								background the proteins discovered by the experiment. Filtered by the datasets choose in
-								the advanced options.</li>
-							<li><code>enrichment_terms_filter_all_universe.pdf</code>: dot matrix of the enrichment
-								result combining the up- and down- regulated genes in a single list, comparisons versus
-								background the proteins discovered by the experiment. Filtered by the terms written in
-								the advanced options.</li>
-						</ul>
-					</li>
-					<li>
-						<code>network</code> directory: plots of the up- and down-
-						regulated genes based on STRINGdb. For each contrast design are create 2
-						files:
-						<!-- - **Prefilter**: histogram representing the number of genes in each community discovered. -->
-						<ul>
-							<li><code>Postfilter</code>: histogram representing the number of
-								genes in each community discovered after a filter on the genes and on
-								the links.
+							<li><code>protn_env.RData</code>: RData object containing the essential
+								variables and data for additional analyses in R. The variables are:
+								<ul>
+									<li><em>c_anno</em>: dataframe with the description of the samples;</li>
+									<li><em>dat_gene</em>: dataframe with the protein normalized
+										abundances;</li>
+									<li><em>dat_pep</em>: dataframe with the peptide normalized
+										abundances;</li>
+									<li><em>psm_peptide_table</em>: descriptive dataframe of the
+										peptides;</li>
+									<li><em>deps_l_df</em>: dataframe of differential expressed
+										proteins;</li>
+									<li><em>deps_pep_l_df</em>: dataframe of differential expressed
+										peptides;</li>
+									<li><em>expr_avgse_df</em>: dataframe with average, standard error and
+										covariance for each condition based on protein abundances;</li>
+									<li><em>expr_avgse_pep_df</em>: dataframe with average, standard error
+										and covariance for each condition based on peptide abundances;</li>
+									<li><em>formule_contrast</em>: design for the differential
+										analysis;</li>
+									<li>Settings: <em>colour_vec</em>: color list for the plot, <em>bf</em>:
+										family text, <em>bs</em>: base text size;</li>
+									<li>Thresholds: <em>fc_thr</em>: Fold Change threshold,
+										<em>pval_thr</em>: P.value threshold, <em>pval_enrich_thr</em>: P.value
+										threshold for Enrichment, <em>overlap_size_enrich_thr</em>: Overlap size
+										threshold for enrichment.
+									</li>
+								</ul>
 							</li>
-							<li><code>Graph</code>: visual representation of the network
-								discovered in two layouts: <em>fr</em> and <em>kk</em>.
+							<li><code>enrichment_DE.RData</code>: RData object containing enrichment
+								results based on differentially expressed proteins</li>
+						</ul>
+					</li>
+					<li><strong>Tables folder</strong>
+						<ul>
+							<li><code>normalised_abundances.xlsx</code>: excel file containing
+								abundance values generated by proTN. abundances are log2 transformed,
+								normalized, imputed (and batch corrected). The file is organized in the
+								following sheets:
+								<ul>
+									<li><strong>protein_per_sample</strong>: protein abundances per
+										sample.</li>
+									<li><strong>peptide_per_sample</strong>: peptide abundances per
+										sample.</li>
+									<li><strong>protein_per_condition</strong>: protein abundances per
+										condition (average &amp; standard deviation), as defined in the Sample
+										Annotation.</li>
+									<li><strong>peptide_per_condition</strong>: peptide abundances per
+										condition (average &amp; standard deviation), as defined in the Sample
+										Annotation.</li>
+								</ul>
+							</li>
+							<li><code>differential_expression.xlsx</code>: excel file containing the
+								results of differential analysis, according to the contrasts defined in
+								the Design file. The file is organized in the following sheets:
+								<ul>
+									<li><strong>protein_DE</strong>: protein differential expression results
+										protein abundances per sample.</li>
+									<li><strong>peptide_DE</strong>: peptide differential expression
+										results. Annotation columns:</li>
+									<li><strong>Accession</strong>: protein UniprotID</li>
+									<li><strong>Description</strong>: protein description</li>
+									<li><strong>GeneName</strong>: Gene Symbol</li>
+									<li><strong>Peptide_Sequence</strong>: peptide sequence</li>
+									<li><strong>Peptide_Modifications</strong>: peptide modifications</li>
+									<li><strong>Peptide_Position</strong>: start and end position of the
+										peptide within the protein sequence, defined UniprotID</li>
+									<li><strong>Peptide_Tryptic</strong>: peptide tryptic digestion status
+										(fully tryptic, N-semi tryptic, C-semi tryptic, non tryptic)</li>
+									<li>Columns for each contrast:</li>
+									<li><strong>class</strong>: defined according to the fold change,
+										p-value and abundance thresholds specified in the input</li>
+									<li><em>+</em> up-regulated protein/peptide</li>
+									<li><em>-</em> down-regulated protein/peptide</li>
+									<li><em>=</em> invariant protein/peptide</li>
+									<li><strong>log2_FC</strong>: protein/peptide log2 transformed fold
+										change</li>
+									<li><strong>p_val</strong>: protein/peptide contrast p-value</li>
+									<li><strong>p_adj</strong>: protein/peptide adjusted p-value (FDR after
+										BH correction)</li>
+									<li><strong>log2_expr</strong>: protein/peptide log2 average
+										abundance</li>
+								</ul>
+							</li>
+							<li><code>enrichment_DE.xlsx</code>: excel file containing a selection
+								of enrichment results starting from differentially expressed proteins.
+								Terms are selected according to significance thresholds specified in the
+								input (Default: adj.P.Value &lt; 0.05, Overlap Size &gt;= 5)</li>
+						</ul>
+					</li>
+					<li><strong>Figures folder</strong>
+						<ul>
+							<li><code>PCA_MDS</code> directory: Directory containing
+								(Multidimensional scaling) and PCA (Principal component analysis) plots
+								of samples.
+								<ul>
+									<li><strong>mds_proteins.pdf</strong>: MDS, based on protein
+										abundances.</li>
+									<li><strong>mds_peptides.pdf</strong>: MDS of the samples by
+										peptides.</li>
+									<li><strong>pca_protein.pdf</strong>: PCA of the samples by
+										proteins.</li>
+									<li><strong>pca_peptides.pdf</strong>: PCA of the samples by
+										peptides.</li>
+									<li><strong>DE_mds_protein.pdf</strong>: MDS based on differentially
+										expressed proteins.</li>
+									<li><strong>DE_mds_peptide.pdf</strong>: MDS based on differentially
+										expressed peptides.</li>
+									<li><strong>DE_pca_protein.pdf</strong>: PCA based on differentially
+										expressed proteins.</li>
+									<li><strong>DE_pca_peptide.pdf</strong>: PCA based on differentially
+										expressed peptides.</li>
+								</ul>
+							</li>
+							<li><code>Expression</code> directory: Directory containing figures
+								related to expression analyses.
+								<ul>
+									<li><strong>selected_protein_plot.pdf</strong>: plot displaying the
+										abundances of selected proteins</li>
+									<li><strong>DE_protein_barplot.pdf</strong>: number of differentially
+										expressed proteins found in each contrast.</li>
+									<li><strong>DE_peptide_barplot.pdf</strong>: number of differentially
+										expressed peptides found in each contrast.</li>
+								</ul>
+							</li>
+							<li><code>Enrichment</code> directory: Directory containing figures from
+								functional annotation enrichment analysi
+								<ul>
+									<li><strong>enr_updown_keysources.pdf</strong>: dot plot of top enriched
+										terms based on differentially expressed proteins, divided in up- and
+										down-regulated. Terms are filtered for key source datasets selected in
+										the advanced options.</li>
+									<li><strong>enr_updown_keywords.pdf</strong>: dot plot of top enriched
+										terms based on differentially expressed proteins, divided in up- and
+										down-regulated. Terms are filtered for keywords defined in the advanced
+										options.</li>
+									<li><strong>enr_DE_keysources.pdf</strong>: dot plot of top enriched
+										terms based on differentially expressed proteins. Terms are filtered for
+										key source datasets selected in the advanced options.</li>
+									<li><strong>enr_DE_keywords.pdf</strong>: dot plot of top enriched terms
+										based on differentially expressed proteins. Terms are filtered for
+										keywords defined in the advanced options.</li>
+								</ul>
+							</li>
+							<li><code>Network</code> directory: Directory with figures from network
+								analysis of differentially expressed proteins, based on STRINGdb
+								protein-protein interactions. For each contrast, two files are
+								generated:
+								<ul>
+									<li><strong>communities_sizes.pdf</strong>: histogram representing the
+										number of protein in each network community.</li>
+									<li><strong>ppi_network.pdf</strong>: network representation in two
+										layouts: Fruchterman Reingold (<em>fr</em>) and Kamada Kawai
+										(<em>kk</em>).</li>
+								</ul>
 							</li>
 						</ul>
 					</li>
