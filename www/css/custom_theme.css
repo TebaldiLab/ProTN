@@ -1,4 +1,11 @@
-
+/*############################################################################*/
+/* ProTN: an integrative pipeline for complete analysis of proteomics         */ 
+/* data from mass spectrometry                                                */
+/* Laboratory of RNA and Disease Data Science, University of Trento           */
+/* Developer: Gabriele Tomè                                                   */
+/* Issue at: https://github.com/TebaldiLab/ProTN/issues                       */
+/* PI: Dr. Toma Tebaldi, PhD                                                  */
+/*############################################################################*/
 .skin-black .main-header>.logo {
   background-color: #222d32;
   border-right: 0px;
