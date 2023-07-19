@@ -43,6 +43,15 @@ params:
   dirOutput: NA
 ---
 
+<!--############################################################################
+# ProTN: an integrative pipeline for complete analysis of proteomics           # 
+# data from mass spectrometry                                                  #
+# Laboratory of RNA and Disease Data Science, University of Trento             #
+# Developer: Gabriele Tomè                                                     #
+# Issue at: https://github.com/TebaldiLab/ProTN/issues                         #
+# PI: Dr. Toma Tebaldi, PhD                                                    #
+#############################################################################-->
+
 ```{r settings, message=F, warning=F, echo=F,results='hide'}
 shiny::setProgress(0, detail = "Initialize...")  # set progress to 50%
 
