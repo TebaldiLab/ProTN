@@ -1,9 +1,18 @@
+################################################################################
+# ProTN: an integrative pipeline for complete analysis of proteomics           # 
+# data from mass spectrometry                                                  #
+# Laboratory of RNA and Disease Data Science, University of Trento             #
+# Developer: Gabriele Tomè                                                     #
+# Issue at: https://github.com/TebaldiLab/ProTN/issues                         #
+# PI: Dr. Toma Tebaldi, PhD                                                    #
+################################################################################
 list.of.packages <- c("shiny","tidyverse","markdown","knitr","shinydashboard",
                       "shinydashboardPlus","shinymaterial","shinyjs","magrittr",
                       "dplyr","stringr","shinyBS")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) suppressMessages(suppressWarnings({install.packages(new.packages, dependencies = T)}))
 
+#Load library
 library(shiny)
 library(tidyverse)
 library(markdown)
@@ -17,6 +26,7 @@ library(dplyr)
 library(stringr)
 library(shinyBS)
 
+#Javascript code to disable click when is running the app
 jsCode <- "shinyjs.pageDisable = function(params){
               $('body').css('pointer-events', params);
             };"
@@ -31,6 +41,7 @@ ui <- tagList(
       title=tags$a(href="#shiny-tab-info",
                    tags$img(id="logo_protn"))
     ),
+    #Sidebar menu
     sidebar=dashboardSidebar(
       sidebarMenu(
         menuItem("Info ProTN", tabName = "info", icon = icon("info-circle", lib="font-awesome")),
@@ -40,24 +51,27 @@ ui <- tagList(
         menuItem("Contacts", tabName = "contacts", icon = icon("comment", lib="font-awesome"))
       )
     ),
+    #Main body web page
     body=dashboardBody(
-      
-      tags$head(tags$link(rel="shortcut icon", href="images/logo_black.ico")),
+      #Load associated file, CSS, JS, logo
       useShinyjs(),
+      tags$meta(charset = "UTF-8"),
+      tags$head(tags$link(rel="shortcut icon", href="images/logo_black.ico")),
       tags$head(tags$script(src="https://kit.fontawesome.com/5d5f342cf8.js")),
       tags$link(rel="stylesheet", href="https://fonts.googleapis.com/css?family=El+Messiri"),
       includeCSS("www/css/custom_theme.css"),
-      tags$meta(charset = "UTF-8"),
       includeCSS("www/css/materialize.css"),
       includeScript("www/js/materialize.js"),
       extendShinyjs(text = jsCode, functions = c("pageDisable")),
       
+      #Busy panel when app is running
       conditionalPanel(
         condition = "$(\'html\').hasClass(\'shiny-busy\')",
         tags$div(class = "loader"),
         tags$div(class = "prevent_click")
       ),    
       tabItems(
+        #INFO tab ProTN
         tabItem(
           tabName = "info",
           includeHTML("www/README.html"),
@@ -72,6 +86,7 @@ ui <- tagList(
                   size = "large",
                   DT::dataTableOutput("input_df"))
         ),
+        #Execution tab of ProTN
         tabItem(
           tabName = "analysis_protn",
           tagList(
@@ -122,6 +137,7 @@ ui <- tagList(
             uiOutput("input_params")
           )
         ),
+        #Info tab PhosProTN
         tabItem(
           tabName = "info_phos",
           includeHTML("www/README_phos.html"),
@@ -136,6 +152,7 @@ ui <- tagList(
                   size = "large",
                   DT::dataTableOutput("input_df_phos"))
         ),
+        #Execution tab PhosProTN
         tabItem(
           tabName = "analysis_phosprotn",
           tagList(
@@ -171,6 +188,7 @@ ui <- tagList(
             uiOutput("input_params_phos")
           )
         ),
+        #Contact tab
         tabItem(
           tabName = "contacts",
           tagList(
@@ -194,13 +212,16 @@ ui <- tagList(
       )
     )
   ),
+  #Footer with lab, name and university
   tags$footer(
     tags$div(
       class="footer-row",
       tags$div(class="footer-col", style="text-align: left;",tags$p("Gabriele Tomè, Toma Tebaldi")),
-      tags$div(class="footer-col",tags$div(tags$img(id="logo_RDDS_footer",
-                                                    src="data:image/svg+xml;base64,PHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4MDUuMzMgODAxLjY3Ij48ZGVmcz48c3R5bGU+LmNscy0xe2ZpbGw6IzA4OGY4Zjt9LmNscy0ye2ZpbGw6bm9uZTtzdHJva2U6IzA4OGY4ZjtzdHJva2UtbWl0ZXJsaW1pdDoxMDtzdHJva2Utd2lkdGg6NXB4O308L3N0eWxlPjwvZGVmcz48ZyBpZD0iWWluWWFuZyI+PHBhdGggY2xhc3M9ImNscy0xIiBkPSJNNjM3LjE5LDQ2MS40N0E1LjIyLDUuMjIsMCwwLDAsNjQyLDQ2M2EyNy42LDI3LjYsMCwwLDAsMjMuMzctMTkuNDMsNS4xMiw1LjEyLDAsMCwwLS43My00Ljc5bC00Ny01Ni42MmEyMDUuNTUsMjA1LjU1LDAsMCwxLTI4LjY3LDIxLjE2WiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTI2LjgzIC0yMS42NykiLz48cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik01NDMsNDFhMzc3LjU4LDM3Ny41OCwwLDAsMSwzOC40MSwxMS43OSw0MDMuMjQsNDAzLjI0LDAsMCwwLTU3LjcyLTE5LjFDMzA5LjM1LTE5Ljc5LDkyLjI1LDExMC42NSwzOC44MSwzMjVzNzcsNDMxLjQ0LDI5MS4zNSw0ODQuODlhNDAzLjY3LDQwMy42NywwLDAsMCw2Ni42NCwxMC44LDM3NS40NCwzNzUuNDQsMCwwLDEtNDYuMDktOC40OEMyNjMuNjIsNzkwLjQ5LDIwMS44OCw3MjIsMjAwLjgyLDYzNC4yN0gxMzMuNjRjLTYuNzMsMC0xMCwuNDUtMTMuMzctMi4zNnMtMi45My04LjQtMi45My0xMy4zNGMwLTguODEtLjQ2LTExLjExLDMuMzUtMTUsMy0zLDEwLjcxLTIuMDksMTctMiw2LjEzLjA5LDE0LjY4LDAsMTkuOTIsMCw2LjE0LDAsMTMtLjEzLDE5LjE3LDBzMTAuNCwwLDE2LjYzLDBoNS4xYTUuMzksNS4zOSwwLDAsMSwuNzEtLjA1LDYuNSw2LjUsMCwwLDEsLjc5LjA2aC4xOGE1Ljg0LDUuODQsMCwwLDEsLjczLS4wNSw2Ljg0LDYuODQsMCwwLDEsLjgxLjA2aDBhMTk0Ljg3LDE5NC44NywwLDAsMSw0LjUzLTI0LjkzYzExLjg3LTQ3LjYyLDQ4LTkyLjg1LDk1LjIxLTEyMi4wOUwyOTksNDUwLjE5bC01LjY5LTkuODVMMjg1LDQyNmwtNy4wOC0xMi4yN0wyNzAuNTUsNDAxYy0yLjYtNC41MS01LjUxLTguOTUtNy43OS0xMy42NGE1LjcyLDUuNzIsMCwwLDEtLjctMy4zMWMuMDUtMS4xLjE5LTUsMy43MS03LjQsMS4xMy0uNzYsMy43OC0yLjI5LDQuNC0yLjY1bDYtMy40NWMyLjU1LTEuNDcsNC44OS0zLjczLDkuMzMtMi44NSw2LDEuMiw4LjI0LDguMDUsMTEsMTIuOGwxMS4xMywxOS4yOCw0LjE0LDcuMTcsNC4yMiw3LjMyYzEuOTIsMy4zMSw3LjIxLDEyLjMzLDkuMDUsMTUuNjcuOSwxLjYxLDEuMzIsMi4xNCwxLjg0LDMuMTkuMTQuMjcuMjguNDIuNzUsMS4yOS42LDEuMTIuNzQsMS4xMiwxLjE0LDJsLjA5LjE4Yy40NS43NiwxLDEuODIsMS40MywyLjQ2LDM2Ljk1LTE2LjUsNzcuMzQtMjIuMjQsMTE2LjYxLTEyLjQ1QzQ5Ni41Niw0MzksNTQ3LDQyOSw1ODguOTIsNDAzLjM2bC01Ni40Ny02OGE0LjU2LDQuNTYsMCwwLDEtMS0zLjIyQTEyMiwxMjIsMCwwLDEsNDQxLDM0NS43OGMtNjUuNTEtMTUuNjItMTA2LjM3LTgyLjEyLTkwLjYzLTE0Ny42MWExMjIuMzgsMTIyLjM4LDAsMCwxLDE0OS43Mi04OS44OGM2NC4wNiwxNi42MSwxMDMuNTQsODIsODguNDEsMTQ2LjM5YTEyMS45MywxMjEuOTMsMCwwLDEtMzAuNjgsNTYuNjQsNC4yNiw0LjI2LDAsMCwxLDIsMS4zM2w1Ny43OCw2OS41NWEyMTAuMjgsMjEwLjI4LDAsMCwwLDY1LjA5LTEwNi44N0M3MDMsMTk0LDY0Niw2Ni42NSw1NDMsNDFaIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMjYuODMgLTIxLjY3KSIvPjxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTU4MS40Miw1Mi43NUM3NjAuNzksMTI3LjU4LDg2My41LDMyNC4xOSw4MTUuMDUsNTE4LjU0Yy00Ny45LDE5Mi4xLTIyNy4yNCwzMTYuOC00MTguMjUsMzAyLjE1LDE5MC4zOCwyMi44OCwzNzMuOTQtMTA0LDQyMy4wOC0zMDEuMUM4NjkuNTksMzIwLjIxLDc2NC4xMiwxMTkuNjgsNTgxLjQyLDUyLjc1WiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTI2LjgzIC0yMS42NykiLz48L2c+PHBhdGggY2xhc3M9ImNscy0xIiBkPSJNNDY2LjM3LDgxMC4xOUEzNi40MiwzNi40MiwwLDAsMSw0NTIsODA3LjMyYTQzLjEyLDQzLjEyLDAsMCwxLTEzLjQ1LTkuMzgsMTAzLjE2LDEwMy4xNiwwLDAsMS0xMy43Mi0xNy42N2wtMjEuNjYtMzQuNTItOC41NiwwLC40NSw2Mi41LTI4LC4wNi0uOC0xMDkuNjhxLS4wOC05LjMxLTIuNzktMTVUMzUxLjA5LDY3OEgzNDlsMC02LjIxLDU5LjA4LS4xMnE1Ljc3LDAsMTMuMzguNjlhODcuNDUsODcuNDUsMCwwLDEsMTUuMzMsMi44Nyw1NS43Nyw1NS43NywwLDAsMSwxNC4zOSw2LjI4LDMyLjYxLDMyLjYxLDAsMCwxLDEwLjc4LDEwLjg1cTQuMTEsNi43MSw0LjE5LDE2LjY1LjA3LDExLTQuOSwxNy45MWEzNC42LDM0LjYsMCwwLDEtMTIuODcsMTAuODlBODUuNjYsODUuNjYsMCwwLDEsNDMxLjY0LDc0NGwyMi43NCwzNi4xN3E4LjI0LDEzLjIzLDE1LjExLDE3LjU2dDExLjYsNS4xNWwwLDUuMTdhMjMuMjYsMjMuMjYsMCwwLDEtNi4wOSwxLjQ2QTYxLjA4LDYxLjA4LDAsMCwxLDQ2Ni4zNyw4MTAuMTlabS03MS44MS03Mi43LDEyLjg0LDBBMzcuNzUsMzcuNzUsMCwwLDAsNDE3LjY2LDczNmEyNi4yMSwyNi4yMSwwLDAsMCw5LjI4LTQuNzgsMjMuNTgsMjMuNTgsMCwwLDAsNi42OC04LjkxLDMyLjYsMzIuNiwwLDAsMCwyLjQ3LTEzLjY3LDMzLjM0LDMzLjM0LDAsMCwwLTIuNTYtMTMuNTUsMjQuMjEsMjQuMjEsMCwwLDAtNi43LTguODgsMjUuODcsMjUuODcsMCwwLDAtOS4yNS00Ljg1LDM2LjgzLDM2LjgzLDAsMCwwLTEwLjE3LTEuNDJjLTEuMTUsMC0yLjgyLjA3LTUsLjIxYTYxLjMyLDYxLjMyLDAsMCwwLTguMjMsMS4yNloiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0yNi44MyAtMjEuNjcpIi8+PHBhdGggY2xhc3M9ImNscy0xIiBkPSJNNTI5Ljc4LDc5NS4yOGwtNDYtMTAwLjIxcS0zLjkxLTguNTEtOC42MS0xMi42OXQtMTMuMDUtLjU0bC0xLjg1LjgxLTIuNi01LjY3LDUwLjQyLTIyLjA1cTM4LjE4LTE2LjcxLDY0LjkyLTguNjV0MzkuOTMsMzYuOHE4LjU5LDE4LjcsNi44NSwzNi41dC0xNCwzMi44cS0xMi4yNSwxNS0zNS42MSwyNS4yMlptMzYuMzgtMjVhNDMuNTcsNDMuNTcsMCwwLDAsMjAtMTYuNjdxNy0xMSw3LjA4LTI1LjhUNTg1LjQ4LDY5NnEtNy42My0xNi42My0xOC45My0yNi40NUE1MC44OCw1MC44OCwwLDAsMCw1NDIsNjU3LjM0YTQ1LjA3LDQ1LjA3LDAsMCwwLTI2LjU4LDMuNDVxLTQuMDgsMS43OS03LDMuMjdhODcuNjUsODcuNjUsMCwwLDAtNy44Miw0Ljc4bDQ5LjEzLDEwN3E0LjQzLTEsNi44Ny0xLjc2YTM3LjEzLDM3LjEzLDAsMCwwLDQuNDktMS42MloiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0yNi44MyAtMjEuNjcpIi8+PHBhdGggY2xhc3M9ImNscy0xIiBkPSJNNjkxLjI3LDcwNi41OGwtODUuNjQtNzFxLTcuMjYtNi0xMy4zNS03LjgxdC0xMiw1LjA1TDU3OSw2MzQuMzVsLTQuODUtNEw2MDkuNzUsNTg5cTI3LTMxLjMxLDU0LjU1LTM1LjM5dDUyLjE2LDE2LjI4cTE2LDEzLjI3LDIyLjI5LDMwLjA4dDEuOTEsMzUuNTdxLTQuMzgsMTguNzYtMjAuODcsMzcuOTJabTIxLjY3LTM4QTQyLjU0LDQyLjU0LDAsMCwwLDcyMy41LDY0NXExLjQzLTEyLjktNS0yNi4zMnQtMjEtMjUuNDdxLTE0LjIyLTExLjc5LTI4LjcxLTE1Ljg2dC0yNy40NC0uNjFBNDQuMTMsNDQuMTMsMCwwLDAsNjE5LDU5MS4xNnEtMi44OCwzLjM1LTQuODEsNS45MWE4NS4zNyw4NS4zNywwLDAsMC00LjkyLDcuNjRsOTEuNDUsNzUuODJjMi4zNS0xLjg3LDQuMTUtMy4zOCw1LjQxLTQuNTFhMzguNTUsMzguNTUsMCwwLDAsMy4zMS0zLjM3WiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTI2LjgzIC0yMS42NykiLz48cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik04MDguNzYsNTI2YTg2LjM0LDg2LjM0LDAsMCwxLTYuNzEsMTUuNzMsNjYuODQsNjYuODQsMCwwLDEtOS4zNCwxMy4xNiwzMy4wNywzMy4wNywwLDAsMS0xMSw4LjE3LDE2LDE2LDAsMCwxLTExLjQxLjc4bC0yMy42LTcuMjUsMS43Ni01LjZxMjIsMy4yMiwzMy45Mi0zLjc2dDE3LjIyLTIzLjgxYTM4LjE1LDM4LjE1LDAsMCwwLDItMTQsMTkuNjUsMTkuNjUsMCwwLDAtMy43OC0xMC44MywxOC43OSwxOC43OSwwLDAsMC05LjgyLTYuNDIsMjEsMjEsMCwwLDAtMTYuMTUsMS4wOSw3OS4xMSw3OS4xMSwwLDAsMC0xNi4zNiwxMS41NmwtMjIuNjcsMjBxLTEyLjM0LDExLjE1LTIyLjU5LDE0LjE1YTM2LjMyLDM2LjMyLDAsMCwxLTIxLjMzLS4zOXEtMTUuOTMtNC44OS0yMS40LTE5Ljg2dDEtMzUuNTlhODYuNjQsODYuNjQsMCwwLDEsNi43MS0xNS43Myw2Ni44NCw2Ni44NCwwLDAsMSw5LjM0LTEzLjE2LDM0LDM0LDAsMCwxLDEwLjg3LTguMiwxNiwxNiwwLDAsMSwxMS41Mi0uNzVsMjMuNiw3LjI0LTEuNzYsNS42MXEtMjItMy0zMy44OSwzLjY2VDY3OC4yOCw0ODMuOGEzMS4yMiwzMS4yMiwwLDAsMC0xLjUyLDEzLjI2QTE5LjIxLDE5LjIxLDAsMCwwLDY4MSw1MDcuMjVhMTkuNDIsMTkuNDIsMCwwLDAsOS41LDYsMTguNzMsMTguNzMsMCwwLDAsMTUuNTItMS41QTk5LjA3LDk5LjA3LDAsMCwwLDcyMS42Myw1MDBsMjIuNDgtMjAuMTFxMTIuMzUtMTEuMTQsMjIuMS0xNS4wN3QyMC44NC0uNTNxMTcuMzYsNS4zMywyMy4zNCwyMS40NFQ4MDguNzYsNTI2WiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTI2LjgzIC0yMS42NykiLz48cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik00MjUuMjMsNDE1LjFoMzIuNjhhMCwwLDAsMCwxLDAsMHY4NC40NmE5LDksMCwwLDEtOSw5SDQzNC4yM2E5LDksMCwwLDEtOS05VjQxNS4xYTAsMCwwLDAsMSwwLDBaIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgyLjk3IC00OC40NCkgcm90YXRlKDMuNTkpIi8+PHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMjQ5LjcyLDQ5My41M0gyODIuNGEwLDAsMCwwLDEsMCwwVjU3OGE5LDksMCwwLDEtOSw5SDI1OC43MmE5LDksMCwwLDEtOS05VjQ5My41M2EwLDAsMCwwLDEsMCwwWiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTM1My45MSA0MTQuMzcpIHJvdGF0ZSgtNTMuODIpIi8+PHBhdGggY2xhc3M9ImNscy0yIiBkPSJNMzQ2LjkyLDI3NC43OGM0LjUtNy4zNSw2LjgxLTksOC4wNS04LjU3LDEsLjM0LDEuMzksMi4xNiwyLjg2LDIuMzNhMy40OCwzLjQ4LDAsMCwwLDIuNi0xLjNjNC00LjA4LDkuODUtNS44MiwxNC41NC05LjA5LDEyLjgyLTguOTIsMzAuNjUtMS4zOSwzNC41Ni05LjYxLDEuMTctMi40NiwwLTQuMDgsMi4wNy03LjUzYTE1LjIxLDE1LjIxLDAsMCwxLDguNTgtNi41YzMuMDUtLjgxLDguMjktMS4wOCwxMS4xNywxLjgyLDEsMSwuOTMsMS42NywyLjYsMy4zOCwxLjM4LDEuNDEsNC4yNiwzLjg1LDUuNDUsMy4xMSwxLS42LS4zMi0yLjY0LDEtNC45M2E0LjU0LDQuNTQsMCwwLDEsMy4zOC0yLjM0YzEuNDQtLjA1LDEuODQsMS4wOCwyLjg2LDEsMi4xMi0uMDgsMi40LTUuMDcsNC45My04LjMxLDQuMzktNS42NCwxNC4zOS00LjU0LDE1LjMzLTQuNDIsMCwwLDMuMzEuNDEsMTYuMzcsNy43OWExMi42OCwxMi42OCwwLDAsMCwzLjYzLDIuNmM4LjM0LDMuOTIsMTQuODEtNC43OCwyNy4yOC00LDIuNDYuMTUuMjUuMzcsMTUuODUsNSw4LjI2LDIuNDgsMTEuOCwzLjMsMTQsNi43NSwyLDMuMTUuNTcsNC43NSwzLjEyLDcuOHM1LjU1LDMsNy41Myw2LjQ5YTEwLjcyLDEwLjcyLDAsMCwxLDEuMyw0Ljk0Yy4zMywzLjkyLDguNzMsMTAuODcsNDIuODcsMjQuMTYiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0yNi44MyAtMjEuNjcpIi8+PHBhdGggY2xhc3M9ImNscy0yIiBkPSJNMzQ1LDIzMS42N2ExOS44MSwxOS44MSwwLDAsMCw1LjE1LTYuMzFjMi4zMy00LjU4LDEuMTItNi45NCwzLjk1LTEwLjY1YTEyLjM0LDEyLjM0LDAsMCwxLDYuMzEtNC41NGMxLjM3LS40LDMtMS4xNSw0LjE0LS4zOS44NS41Ni44NiwxLjQ5LDIsMmEyLjc1LDIuNzUsMCwwLDAsMi4xNywwYy44Ni0uNDQsMS4xNi0xLjM4LDEuNTgtMi43Ni42Mi0yLjA3LjI5LTIuNy43OS0zLjE2Ljk0LS44NywzLjUxLjEsNS41MiwxLjM4LDYuMzYsNC4wNiw3LjMzLDExLjM2LDkuMjcsMTEsMS43NC0uMjksMS42LTYuMzMsMy45NC02LjcxLDEuMDYtLjE3LDEuMjgsMSwyLjc2LDEuMTksMS45Mi4xOCwzLjgtMS44NSw3LjQ5LTUuOTJhMjYuNTIsMjYuNTIsMCwwLDEsMS43OC0yYzIuMDgtMS44Miw2LjEtMy45NSw4LjY4LTIuNTcsMS4yOC43LDEuMTMsMS42OCwzLjk0LDQuMTQuOTEuODEsMS4zOCwxLjIxLDEuNzcsMS4xOSwxLjYyLS4wOCwxLjgzLTMuNzUsNS4xMy04LjQ4LDEuNjQtMi4zNSwyLjc2LTMuMTMsMy45NC0zLjM1LDEuMzUtLjI2LDEuNjMuNDIsMywuMTlzMS42Ny0uOTMsNS4xMy00LjE0YzEuNjEtMS40OSwyLjI4LTIsMy4xNS0yLDEuMTUuMDksMS4zOSwxLjExLDIuMTcsMS4xOCwxLjg3LjE4LDIuNzQtNS4zNSw2LjEyLTkuODZzOS4zMS04LjE5LDEyLjYyLTYuN2MxLjMzLjYsMS44NCwxLjg4LDUuMTIsMy43NSwxLjI5LjczLDEuNzcuODUsMi4zNywxLjE4LDUuMTUsMi44NSw1LDEzLjQ3LDUuOTIsMTMuNDEuNDQsMCwuMTMtMi4zMiwxLjc3LTMuNzVhNCw0LDAsMCwxLDMtMWMyLjEyLjMzLDIuMTIsMi45Miw1LjEzLDQuOTMuNy40NywyLjg5LDEuOTMsNC4zMywxLjE4LDEuOTEtMSwxLjI1LTUuMiwyLjE3LTUuMzNzMS40NSwyLjg0LDIuMTcsMi43N2MxLjE5LS4xMy42OC04LjE5LDIuMTctOC40OHM0LjQyLDguMjEsNS40Niw3LjljLjY2LS4yLDAtMy43MS44NS00czEuOTUsMi42MSwzLDIuMzdjLjg1LS4yMS42My0yLjM4LDEuMzgtMi41NywxLjI4LS4zMywzLjEyLDUuNyw0LjkzLDUuNTIsMS4xNy0uMTEsMS4xLTMuNDgsMi0zLjU1czEuNzcsNC4yNSwzLjk0LDkuNDdjMS42Nyw0LDIuMzUsNi4wOCwzLjE2LDYuMzFDNTIwLDIwNS43NSw1MzAsMTkzLjE4LDUzNSwxNzljMS41NS00LjQ1LDIuMzQtOC4zNCw1LjcyLTkuODZzNy43Ni0uMiwxMi42MiwxLjE5YTI3LjExLDI3LjExLDAsMCwxLDUuNTIsMmMzLjA4LDEuNTksNC42NiwzLjM2LDUuNzIsMi43NnMuNi0zLjA2LDEuMTktMy4xNSwxLjQxLDMuMjEsMi4zNiwzLjE1Yy44LDAsLjkxLTIuNDQsMS43OC0yLjU2czEuNTEsMS45MSwyLjM2LDMuMzVjMi42OSw0LjU1LDYuNzEsMywxMSw3LjQ5LDIuNjYsMi43OSwxLjY2LDMuOTMsNC45Myw3LjMsMi42NiwyLjc1LDQuMzMsMyw1LjkxLDQuNTMsMi4yOCwyLjE3LDQuMTQsNi42NywxLjkzLDE3IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMjYuODMgLTIxLjY3KSIvPjwvc3ZnPg=="
-      ),tags$a(href="https://rdds.it", "Laboratory of RNA and Disease Data Science", style="color: currentcolor;"))),
+      tags$div(class="footer-col",
+               tags$div(
+                 tags$img(id="logo_RDDS_footer",
+                          src="data:image/svg+xml;base64,PHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA4MDUuMzMgODAxLjY3Ij48ZGVmcz48c3R5bGU+LmNscy0xe2ZpbGw6IzA4OGY4Zjt9LmNscy0ye2ZpbGw6bm9uZTtzdHJva2U6IzA4OGY4ZjtzdHJva2UtbWl0ZXJsaW1pdDoxMDtzdHJva2Utd2lkdGg6NXB4O308L3N0eWxlPjwvZGVmcz48ZyBpZD0iWWluWWFuZyI+PHBhdGggY2xhc3M9ImNscy0xIiBkPSJNNjM3LjE5LDQ2MS40N0E1LjIyLDUuMjIsMCwwLDAsNjQyLDQ2M2EyNy42LDI3LjYsMCwwLDAsMjMuMzctMTkuNDMsNS4xMiw1LjEyLDAsMCwwLS43My00Ljc5bC00Ny01Ni42MmEyMDUuNTUsMjA1LjU1LDAsMCwxLTI4LjY3LDIxLjE2WiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTI2LjgzIC0yMS42NykiLz48cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik01NDMsNDFhMzc3LjU4LDM3Ny41OCwwLDAsMSwzOC40MSwxMS43OSw0MDMuMjQsNDAzLjI0LDAsMCwwLTU3LjcyLTE5LjFDMzA5LjM1LTE5Ljc5LDkyLjI1LDExMC42NSwzOC44MSwzMjVzNzcsNDMxLjQ0LDI5MS4zNSw0ODQuODlhNDAzLjY3LDQwMy42NywwLDAsMCw2Ni42NCwxMC44LDM3NS40NCwzNzUuNDQsMCwwLDEtNDYuMDktOC40OEMyNjMuNjIsNzkwLjQ5LDIwMS44OCw3MjIsMjAwLjgyLDYzNC4yN0gxMzMuNjRjLTYuNzMsMC0xMCwuNDUtMTMuMzctMi4zNnMtMi45My04LjQtMi45My0xMy4zNGMwLTguODEtLjQ2LTExLjExLDMuMzUtMTUsMy0zLDEwLjcxLTIuMDksMTctMiw2LjEzLjA5LDE0LjY4LDAsMTkuOTIsMCw2LjE0LDAsMTMtLjEzLDE5LjE3LDBzMTAuNCwwLDE2LjYzLDBoNS4xYTUuMzksNS4zOSwwLDAsMSwuNzEtLjA1LDYuNSw2LjUsMCwwLDEsLjc5LjA2aC4xOGE1Ljg0LDUuODQsMCwwLDEsLjczLS4wNSw2Ljg0LDYuODQsMCwwLDEsLjgxLjA2aDBhMTk0Ljg3LDE5NC44NywwLDAsMSw0LjUzLTI0LjkzYzExLjg3LTQ3LjYyLDQ4LTkyLjg1LDk1LjIxLTEyMi4wOUwyOTksNDUwLjE5bC01LjY5LTkuODVMMjg1LDQyNmwtNy4wOC0xMi4yN0wyNzAuNTUsNDAxYy0yLjYtNC41MS01LjUxLTguOTUtNy43OS0xMy42NGE1LjcyLDUuNzIsMCwwLDEtLjctMy4zMWMuMDUtMS4xLjE5LTUsMy43MS03LjQsMS4xMy0uNzYsMy43OC0yLjI5LDQuNC0yLjY1bDYtMy40NWMyLjU1LTEuNDcsNC44OS0zLjczLDkuMzMtMi44NSw2LDEuMiw4LjI0LDguMDUsMTEsMTIuOGwxMS4xMywxOS4yOCw0LjE0LDcuMTcsNC4yMiw3LjMyYzEuOTIsMy4zMSw3LjIxLDEyLjMzLDkuMDUsMTUuNjcuOSwxLjYxLDEuMzIsMi4xNCwxLjg0LDMuMTkuMTQuMjcuMjguNDIuNzUsMS4yOS42LDEuMTIuNzQsMS4xMiwxLjE0LDJsLjA5LjE4Yy40NS43NiwxLDEuODIsMS40MywyLjQ2LDM2Ljk1LTE2LjUsNzcuMzQtMjIuMjQsMTE2LjYxLTEyLjQ1QzQ5Ni41Niw0MzksNTQ3LDQyOSw1ODguOTIsNDAzLjM2bC01Ni40Ny02OGE0LjU2LDQuNTYsMCwwLDEtMS0zLjIyQTEyMiwxMjIsMCwwLDEsNDQxLDM0NS43OGMtNjUuNTEtMTUuNjItMTA2LjM3LTgyLjEyLTkwLjYzLTE0Ny42MWExMjIuMzgsMTIyLjM4LDAsMCwxLDE0OS43Mi04OS44OGM2NC4wNiwxNi42MSwxMDMuNTQsODIsODguNDEsMTQ2LjM5YTEyMS45MywxMjEuOTMsMCwwLDEtMzAuNjgsNTYuNjQsNC4yNiw0LjI2LDAsMCwxLDIsMS4zM2w1Ny43OCw2OS41NWEyMTAuMjgsMjEwLjI4LDAsMCwwLDY1LjA5LTEwNi44N0M3MDMsMTk0LDY0Niw2Ni42NSw1NDMsNDFaIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMjYuODMgLTIxLjY3KSIvPjxwYXRoIGNsYXNzPSJjbHMtMSIgZD0iTTU4MS40Miw1Mi43NUM3NjAuNzksMTI3LjU4LDg2My41LDMyNC4xOSw4MTUuMDUsNTE4LjU0Yy00Ny45LDE5Mi4xLTIyNy4yNCwzMTYuOC00MTguMjUsMzAyLjE1LDE5MC4zOCwyMi44OCwzNzMuOTQtMTA0LDQyMy4wOC0zMDEuMUM4NjkuNTksMzIwLjIxLDc2NC4xMiwxMTkuNjgsNTgxLjQyLDUyLjc1WiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTI2LjgzIC0yMS42NykiLz48L2c+PHBhdGggY2xhc3M9ImNscy0xIiBkPSJNNDY2LjM3LDgxMC4xOUEzNi40MiwzNi40MiwwLDAsMSw0NTIsODA3LjMyYTQzLjEyLDQzLjEyLDAsMCwxLTEzLjQ1LTkuMzgsMTAzLjE2LDEwMy4xNiwwLDAsMS0xMy43Mi0xNy42N2wtMjEuNjYtMzQuNTItOC41NiwwLC40NSw2Mi41LTI4LC4wNi0uOC0xMDkuNjhxLS4wOC05LjMxLTIuNzktMTVUMzUxLjA5LDY3OEgzNDlsMC02LjIxLDU5LjA4LS4xMnE1Ljc3LDAsMTMuMzguNjlhODcuNDUsODcuNDUsMCwwLDEsMTUuMzMsMi44Nyw1NS43Nyw1NS43NywwLDAsMSwxNC4zOSw2LjI4LDMyLjYxLDMyLjYxLDAsMCwxLDEwLjc4LDEwLjg1cTQuMTEsNi43MSw0LjE5LDE2LjY1LjA3LDExLTQuOSwxNy45MWEzNC42LDM0LjYsMCwwLDEtMTIuODcsMTAuODlBODUuNjYsODUuNjYsMCwwLDEsNDMxLjY0LDc0NGwyMi43NCwzNi4xN3E4LjI0LDEzLjIzLDE1LjExLDE3LjU2dDExLjYsNS4xNWwwLDUuMTdhMjMuMjYsMjMuMjYsMCwwLDEtNi4wOSwxLjQ2QTYxLjA4LDYxLjA4LDAsMCwxLDQ2Ni4zNyw4MTAuMTlabS03MS44MS03Mi43LDEyLjg0LDBBMzcuNzUsMzcuNzUsMCwwLDAsNDE3LjY2LDczNmEyNi4yMSwyNi4yMSwwLDAsMCw5LjI4LTQuNzgsMjMuNTgsMjMuNTgsMCwwLDAsNi42OC04LjkxLDMyLjYsMzIuNiwwLDAsMCwyLjQ3LTEzLjY3LDMzLjM0LDMzLjM0LDAsMCwwLTIuNTYtMTMuNTUsMjQuMjEsMjQuMjEsMCwwLDAtNi43LTguODgsMjUuODcsMjUuODcsMCwwLDAtOS4yNS00Ljg1LDM2LjgzLDM2LjgzLDAsMCwwLTEwLjE3LTEuNDJjLTEuMTUsMC0yLjgyLjA3LTUsLjIxYTYxLjMyLDYxLjMyLDAsMCwwLTguMjMsMS4yNloiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0yNi44MyAtMjEuNjcpIi8+PHBhdGggY2xhc3M9ImNscy0xIiBkPSJNNTI5Ljc4LDc5NS4yOGwtNDYtMTAwLjIxcS0zLjkxLTguNTEtOC42MS0xMi42OXQtMTMuMDUtLjU0bC0xLjg1LjgxLTIuNi01LjY3LDUwLjQyLTIyLjA1cTM4LjE4LTE2LjcxLDY0LjkyLTguNjV0MzkuOTMsMzYuOHE4LjU5LDE4LjcsNi44NSwzNi41dC0xNCwzMi44cS0xMi4yNSwxNS0zNS42MSwyNS4yMlptMzYuMzgtMjVhNDMuNTcsNDMuNTcsMCwwLDAsMjAtMTYuNjdxNy0xMSw3LjA4LTI1LjhUNTg1LjQ4LDY5NnEtNy42My0xNi42My0xOC45My0yNi40NUE1MC44OCw1MC44OCwwLDAsMCw1NDIsNjU3LjM0YTQ1LjA3LDQ1LjA3LDAsMCwwLTI2LjU4LDMuNDVxLTQuMDgsMS43OS03LDMuMjdhODcuNjUsODcuNjUsMCwwLDAtNy44Miw0Ljc4bDQ5LjEzLDEwN3E0LjQzLTEsNi44Ny0xLjc2YTM3LjEzLDM3LjEzLDAsMCwwLDQuNDktMS42MloiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0yNi44MyAtMjEuNjcpIi8+PHBhdGggY2xhc3M9ImNscy0xIiBkPSJNNjkxLjI3LDcwNi41OGwtODUuNjQtNzFxLTcuMjYtNi0xMy4zNS03LjgxdC0xMiw1LjA1TDU3OSw2MzQuMzVsLTQuODUtNEw2MDkuNzUsNTg5cTI3LTMxLjMxLDU0LjU1LTM1LjM5dDUyLjE2LDE2LjI4cTE2LDEzLjI3LDIyLjI5LDMwLjA4dDEuOTEsMzUuNTdxLTQuMzgsMTguNzYtMjAuODcsMzcuOTJabTIxLjY3LTM4QTQyLjU0LDQyLjU0LDAsMCwwLDcyMy41LDY0NXExLjQzLTEyLjktNS0yNi4zMnQtMjEtMjUuNDdxLTE0LjIyLTExLjc5LTI4LjcxLTE1Ljg2dC0yNy40NC0uNjFBNDQuMTMsNDQuMTMsMCwwLDAsNjE5LDU5MS4xNnEtMi44OCwzLjM1LTQuODEsNS45MWE4NS4zNyw4NS4zNywwLDAsMC00LjkyLDcuNjRsOTEuNDUsNzUuODJjMi4zNS0xLjg3LDQuMTUtMy4zOCw1LjQxLTQuNTFhMzguNTUsMzguNTUsMCwwLDAsMy4zMS0zLjM3WiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTI2LjgzIC0yMS42NykiLz48cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik04MDguNzYsNTI2YTg2LjM0LDg2LjM0LDAsMCwxLTYuNzEsMTUuNzMsNjYuODQsNjYuODQsMCwwLDEtOS4zNCwxMy4xNiwzMy4wNywzMy4wNywwLDAsMS0xMSw4LjE3LDE2LDE2LDAsMCwxLTExLjQxLjc4bC0yMy42LTcuMjUsMS43Ni01LjZxMjIsMy4yMiwzMy45Mi0zLjc2dDE3LjIyLTIzLjgxYTM4LjE1LDM4LjE1LDAsMCwwLDItMTQsMTkuNjUsMTkuNjUsMCwwLDAtMy43OC0xMC44MywxOC43OSwxOC43OSwwLDAsMC05LjgyLTYuNDIsMjEsMjEsMCwwLDAtMTYuMTUsMS4wOSw3OS4xMSw3OS4xMSwwLDAsMC0xNi4zNiwxMS41NmwtMjIuNjcsMjBxLTEyLjM0LDExLjE1LTIyLjU5LDE0LjE1YTM2LjMyLDM2LjMyLDAsMCwxLTIxLjMzLS4zOXEtMTUuOTMtNC44OS0yMS40LTE5Ljg2dDEtMzUuNTlhODYuNjQsODYuNjQsMCwwLDEsNi43MS0xNS43Myw2Ni44NCw2Ni44NCwwLDAsMSw5LjM0LTEzLjE2LDM0LDM0LDAsMCwxLDEwLjg3LTguMiwxNiwxNiwwLDAsMSwxMS41Mi0uNzVsMjMuNiw3LjI0LTEuNzYsNS42MXEtMjItMy0zMy44OSwzLjY2VDY3OC4yOCw0ODMuOGEzMS4yMiwzMS4yMiwwLDAsMC0xLjUyLDEzLjI2QTE5LjIxLDE5LjIxLDAsMCwwLDY4MSw1MDcuMjVhMTkuNDIsMTkuNDIsMCwwLDAsOS41LDYsMTguNzMsMTguNzMsMCwwLDAsMTUuNTItMS41QTk5LjA3LDk5LjA3LDAsMCwwLDcyMS42Myw1MDBsMjIuNDgtMjAuMTFxMTIuMzUtMTEuMTQsMjIuMS0xNS4wN3QyMC44NC0uNTNxMTcuMzYsNS4zMywyMy4zNCwyMS40NFQ4MDguNzYsNTI2WiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTI2LjgzIC0yMS42NykiLz48cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik00MjUuMjMsNDE1LjFoMzIuNjhhMCwwLDAsMCwxLDAsMHY4NC40NmE5LDksMCwwLDEtOSw5SDQzNC4yM2E5LDksMCwwLDEtOS05VjQxNS4xYTAsMCwwLDAsMSwwLDBaIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgyLjk3IC00OC40NCkgcm90YXRlKDMuNTkpIi8+PHBhdGggY2xhc3M9ImNscy0xIiBkPSJNMjQ5LjcyLDQ5My41M0gyODIuNGEwLDAsMCwwLDEsMCwwVjU3OGE5LDksMCwwLDEtOSw5SDI1OC43MmE5LDksMCwwLDEtOS05VjQ5My41M2EwLDAsMCwwLDEsMCwwWiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTM1My45MSA0MTQuMzcpIHJvdGF0ZSgtNTMuODIpIi8+PHBhdGggY2xhc3M9ImNscy0yIiBkPSJNMzQ2LjkyLDI3NC43OGM0LjUtNy4zNSw2LjgxLTksOC4wNS04LjU3LDEsLjM0LDEuMzksMi4xNiwyLjg2LDIuMzNhMy40OCwzLjQ4LDAsMCwwLDIuNi0xLjNjNC00LjA4LDkuODUtNS44MiwxNC41NC05LjA5LDEyLjgyLTguOTIsMzAuNjUtMS4zOSwzNC41Ni05LjYxLDEuMTctMi40NiwwLTQuMDgsMi4wNy03LjUzYTE1LjIxLDE1LjIxLDAsMCwxLDguNTgtNi41YzMuMDUtLjgxLDguMjktMS4wOCwxMS4xNywxLjgyLDEsMSwuOTMsMS42NywyLjYsMy4zOCwxLjM4LDEuNDEsNC4yNiwzLjg1LDUuNDUsMy4xMSwxLS42LS4zMi0yLjY0LDEtNC45M2E0LjU0LDQuNTQsMCwwLDEsMy4zOC0yLjM0YzEuNDQtLjA1LDEuODQsMS4wOCwyLjg2LDEsMi4xMi0uMDgsMi40LTUuMDcsNC45My04LjMxLDQuMzktNS42NCwxNC4zOS00LjU0LDE1LjMzLTQuNDIsMCwwLDMuMzEuNDEsMTYuMzcsNy43OWExMi42OCwxMi42OCwwLDAsMCwzLjYzLDIuNmM4LjM0LDMuOTIsMTQuODEtNC43OCwyNy4yOC00LDIuNDYuMTUuMjUuMzcsMTUuODUsNSw4LjI2LDIuNDgsMTEuOCwzLjMsMTQsNi43NSwyLDMuMTUuNTcsNC43NSwzLjEyLDcuOHM1LjU1LDMsNy41Myw2LjQ5YTEwLjcyLDEwLjcyLDAsMCwxLDEuMyw0Ljk0Yy4zMywzLjkyLDguNzMsMTAuODcsNDIuODcsMjQuMTYiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0yNi44MyAtMjEuNjcpIi8+PHBhdGggY2xhc3M9ImNscy0yIiBkPSJNMzQ1LDIzMS42N2ExOS44MSwxOS44MSwwLDAsMCw1LjE1LTYuMzFjMi4zMy00LjU4LDEuMTItNi45NCwzLjk1LTEwLjY1YTEyLjM0LDEyLjM0LDAsMCwxLDYuMzEtNC41NGMxLjM3LS40LDMtMS4xNSw0LjE0LS4zOS44NS41Ni44NiwxLjQ5LDIsMmEyLjc1LDIuNzUsMCwwLDAsMi4xNywwYy44Ni0uNDQsMS4xNi0xLjM4LDEuNTgtMi43Ni42Mi0yLjA3LjI5LTIuNy43OS0zLjE2Ljk0LS44NywzLjUxLjEsNS41MiwxLjM4LDYuMzYsNC4wNiw3LjMzLDExLjM2LDkuMjcsMTEsMS43NC0uMjksMS42LTYuMzMsMy45NC02LjcxLDEuMDYtLjE3LDEuMjgsMSwyLjc2LDEuMTksMS45Mi4xOCwzLjgtMS44NSw3LjQ5LTUuOTJhMjYuNTIsMjYuNTIsMCwwLDEsMS43OC0yYzIuMDgtMS44Miw2LjEtMy45NSw4LjY4LTIuNTcsMS4yOC43LDEuMTMsMS42OCwzLjk0LDQuMTQuOTEuODEsMS4zOCwxLjIxLDEuNzcsMS4xOSwxLjYyLS4wOCwxLjgzLTMuNzUsNS4xMy04LjQ4LDEuNjQtMi4zNSwyLjc2LTMuMTMsMy45NC0zLjM1LDEuMzUtLjI2LDEuNjMuNDIsMywuMTlzMS42Ny0uOTMsNS4xMy00LjE0YzEuNjEtMS40OSwyLjI4LTIsMy4xNS0yLDEuMTUuMDksMS4zOSwxLjExLDIuMTcsMS4xOCwxLjg3LjE4LDIuNzQtNS4zNSw2LjEyLTkuODZzOS4zMS04LjE5LDEyLjYyLTYuN2MxLjMzLjYsMS44NCwxLjg4LDUuMTIsMy43NSwxLjI5LjczLDEuNzcuODUsMi4zNywxLjE4LDUuMTUsMi44NSw1LDEzLjQ3LDUuOTIsMTMuNDEuNDQsMCwuMTMtMi4zMiwxLjc3LTMuNzVhNCw0LDAsMCwxLDMtMWMyLjEyLjMzLDIuMTIsMi45Miw1LjEzLDQuOTMuNy40NywyLjg5LDEuOTMsNC4zMywxLjE4LDEuOTEtMSwxLjI1LTUuMiwyLjE3LTUuMzNzMS40NSwyLjg0LDIuMTcsMi43N2MxLjE5LS4xMy42OC04LjE5LDIuMTctOC40OHM0LjQyLDguMjEsNS40Niw3LjljLjY2LS4yLDAtMy43MS44NS00czEuOTUsMi42MSwzLDIuMzdjLjg1LS4yMS42My0yLjM4LDEuMzgtMi41NywxLjI4LS4zMywzLjEyLDUuNyw0LjkzLDUuNTIsMS4xNy0uMTEsMS4xLTMuNDgsMi0zLjU1czEuNzcsNC4yNSwzLjk0LDkuNDdjMS42Nyw0LDIuMzUsNi4wOCwzLjE2LDYuMzFDNTIwLDIwNS43NSw1MzAsMTkzLjE4LDUzNSwxNzljMS41NS00LjQ1LDIuMzQtOC4zNCw1LjcyLTkuODZzNy43Ni0uMiwxMi42MiwxLjE5YTI3LjExLDI3LjExLDAsMCwxLDUuNTIsMmMzLjA4LDEuNTksNC42NiwzLjM2LDUuNzIsMi43NnMuNi0zLjA2LDEuMTktMy4xNSwxLjQxLDMuMjEsMi4zNiwzLjE1Yy44LDAsLjkxLTIuNDQsMS43OC0yLjU2czEuNTEsMS45MSwyLjM2LDMuMzVjMi42OSw0LjU1LDYuNzEsMywxMSw3LjQ5LDIuNjYsMi43OSwxLjY2LDMuOTMsNC45Myw3LjMsMi42NiwyLjc1LDQuMzMsMyw1LjkxLDQuNTMsMi4yOCwyLjE3LDQuMTQsNi42NywxLjkzLDE3IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMjYuODMgLTIxLjY3KSIvPjwvc3ZnPg=="),
+                 tags$a(href="https://rdds.it", "Laboratory of RNA and Disease Data Science", style="color: currentcolor;"))),
       tags$div(class="footer-col", style="text-align: right;",tags$p("University of Trento"))
     ), 
     align = "center")
@@ -248,6 +269,7 @@ server <- function(input, output, session) {
     }
   })
   
+  #PROTN: Visibility of the extra parameters based on the radiobutton
   output$input_params <- renderUI({
     if (input$custom_param){
       tagList(
@@ -306,7 +328,7 @@ server <- function(input, output, session) {
     }
   })
   
-  # PHOSPROTN: Visibility of the enrichment parameters based on the value of the Enrichment radiobutton
+  #PHOSPROTN: Visibility of the enrichment parameters based on the value of the Enrichment radiobutton
   output$input_enrichment_phos <- renderUI({
     if (input$enrichR_phos) {
       tagList(
@@ -345,6 +367,7 @@ server <- function(input, output, session) {
     }
   })
   
+  #PHOSPROTN: Visibility of the extra parameters based on the radiobutton
   output$input_params_phos <- renderUI({
     if (input$custom_param_phos){
       tagList(
@@ -411,6 +434,7 @@ server <- function(input, output, session) {
     }
   })
   
+  #PHOSPROTN: Visibility of the proteomics files for PhosProTN
   output$input_filePROT_phos <- renderUI({
     if (input$sw_analyzer_phos == "ProteomeDiscoverer"){
       tagList(
@@ -445,6 +469,7 @@ server <- function(input, output, session) {
     }
   })
   
+  #PHOSPROTN: Visibility of the phospho-proteomics files for PhosProTN
   output$input_filePHOS_phos <- renderUI({
     if (input$sw_analyzer_phos == "ProteomeDiscoverer"){
       tagList(
@@ -491,7 +516,7 @@ server <- function(input, output, session) {
     }
   })
   
-  #Show modals with example files
+  #PROTN: Show modals with example files
   output$input_df <- DT::renderDataTable({
     input_file <- readxl::read_xlsx("Data/Input.xlsx")
     DT::datatable(input_file, escape = FALSE)
@@ -503,7 +528,7 @@ server <- function(input, output, session) {
     DT::datatable(design_file, escape = FALSE)
   })
   
-  #Show modals with example files phospho
+  #PHOSPROTN: Show modals with example files phospho
   output$input_df_phos <- DT::renderDataTable({
     input_file_phos <- readxl::read_xlsx("Data/Input.xlsx")
     DT::datatable(input_file_phos, escape = FALSE)
@@ -515,6 +540,7 @@ server <- function(input, output, session) {
     DT::datatable(design_file_phos, escape = FALSE)
   })
   
+  #Define HELP button in execution pages
   setHelp <- function(x) {
     showNotification(
       type = "message",
@@ -657,10 +683,12 @@ server <- function(input, output, session) {
       tryCatch(
         {
           withProgress(message = "Rendering, please wait!", {
+            #Disable click page
             shinyjs::disable("report")
             shinyjs::disable("case_study")
             js$pageDisable("none")
             
+            #Creation directory for the results
             dirOutput_2 <- tempdir()
             currentTime <- gsub(".*?([0-9]+).*?", "\\1", Sys.time())
             dirOutput_1 <- paste("/", currentTime, "/", sep = "")
@@ -710,6 +738,7 @@ server <- function(input, output, session) {
               dirOutput = dirOutput_Server
             )
             
+            #Render the notebook for the analysis
             rmarkdown::render("R/pipeline_elaborate_PD_files.Rmd",
                               output_file = "protn_report.html",
                               output_dir = dirOutput_Server,
@@ -717,18 +746,21 @@ server <- function(input, output, session) {
                               envir = new.env(parent = globalenv())
             )
             
+            #Zip the dir resutls
             oldwd <- getwd()
             setwd(dirOutput_Server)
             files2zip <- list.files("./", recursive = TRUE)
             zip(zipfile = file, files = files2zip, extra = "-r")
             setwd(oldwd)
             
+            #Reactivate click
             shinyjs::enable("report")
             shinyjs::enable("case_study")
             js$pageDisable("all")
           })
         },
         error = function(e) {
+          #Create error report and reactivate the click in the page
           showNotification(paste0("ERROR: ", e), type = "error", duration = 30)
           shinyjs::enable("report")
           shinyjs::enable("case_study")
@@ -750,9 +782,11 @@ server <- function(input, output, session) {
       tryCatch(
         {
           withProgress(message = "Rendering, please wait!", {
+            #Disable page
             shinyjs::disable("report_phos")
             js$pageDisable("none")
             
+            #Create dir results
             dirOutput_2 <- tempdir()
             currentTime <- gsub(".*?([0-9]+).*?", "\\1", Sys.time())
             dirOutput_1 <- paste("/", currentTime, "/", sep = "")
@@ -809,6 +843,7 @@ server <- function(input, output, session) {
               dirOutput = dirOutput_Server
             )
             
+            #Render notebook
             rmarkdown::render("R/pipeline_elaborate_PD_file_PhosProTN.Rmd",
                               output_file = "phosprotn_report.html",
                               output_dir = dirOutput_Server,
@@ -826,6 +861,7 @@ server <- function(input, output, session) {
           })
         },
         error = function(e) {
+          #Create error report and reactivate page
           showNotification(paste0("ERROR: ", e), type = "error", duration = 30)
           shinyjs::enable("report_phos")
           js$pageDisable("all")
@@ -902,7 +938,6 @@ server <- function(input, output, session) {
               dirOutput = dirOutput_Server
             )
             
-            
             rmarkdown::render("R/pipeline_elaborate_PD_files.Rmd",
                               output_file = "protn_case_study_report.html",
                               output_dir = dirOutput_Server,
@@ -935,8 +970,7 @@ server <- function(input, output, session) {
     }
   )
   
-  # ----------------- DELETE TEMP FILES WHEN SESSION ENDS ---------------- #
-  
+  # -- DELETE TEMP FILES WHEN SESSION ENDS -- #
   session$onSessionEnded(function() {
     if (dir.exists(tempdir())){unlink(list.files(tempdir(), full.names = T), recursive = T)}
   })
