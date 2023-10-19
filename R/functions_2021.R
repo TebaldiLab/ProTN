@@ -986,8 +986,9 @@ limmafnc<-function(type = "PROT",c_anno,dat_gene,psm_count_table,contro_list,exp
     
     degs_add<- degs_u %>% dplyr::select("class","log2_FC","p_val","p_adj","log2_expr")
     colnames(degs_add)<-paste(comp,colnames(degs_add),sep="_")
-    degs_w_df<-bind_cols(degs_w_df,degs_add)
-    
+    degs_w_df<-merge(degs_w_df,degs_add,by="row.names",all=TRUE)
+    rownames(degs_w_df)<-degs_w_df$Row.names
+    degs_w_df<-degs_w_df[,-1]
   }
   
   rownames(degs_l_df)<-NULL
@@ -1180,7 +1181,7 @@ plot_networks<-function(g, scr_thr, bf, comp, colour_vector, bs, dirOutput_net, 
       l_list$labels$edge_width<-"STRINGdb score"
       # l_list$labels$edge_alpha<-"Weight"
       l_list
-      ggsave(paste0(dirOutput_net,gsub(comp, pattern = "\\/", replacement="vs"),"_",l,"_network.pdf"), l_list, device=cairo_pdf, width = 10, height = 6, units = c("in"))
+      ggsave(paste0(dirOutput_net,gsub(comp, pattern = "\\/", replacement="vs"),"_",l,"_network.pdf"), l_list, device=cairo_pdf, width = 20, height = 12, units = c("in"))
       #
       print(paste0(dirOutput_net,gsub(comp, pattern = "\\/", replacement="vs"),"_",l,"_network.pdf"))
       # name_list<-append(name_list,paste0(dirOutput_net,comp,"_",l,"_network.pdf"))
