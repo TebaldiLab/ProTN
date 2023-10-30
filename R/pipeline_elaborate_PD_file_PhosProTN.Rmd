@@ -3068,13 +3068,14 @@ dir.create(file.path(dirOutput,subfold_Fig,"kinaseTree/"), showWarnings = FALSE)
 dirOutput_kinase=paste0(dirOutput,subfold_Fig,"kinaseTree/")
 
 if(!run_enrich){deps_pep_l_df$id<- psm_peptide_table[deps_pep_l_df$id, "GeneName"]}
-
 kinase_act_phosr_wrapper <- function(comparison) {
   oldwd<-getwd()
   source("functions_2021.R")
   library(PhosR)
   library(pheatmap)
   library(svgPanZoom)
+  library(SummarizedExperiment)
+  lapply(list.files("PhosR", full.names = T), function(c) {source(c)})
   source("CORAL/global.R")
   source("server.R")
   svg<-kinase_act_phosr(dirOutput_kinase = dirOutput_kinase, formule_CORAL = formule_CORAL, comp = comparison, 

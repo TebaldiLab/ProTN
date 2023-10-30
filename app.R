@@ -44,6 +44,7 @@ ui <- tagList(
     #Sidebar menu
     sidebar=dashboardSidebar(
       sidebarMenu(
+        id="tabs",
         menuItem("Info ProTN", tabName = "info", icon = icon("info-circle", lib="font-awesome")),
         menuItem("Run ProTN", tabName = "analysis_protn", icon = icon("rocket", "fa-regular")),
         menuItem("Info PhosProTN", tabName = "info_phos", icon = icon("info-circle", lib="font-awesome")),
@@ -129,12 +130,23 @@ ui <- tagList(
                 ),
                 radioButtons("custom_param", "Use custom parameter", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
                 fillRow(
-                  downloadButton("report", "Generate report"),
-                  downloadButton("case_study", "Case Study Example")
+                  # downloadButton("report", "Generate report"),
+                  actionButton("preview_output_ProTN", "Generate report"),
+                  actionButton("case_study_ProTN", "Case Study Example")
                 )
               )
             ),
-            uiOutput("input_params")
+            uiOutput("input_params"),
+            bsModal("modal_preview_case_study_ProTN", 
+                    "Example case study", 
+                    "case_study_ProTN",
+                    size = "large",
+                    downloadButton('download_report_CS', 'Download complete results (ZIP)'), uiOutput("preview_results_CS")),
+            bsModal("modal_preview_output_ProTN", 
+                    "Preview report of ProTN", 
+                    "preview_output_ProTN",
+                    size = "large",
+                    downloadButton('download_report', 'Download complete results (ZIP)'), uiOutput("preview_results"))
           )
         ),
         #Info tab PhosProTN
@@ -182,10 +194,16 @@ ui <- tagList(
               ),
               column(
                 width = 4,
-                uiOutput("input_filePHOS_phos")
+                uiOutput("input_filePHOS_phos"),
+                actionButton("report_phos", "Generate report")
               )
             ),
-            uiOutput("input_params_phos")
+            uiOutput("input_params_phos"),
+            bsModal("modal_preview_output_PhosProTN", 
+                    "Preview report of PhosProTN", 
+                    "report_phos",
+                    size = "large",
+                    downloadButton('download_report_PhosProTN', 'Download complete results (ZIP)'), uiOutput("preview_results_phos"))
           )
         ),
         #Contact tab
@@ -490,9 +508,10 @@ server <- function(input, output, session) {
           uiOutput("help30_P")
         ),
         radioButtons("custom_param_phos", "Use custom parameter", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
-        fillRow(
-          downloadButton("report_phos", "Generate report"),
-        )
+        # fillRow(
+        #   # downloadButton("report_phos", "Generate report"),
+        #   actionButton("report_phos2", "Generate report")
+        # )
       )
     } else if(input$sw_analyzer_phos == "MaxQuant"){
       tagList(
@@ -505,9 +524,9 @@ server <- function(input, output, session) {
           uiOutput("help31_P")
         ),
         radioButtons("custom_param_phos", "Use custom parameter", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
-        fillRow(
-          downloadButton("report_phos", "Generate report"),
-        )
+        # fillRow(
+        #   actionButton("report_phos2", "Generate report")
+        # )
       )
     } else{
       tagList(
@@ -539,6 +558,7 @@ server <- function(input, output, session) {
     design_file_phos <- readxl::read_xlsx("Data/design.xlsx")
     DT::datatable(design_file_phos, escape = FALSE)
   })
+  
   
   #Define HELP button in execution pages
   setHelp <- function(x) {
@@ -676,13 +696,15 @@ server <- function(input, output, session) {
       }))
   }
   
-  # EXECUTE ProTN
-  output$report <- downloadHandler(
-    filename = "results_ProTN.zip",
-    content = function(file) {
+  
+  #####################################################
+  addResourcePath("basedir", tempdir())
+  output$preview_results <- renderUI({
       tryCatch(
         {
           withProgress(message = "Rendering, please wait!", {
+            shinyjs::hide("modal_preview_output_ProTN")
+            message(session$token)
             #Disable click page
             shinyjs::disable("report")
             shinyjs::disable("case_study")
@@ -694,6 +716,7 @@ server <- function(input, output, session) {
             dirOutput_1 <- paste("/", currentTime, "/", sep = "")
             dir.create(file.path(dirOutput_2, dirOutput_1), showWarnings = FALSE)
             dirOutput_Server <- paste(dirOutput_2, dirOutput_1, sep = "")
+            dirOutput_Server_2<-dirOutput_Server
             message(dirOutput_Server)
             #Create subfolder for the files
             dir.create(file.path(dirOutput_Server, "figures"), showWarnings = FALSE)
@@ -746,17 +769,29 @@ server <- function(input, output, session) {
                               envir = new.env(parent = globalenv())
             )
             
-            #Zip the dir resutls
-            oldwd <- getwd()
-            setwd(dirOutput_Server)
-            files2zip <- list.files("./", recursive = TRUE)
-            zip(zipfile = file, files = files2zip, extra = "-r")
-            setwd(oldwd)
-            
             #Reactivate click
             shinyjs::enable("report")
             shinyjs::enable("case_study")
+            shinyjs::show("modal_preview_output_ProTN")
             js$pageDisable("all")
+            
+            #Save folder for the download
+            readr::write_csv(data.frame("session"=session$token,
+                                        "outdir"=dirOutput_Server),
+                             file = paste0(tempdir(),"/outdir_log_ProTN.log"), append = T)
+            #Zip the dir resutls
+            # files2zip <- list.files("./", recursive = TRUE)
+            # zip(zipfile = file, files = files2zip, extra = "-r")
+            # setwd(oldwd)
+            
+            # updateTabItems(session, "tabs", "report_results")
+            # html_text<-str_replace(read_file("protn_report.html"), 
+            #                        pattern = "The page you’re looking for doesn’t exist.</p>", 
+            #                        replacement = paste0("Description:", e, "</p>"))
+            # write_file(html_text, file = paste0(tempdir(), "/error.html"))
+            # setwd(oldwd)
+            # includeHTML(paste0(dirOutput_Server,"/protn_report.html"))
+            tags$iframe(src = paste0("basedir", dirOutput_1,"/protn_report.html"), height = "100%", width = "100%", scrolling = "yes")
           })
         },
         error = function(e) {
@@ -764,7 +799,47 @@ server <- function(input, output, session) {
           showNotification(paste0("ERROR: ", e), type = "error", duration = 30)
           shinyjs::enable("report")
           shinyjs::enable("case_study")
+          shinyjs::show("modal_preview_output_ProTN")
+          shinyjs::hide("download_report")
           js$pageDisable("all")
+          html_text<-str_replace(read_file("R/error.html"), 
+                                 pattern = "The page you’re looking for doesn’t exist.</p>", 
+                                 replacement = paste0("Description:", e, "</p>"))
+          write_file(html_text, file = paste0(tempdir(), "/error.html"))
+          # zip(zipfile = file, files = paste0(tempdir(), "/error.html"), extra = "-j")
+          
+          # updateTabItems(session, "tabs", "report_results")
+          includeHTML(paste0(tempdir(), "/error.html"))
+        }
+      )
+    })
+    
+  # EXECUTE ProTN
+  output$download_report <- downloadHandler(
+    filename = "results_ProTN.zip",
+    content = function(file) {
+      tryCatch(
+        {
+          withProgress(message = "Prepraring files to download, please wait!", {
+            #Zip the dir resutls
+            message(session$token)
+            #Save folder for the download
+            logs<-readr::read_csv(file = paste0(tempdir(),"/outdir_log_ProTN.log"),col_names = F)
+            dirOutput_Server_2<-as.list(logs[which(logs$X1==session$token),"X2"])
+            oldwd <- getwd()
+            setwd(dirOutput_Server_2[[length(dirOutput_Server_2)]])
+            files2zip <- list.files("./", recursive = TRUE)
+            zip(zipfile = file, files = files2zip, extra = "-r")
+            setwd(oldwd)
+            
+          })
+        },
+        error = function(e) {
+          #Create error report and reactivate the click in the page
+          showNotification(paste0("ERROR: ", e), type = "error", duration = 30)
+          # shinyjs::enable("report")
+          # shinyjs::enable("case_study")
+          # js$pageDisable("all")
           html_text<-str_replace(read_file("R/error.html"), 
                                  pattern = "The page you’re looking for doesn’t exist.</p>", 
                                  replacement = paste0("Description:", e, "</p>"))
@@ -775,96 +850,408 @@ server <- function(input, output, session) {
     }
   )
   
+  
+#######################################################
+  output$preview_results_CS <- renderUI({
+    tryCatch(
+      {
+        withProgress(message = "Rendering, please wait!", {
+          shinyjs::hide("modal_preview_case_study_ProTN")
+          message(session$token)
+          #Disable click page
+          shinyjs::disable("report")
+          shinyjs::disable("case_study")
+          js$pageDisable("none")
+          
+          #Creation directory for the results
+          dirOutput_2 <- tempdir()
+          currentTime <- gsub(".*?([0-9]+).*?", "\\1", Sys.time())
+          dirOutput_1 <- paste("/", currentTime, "/", sep = "")
+          dir.create(file.path(dirOutput_2, dirOutput_1), showWarnings = FALSE)
+          dirOutput_Server <- paste(dirOutput_2, dirOutput_1, sep = "")
+          message(dirOutput_Server)
+          #Create subfolder for the files
+          dir.create(file.path(dirOutput_Server, "figures"), showWarnings = FALSE)
+          dir.create(file.path(dirOutput_Server, "data"), showWarnings = FALSE)
+          dir.create(file.path(dirOutput_Server, "tables"), showWarnings = FALSE)
+          dir.create(file.path(paste0(dirOutput_Server, "figures"),"Expression"), showWarnings = FALSE)	
+          dir.create(file.path(paste0(dirOutput_Server, "figures"),"PCA_MDS"), showWarnings = FALSE)
+          
+          # Set up parameters to pass to Rmd document
+          params <- list(
+            doc_title = "Example case study MCF7 cells",
+            description = "Example case study on proteomics of MCF7 cells. (LC-MS/MS Orbitrap Fusion Tribrid). PRIDE: PXD009417. The software used to analyse the MS spectra was MaxQuant. (Clamer M, Tebaldi T, Lauria F, et al. Active Ribosome Profiling with RiboLace. Cell Rep. 2018;25(4):1097-1108.e5.)",
+            readPD_files = FALSE,
+            readMQ_files = TRUE,
+            file_input = "../Data/Input.xlsx",
+            file_prot = "../Data/proteinGroups.txt",
+            file_pep = "../Data/peptides.txt",
+            filt_absent_value = "0",
+            pval_fdr = FALSE,
+            signal_thr = "inf",
+            fc_thr = "0.75",
+            pval_thr = "0.05",
+            batch_corr_exe = FALSE,
+            contr_design = "../Data/design.xlsx",
+            prot_boxplot = "ABCF2, ACIN1",
+            run_enrich = TRUE,
+            run_enrich_universe = FALSE,
+            run_STRING = TRUE,
+            pval_fdr_enrich = TRUE,
+            pval_enrich_thr = "0.05",
+            overlap_size_enrich_thr = as.integer(5),
+            enrich_filter_term = NULL,
+            enrich_filter_DBs = c(
+              "GO_Molecular_Function_2021",
+              "GO_Cellular_Component_2021",
+              "GO_Biological_Process_2021",
+              "KEGG_2021_Human",
+              "BioPlanet_2019",
+              "MGI_Mammalian_Phenotype_Level_4_2019",
+              "MSigDB_Hallmark_2020",
+              "Jensen_COMPARTMENTS",
+              "DisGeNET"
+            ),
+            enrichR_DB = FALSE,
+            dirOutput = dirOutput_Server
+          )
+          
+          #Render the notebook for the analysis
+          rmarkdown::render("R/pipeline_elaborate_PD_files.Rmd",
+                            output_file = "protn_report.html",
+                            output_dir = dirOutput_Server,
+                            params = params,
+                            envir = new.env(parent = globalenv())
+          )
+          
+          #Reactivate click
+          shinyjs::enable("report")
+          shinyjs::enable("case_study")
+          shinyjs::show("modal_preview_case_study_ProTN")
+          js$pageDisable("all")
+          
+          #Save folder for the download
+          readr::write_csv(data.frame("session"=session$token,
+                                      "outdir"=dirOutput_Server),
+                           file = paste0(tempdir(),"/outdir_log_ProTN.log"), append = T)
+          #Zip the dir resutls
+          # files2zip <- list.files("./", recursive = TRUE)
+          # zip(zipfile = file, files = files2zip, extra = "-r")
+          # setwd(oldwd)
+          
+          # updateTabItems(session, "tabs", "report_results")
+          # html_text<-str_replace(read_file("protn_report.html"), 
+          #                        pattern = "The page you’re looking for doesn’t exist.</p>", 
+          #                        replacement = paste0("Description:", e, "</p>"))
+          # write_file(html_text, file = paste0(tempdir(), "/error.html"))
+          # setwd(oldwd)
+          # includeHTML(paste0(dirOutput_Server,"/protn_report.html"))
+          tags$iframe(src = paste0("basedir", dirOutput_1,"/protn_report.html"), height = "100%", width = "100%", scrolling = "yes")
+        })
+      },
+      error = function(e) {
+        #Create error report and reactivate the click in the page
+        showNotification(paste0("ERROR: ", e), type = "error", duration = 30)
+        shinyjs::enable("report")
+        shinyjs::enable("case_study")
+        shinyjs::show("modal_preview_case_study_ProTN")
+        shinyjs::hide("download_report_CS")
+        js$pageDisable("all")
+        html_text<-str_replace(read_file("R/error.html"), 
+                               pattern = "The page you’re looking for doesn’t exist.</p>", 
+                               replacement = paste0("Description:", e, "</p>"))
+        write_file(html_text, file = paste0(tempdir(), "/error.html"))
+        # zip(zipfile = file, files = paste0(tempdir(), "/error.html"), extra = "-j")
+        
+        # updateTabItems(session, "tabs", "report_results")
+        includeHTML(paste0(tempdir(), "/error.html"))
+      }
+    )
+  })
+  
+  # EXECUTE ProTN
+  output$download_report_CS <- downloadHandler(
+    filename = "results_case_study.zip",
+    content = function(file) {
+      tryCatch(
+        {
+          withProgress(message = "Prepraring files to download, please wait!", {
+            #Zip the dir resutls
+            message(session$token)
+            #Save folder for the download
+            logs<-readr::read_csv(file = paste0(tempdir(),"/outdir_log_ProTN.log"),col_names = F)
+            dirOutput_Server_2<-as.list(logs[which(logs$X1==session$token),"X2"])
+            oldwd <- getwd()
+            setwd(dirOutput_Server_2[[length(dirOutput_Server_2)]])
+            files2zip <- list.files("./", recursive = TRUE)
+            zip(zipfile = file, files = files2zip, extra = "-r")
+            setwd(oldwd)
+            
+          })
+        },
+        error = function(e) {
+          #Create error report and reactivate the click in the page
+          showNotification(paste0("ERROR: ", e), type = "error", duration = 30)
+          # shinyjs::enable("report")
+          # shinyjs::enable("case_study")
+          # js$pageDisable("all")
+          html_text<-str_replace(read_file("R/error.html"), 
+                                 pattern = "The page you’re looking for doesn’t exist.</p>", 
+                                 replacement = paste0("Description:", e, "</p>"))
+          write_file(html_text, file = paste0(tempdir(), "/error.html"))
+          zip(zipfile = file, files = paste0(tempdir(), "/error.html"), extra = "-j")
+        }
+      )
+    }
+  )
+  
+  ###################################
+  # output$report <- downloadHandler(
+  #   filename = "results_ProTN.zip",
+  #   content = function(file) {
+  #     tryCatch(
+  #       {
+  #         withProgress(message = "Rendering, please wait!", {
+  #           #Disable click page
+  #           shinyjs::disable("report")
+  #           shinyjs::disable("case_study")
+  #           js$pageDisable("none")
+  #           
+  #           #Creation directory for the results
+  #           dirOutput_2 <- tempdir()
+  #           currentTime <- gsub(".*?([0-9]+).*?", "\\1", Sys.time())
+  #           dirOutput_1 <- paste("/", currentTime, "/", sep = "")
+  #           dir.create(file.path(dirOutput_2, dirOutput_1), showWarnings = FALSE)
+  #           dirOutput_Server <- paste(dirOutput_2, dirOutput_1, sep = "")
+  #           message(dirOutput_Server)
+  #           #Create subfolder for the files
+  #           dir.create(file.path(dirOutput_Server, "figures"), showWarnings = FALSE)
+  #           dir.create(file.path(dirOutput_Server, "data"), showWarnings = FALSE)
+  #           dir.create(file.path(dirOutput_Server, "tables"), showWarnings = FALSE)
+  #           dir.create(file.path(paste0(dirOutput_Server, "figures"),"Expression"), showWarnings = FALSE)
+  #           dir.create(file.path(paste0(dirOutput_Server, "figures"),"PCA_MDS"), showWarnings = FALSE)
+  #           # Set up parameters to pass to Rmd document
+  #           params <- list(
+  #             doc_title = input$title_exp,
+  #             description = input$description_exp,
+  #             readPD_files = if (input$sw_analyzer == "ProteomeDiscoverer") {
+  #               TRUE
+  #             } else {
+  #               FALSE
+  #             },
+  #             readMQ_files = if (input$sw_analyzer == "MaxQuant") {
+  #               TRUE
+  #             } else {
+  #               FALSE
+  #             },
+  #             file_input = input$input_file$datapath,
+  #             file_prot = input$prot_file$datapath,
+  #             file_pep = input$pep_file$datapath,
+  #             filt_absent_value = if(is.null(input$filt_absent_value)){"0"}else{input$filt_absent_value},
+  #             pval_fdr = if(is.null(input$pval_fdr)){FALSE}else{input$pval_fdr},
+  #             signal_thr = if(is.null(input$signal_DEPs)){"inf"}else{input$signal_DEPs},
+  #             fc_thr = if(is.null(input$FC_DEPs)){"0.75"}else{input$FC_DEPs},
+  #             pval_thr = if(is.null(input$pvalue_DEPs)){"0.05"}else{input$pvalue_DEPs},
+  #             batch_corr_exe = if(is.null(input$batch_corr)){FALSE}else{input$batch_corr},
+  #             contr_design = input$design$datapath,
+  #             prot_boxplot = if(is.null(input$prot_boxplot)){""}else{input$prot_boxplot},
+  #             run_enrich = if(is.null(input$enrichR)){FALSE}else{input$enrichR},
+  #             run_enrich_universe = if(!(is.null(input$enrichR) | is.null(input$enrichR_universe))){if(input$enrichR==T){input$enrichR_universe}else{FALSE}}else{FALSE},
+  #             run_STRING = if(is.null(input$STRING)){FALSE}else{input$STRING},
+  #             pval_fdr_enrich = if(is.null(input$pval_fdr_enrich)){TRUE}else{input$pval_fdr_enrich},
+  #             pval_enrich_thr = if(is.null(input$pvalue_enrich)){"0.05"}else{input$pvalue_enrich},
+  #             overlap_size_enrich_thr = if(is.null(input$os_enrich)){as.integer(5)}else{input$os_enrich},
+  #             enrich_filter_term = input$terms_enrich,
+  #             enrich_filter_DBs = input$DB_enrich,
+  #             enrichR_DB = if(is.null(input$enrichR)){FALSE}else{input$enrichR_DB},
+  #             dirOutput = dirOutput_Server
+  #           )
+  #           
+  #           #Render the notebook for the analysis
+  #           rmarkdown::render("R/pipeline_elaborate_PD_files.Rmd",
+  #                             output_file = "protn_report.html",
+  #                             output_dir = dirOutput_Server,
+  #                             params = params,
+  #                             envir = new.env(parent = globalenv())
+  #           )
+  #           
+  #           #Zip the dir resutls
+  #           oldwd <- getwd()
+  #           setwd(dirOutput_Server)
+  #           files2zip <- list.files("./", recursive = TRUE)
+  #           zip(zipfile = file, files = files2zip, extra = "-r")
+  #           setwd(oldwd)
+  #           
+  #           #Reactivate click
+  #           shinyjs::enable("report")
+  #           shinyjs::enable("case_study")
+  #           js$pageDisable("all")
+  #         })
+  #       },
+  #       error = function(e) {
+  #         #Create error report and reactivate the click in the page
+  #         showNotification(paste0("ERROR: ", e), type = "error", duration = 30)
+  #         shinyjs::enable("report")
+  #         shinyjs::enable("case_study")
+  #         js$pageDisable("all")
+  #         html_text<-str_replace(read_file("R/error.html"), 
+  #                                pattern = "The page you’re looking for doesn’t exist.</p>", 
+  #                                replacement = paste0("Description:", e, "</p>"))
+  #         write_file(html_text, file = paste0(tempdir(), "/error.html"))
+  #         zip(zipfile = file, files = paste0(tempdir(), "/error.html"), extra = "-j")
+  #       }
+  #     )
+  #   }
+  # )
+  ###################################
+  
   # EXECUTE PhosProTN
-  output$report_phos <- downloadHandler(
+  output$preview_results_phos <- renderUI({
+    tryCatch(
+      {
+        withProgress(message = "Rendering, please wait!", {
+          shinyjs::hide("modal_preview_output_PhosProTN")
+          message(session$token)
+          #Disable click page
+          shinyjs::disable("report_phos")
+          js$pageDisable("none")
+          
+          #Creation directory for the results
+          dirOutput_2 <- tempdir()
+          currentTime <- gsub(".*?([0-9]+).*?", "\\1", Sys.time())
+          dirOutput_1 <- paste("/", currentTime, "/", sep = "")
+          dir.create(file.path(dirOutput_2, dirOutput_1), showWarnings = FALSE)
+          dirOutput_Server <- paste(dirOutput_2, dirOutput_1, sep = "")
+          dirOutput_Server_2<-dirOutput_Server
+          message(dirOutput_Server)
+          #Create subfolder for the files
+          dir.create(file.path(dirOutput_Server, "figures"), showWarnings = FALSE)
+          dir.create(file.path(dirOutput_Server, "data"), showWarnings = FALSE)
+          dir.create(file.path(dirOutput_Server, "tables"), showWarnings = FALSE)
+          dir.create(file.path(paste0(dirOutput_Server, "figures"),"Expression"), showWarnings = FALSE)
+          dir.create(file.path(paste0(dirOutput_Server, "figures"),"PCA_MDS"), showWarnings = FALSE)
+          # Set up parameters to pass to Rmd document
+          params <- list(
+            doc_title = input$title_exp_phos,
+            description = input$description_exp_phos,
+            readPD_files = if (input$sw_analyzer_phos == "ProteomeDiscoverer") {
+              TRUE
+            } else {
+              FALSE
+            },
+            readMQ_files = if (input$sw_analyzer_phos == "MaxQuant") {
+              TRUE
+            } else {
+              FALSE
+            },
+            file_input_prot = input$input_file_prot$datapath,
+            file_prot_prot = if(input$sw_analyzer_phos == "ProteomeDiscoverer"){input$prot_file_prot$datapath}else{NA},
+            file_pep_prot = input$pep_file_prot$datapath,
+            file_input_phos = input$input_file_phos$datapath,
+            file_prot_phos = if(input$sw_analyzer_phos == "ProteomeDiscoverer"){input$prot_file_phos$datapath}else{NA},
+            file_pep_phos = input$pep_file_phos$datapath,
+            file_psm_phos = if(input$sw_analyzer_phos == "ProteomeDiscoverer"){input$psm_file_phos$datapath}else{NA},
+            filt_absent_value = if(is.null(input$filt_absent_value_phos)){"0"}else{input$filt_absent_value_phos},
+            pval_fdr = if(is.null(input$pval_fdr_phos)){FALSE}else{input$pval_fdr_phos},
+            phospho_thr = if(is.null(input$phospho_phos)){"75"}else{input$phospho_phos},
+            signal_thr = if(is.null(input$signal_DEPs_phos)){"inf"}else{input$signal_DEPs_phos},
+            fc_thr = if(is.null(input$FC_DEPs_phos)){"0.75"}else{input$FC_DEPs_phos},
+            pval_thr = if(is.null(input$pvalue_DEPs_phos)){"0.05"}else{input$pvalue_DEPs_phos},
+            batch_corr_exe = if(is.null(input$batch_corr_phos)){FALSE}else{input$batch_corr_phos},
+            contr_design = input$design_phos$datapath,
+            prot_boxplot = if(is.null(input$prot_boxplot_phos)){""}else{input$prot_boxplot_phos},
+            run_enrich = if(is.null(input$enrichR_phos)){FALSE}else{input$enrichR_phos},
+            run_enrich_universe = if(!(is.null(input$enrichR_phos) | is.null(input$enrichR_universe_phos))){if(input$enrichR_phos==T){input$enrichR_universe_phos}else{FALSE}}else{FALSE},
+            run_STRING = if(is.null(input$STRING_phos)){FALSE}else{input$STRING_phos},
+            run_kinaseTree = if(is.null(input$kinaseTree_phos)){FALSE}else{input$kinaseTree_phos},
+            pval_fdr_enrich = if(is.null(input$pval_fdr_enrich_phos)){TRUE}else{input$pval_fdr_enrich_phos},
+            pval_enrich_thr = if(is.null(input$pvalue_enrich_phos)){"0.05"}else{input$pvalue_enrich_phos},
+            overlap_size_enrich_thr = if(is.null(input$os_enrich_phos)){as.integer(5)}else{input$os_enrich_phos},
+            enrich_filter_term = input$terms_enrich_phos,
+            enrich_filter_DBs = input$DB_enrich_phos,
+            enrichR_DB = if(is.null(input$enrichR_phos)){FALSE}else{input$enrichR_DB_phos},
+            dirOutput = dirOutput_Server
+          )
+          
+          #Render the notebook for the analysis
+          rmarkdown::render("R/pipeline_elaborate_PD_file_PhosProTN.Rmd",
+                            output_file = "phosprotn_report.html",
+                            output_dir = dirOutput_Server,
+                            params = params,
+                            envir = new.env(parent = globalenv())
+          )
+          
+          #Reactivate click
+          shinyjs::enable("report_phos")
+          js$pageDisable("all")
+          shinyjs::show("modal_preview_output_PhosProTN")
+
+          #Save folder for the download
+          readr::write_csv(data.frame("session"=session$token,
+                                      "outdir"=dirOutput_Server),
+                           file = paste0(tempdir(),"/outdir_log_PhosProTN.log"), append = T)
+          #Zip the dir resutls
+          # oldwd <- getwd()
+          # setwd(dirOutput_Server)
+          # files2zip <- list.files("./", recursive = TRUE)
+          # zip(zipfile = file, files = files2zip, extra = "-r")
+          # setwd(oldwd)
+          
+          # updateTabItems(session, "tabs", "report_results")
+          # html_text<-str_replace(read_file("protn_report.html"), 
+          #                        pattern = "The page you’re looking for doesn’t exist.</p>", 
+          #                        replacement = paste0("Description:", e, "</p>"))
+          # write_file(html_text, file = paste0(tempdir(), "/error.html"))
+          # setwd(oldwd)
+          # includeHTML(paste0(dirOutput_Server,"/protn_report.html"))
+          tags$iframe(src = paste0("basedir", dirOutput_1,"/phosprotn_report.html"), height = "100%", width = "100%", scrolling = "yes")
+        })
+      },
+      error = function(e) {
+        #Create error report and reactivate the click in the page
+        showNotification(paste0("ERROR: ", e), type = "error", duration = 30)
+        shinyjs::enable("report_phos")
+        shinyjs::show("modal_preview_output_PhosProTN")
+        shinyjs::hide("download_report_phos")
+        js$pageDisable("all")
+        html_text<-str_replace(read_file("R/error.html"), 
+                               pattern = "The page you’re looking for doesn’t exist.</p>", 
+                               replacement = paste0("Description:", e, "</p>"))
+        write_file(html_text, file = paste0(tempdir(), "/error.html"))
+        # zip(zipfile = file, files = paste0(tempdir(), "/error.html"), extra = "-j")
+        
+        # updateTabItems(session, "tabs", "report_results")
+        includeHTML(paste0(tempdir(), "/error.html"))
+      }
+    )
+  })
+  
+  # EXECUTE ProTN
+  output$download_report_PhosProTN <- downloadHandler(
     filename = "results_PhosProTN.zip",
     content = function(file) {
       tryCatch(
         {
-          withProgress(message = "Rendering, please wait!", {
-            #Disable page
-            shinyjs::disable("report_phos")
-            js$pageDisable("none")
-            
-            #Create dir results
-            dirOutput_2 <- tempdir()
-            currentTime <- gsub(".*?([0-9]+).*?", "\\1", Sys.time())
-            dirOutput_1 <- paste("/", currentTime, "/", sep = "")
-            dir.create(file.path(dirOutput_2, dirOutput_1), showWarnings = FALSE)
-            dirOutput_Server <- paste(dirOutput_2, dirOutput_1, sep = "")
-            message(dirOutput_Server)
-            #Create subfolder for the files
-            dir.create(file.path(dirOutput_Server, "figures"), showWarnings = FALSE)
-            dir.create(file.path(dirOutput_Server, "data"), showWarnings = FALSE)
-            dir.create(file.path(dirOutput_Server, "tables"), showWarnings = FALSE)
-            dir.create(file.path(paste0(dirOutput_Server, "figures"),"Expression"), showWarnings = FALSE)
-            dir.create(file.path(paste0(dirOutput_Server, "figures"),"PCA_MDS"), showWarnings = FALSE)
-            
-            # Set up parameters to pass to Rmd document
-            params <- list(
-              doc_title = input$title_exp_phos,
-              description = input$description_exp_phos,
-              readPD_files = if (input$sw_analyzer_phos == "ProteomeDiscoverer") {
-                TRUE
-              } else {
-                FALSE
-              },
-              readMQ_files = if (input$sw_analyzer_phos == "MaxQuant") {
-                TRUE
-              } else {
-                FALSE
-              },
-              file_input_prot = input$input_file_prot$datapath,
-              file_prot_prot = if(input$sw_analyzer_phos == "ProteomeDiscoverer"){input$prot_file_prot$datapath}else{NA},
-              file_pep_prot = input$pep_file_prot$datapath,
-              file_input_phos = input$input_file_phos$datapath,
-              file_prot_phos = if(input$sw_analyzer_phos == "ProteomeDiscoverer"){input$prot_file_phos$datapath}else{NA},
-              file_pep_phos = input$pep_file_phos$datapath,
-              file_psm_phos = if(input$sw_analyzer_phos == "ProteomeDiscoverer"){input$psm_file_phos$datapath}else{NA},
-              filt_absent_value = if(is.null(input$filt_absent_value_phos)){"0"}else{input$filt_absent_value_phos},
-              pval_fdr = if(is.null(input$pval_fdr_phos)){FALSE}else{input$pval_fdr_phos},
-              phospho_thr = if(is.null(input$phospho_phos)){"75"}else{input$phospho_phos},
-              signal_thr = if(is.null(input$signal_DEPs_phos)){"inf"}else{input$signal_DEPs_phos},
-              fc_thr = if(is.null(input$FC_DEPs_phos)){"0.75"}else{input$FC_DEPs_phos},
-              pval_thr = if(is.null(input$pvalue_DEPs_phos)){"0.05"}else{input$pvalue_DEPs_phos},
-              batch_corr_exe = if(is.null(input$batch_corr_phos)){FALSE}else{input$batch_corr_phos},
-              contr_design = input$design_phos$datapath,
-              prot_boxplot = if(is.null(input$prot_boxplot_phos)){""}else{input$prot_boxplot_phos},
-              run_enrich = if(is.null(input$enrichR_phos)){FALSE}else{input$enrichR_phos},
-              run_enrich_universe = if(!(is.null(input$enrichR_phos) | is.null(input$enrichR_universe_phos))){if(input$enrichR_phos==T){input$enrichR_universe_phos}else{FALSE}}else{FALSE},
-              run_STRING = if(is.null(input$STRING_phos)){FALSE}else{input$STRING_phos},
-              run_kinaseTree = if(is.null(input$kinaseTree_phos)){FALSE}else{input$kinaseTree_phos},
-              pval_fdr_enrich = if(is.null(input$pval_fdr_enrich_phos)){TRUE}else{input$pval_fdr_enrich_phos},
-              pval_enrich_thr = if(is.null(input$pvalue_enrich_phos)){"0.05"}else{input$pvalue_enrich_phos},
-              overlap_size_enrich_thr = if(is.null(input$os_enrich_phos)){as.integer(5)}else{input$os_enrich_phos},
-              enrich_filter_term = input$terms_enrich_phos,
-              enrich_filter_DBs = input$DB_enrich_phos,
-              enrichR_DB = if(is.null(input$enrichR_phos)){FALSE}else{input$enrichR_DB_phos},
-              dirOutput = dirOutput_Server
-            )
-            
-            #Render notebook
-            rmarkdown::render("R/pipeline_elaborate_PD_file_PhosProTN.Rmd",
-                              output_file = "phosprotn_report.html",
-                              output_dir = dirOutput_Server,
-                              params = params,
-                              envir = new.env(parent = globalenv())
-            )
-            
+          withProgress(message = "Prepraring files to download, please wait!", {
+            #Zip the dir resutls
+            message(session$token)
+            #Save folder for the download
+            logs<-readr::read_csv(file = paste0(tempdir(),"/outdir_log_PhosProTN.log"),col_names = F)
+            dirOutput_Server_2<-as.list(logs[which(logs$X1==session$token),"X2"])
             oldwd <- getwd()
-            setwd(dirOutput_Server)
+            setwd(dirOutput_Server_2[[length(dirOutput_Server_2)]])
             files2zip <- list.files("./", recursive = TRUE)
             zip(zipfile = file, files = files2zip, extra = "-r")
             setwd(oldwd)
-            shinyjs::enable("report_phos")
-            js$pageDisable("all")
+            
           })
         },
         error = function(e) {
-          #Create error report and reactivate page
+          #Create error report and reactivate the click in the page
           showNotification(paste0("ERROR: ", e), type = "error", duration = 30)
-          shinyjs::enable("report_phos")
-          js$pageDisable("all")
+          # shinyjs::enable("report")
+          # shinyjs::enable("case_study")
+          # js$pageDisable("all")
           html_text<-str_replace(read_file("R/error.html"), 
                                  pattern = "The page you’re looking for doesn’t exist.</p>", 
                                  replacement = paste0("Description:", e, "</p>"))
@@ -875,101 +1262,201 @@ server <- function(input, output, session) {
     }
   )
   
+  # output$report_phos <- downloadHandler(
+  #   filename = "results_PhosProTN.zip",
+  #   content = function(file) {
+  #     tryCatch(
+  #       {
+  #         withProgress(message = "Rendering, please wait!", {
+  #           #Disable page
+  #           shinyjs::disable("report_phos")
+  #           js$pageDisable("none")
+  #           
+  #           #Create dir results
+  #           dirOutput_2 <- tempdir()
+  #           currentTime <- gsub(".*?([0-9]+).*?", "\\1", Sys.time())
+  #           dirOutput_1 <- paste("/", currentTime, "/", sep = "")
+  #           dir.create(file.path(dirOutput_2, dirOutput_1), showWarnings = FALSE)
+  #           dirOutput_Server <- paste(dirOutput_2, dirOutput_1, sep = "")
+  #           message(dirOutput_Server)
+  #           #Create subfolder for the files
+  #           dir.create(file.path(dirOutput_Server, "figures"), showWarnings = FALSE)
+  #           dir.create(file.path(dirOutput_Server, "data"), showWarnings = FALSE)
+  #           dir.create(file.path(dirOutput_Server, "tables"), showWarnings = FALSE)
+  #           dir.create(file.path(paste0(dirOutput_Server, "figures"),"Expression"), showWarnings = FALSE)
+  #           dir.create(file.path(paste0(dirOutput_Server, "figures"),"PCA_MDS"), showWarnings = FALSE)
+  #           
+  #           # Set up parameters to pass to Rmd document
+  #           params <- list(
+  #             doc_title = input$title_exp_phos,
+  #             description = input$description_exp_phos,
+  #             readPD_files = if (input$sw_analyzer_phos == "ProteomeDiscoverer") {
+  #               TRUE
+  #             } else {
+  #               FALSE
+  #             },
+  #             readMQ_files = if (input$sw_analyzer_phos == "MaxQuant") {
+  #               TRUE
+  #             } else {
+  #               FALSE
+  #             },
+  #             file_input_prot = input$input_file_prot$datapath,
+  #             file_prot_prot = if(input$sw_analyzer_phos == "ProteomeDiscoverer"){input$prot_file_prot$datapath}else{NA},
+  #             file_pep_prot = input$pep_file_prot$datapath,
+  #             file_input_phos = input$input_file_phos$datapath,
+  #             file_prot_phos = if(input$sw_analyzer_phos == "ProteomeDiscoverer"){input$prot_file_phos$datapath}else{NA},
+  #             file_pep_phos = input$pep_file_phos$datapath,
+  #             file_psm_phos = if(input$sw_analyzer_phos == "ProteomeDiscoverer"){input$psm_file_phos$datapath}else{NA},
+  #             filt_absent_value = if(is.null(input$filt_absent_value_phos)){"0"}else{input$filt_absent_value_phos},
+  #             pval_fdr = if(is.null(input$pval_fdr_phos)){FALSE}else{input$pval_fdr_phos},
+  #             phospho_thr = if(is.null(input$phospho_phos)){"75"}else{input$phospho_phos},
+  #             signal_thr = if(is.null(input$signal_DEPs_phos)){"inf"}else{input$signal_DEPs_phos},
+  #             fc_thr = if(is.null(input$FC_DEPs_phos)){"0.75"}else{input$FC_DEPs_phos},
+  #             pval_thr = if(is.null(input$pvalue_DEPs_phos)){"0.05"}else{input$pvalue_DEPs_phos},
+  #             batch_corr_exe = if(is.null(input$batch_corr_phos)){FALSE}else{input$batch_corr_phos},
+  #             contr_design = input$design_phos$datapath,
+  #             prot_boxplot = if(is.null(input$prot_boxplot_phos)){""}else{input$prot_boxplot_phos},
+  #             run_enrich = if(is.null(input$enrichR_phos)){FALSE}else{input$enrichR_phos},
+  #             run_enrich_universe = if(!(is.null(input$enrichR_phos) | is.null(input$enrichR_universe_phos))){if(input$enrichR_phos==T){input$enrichR_universe_phos}else{FALSE}}else{FALSE},
+  #             run_STRING = if(is.null(input$STRING_phos)){FALSE}else{input$STRING_phos},
+  #             run_kinaseTree = if(is.null(input$kinaseTree_phos)){FALSE}else{input$kinaseTree_phos},
+  #             pval_fdr_enrich = if(is.null(input$pval_fdr_enrich_phos)){TRUE}else{input$pval_fdr_enrich_phos},
+  #             pval_enrich_thr = if(is.null(input$pvalue_enrich_phos)){"0.05"}else{input$pvalue_enrich_phos},
+  #             overlap_size_enrich_thr = if(is.null(input$os_enrich_phos)){as.integer(5)}else{input$os_enrich_phos},
+  #             enrich_filter_term = input$terms_enrich_phos,
+  #             enrich_filter_DBs = input$DB_enrich_phos,
+  #             enrichR_DB = if(is.null(input$enrichR_phos)){FALSE}else{input$enrichR_DB_phos},
+  #             dirOutput = dirOutput_Server
+  #           )
+  #           
+  #           #Render notebook
+  #           rmarkdown::render("R/pipeline_elaborate_PD_file_PhosProTN.Rmd",
+  #                             output_file = "phosprotn_report.html",
+  #                             output_dir = dirOutput_Server,
+  #                             params = params,
+  #                             envir = new.env(parent = globalenv())
+  #           )
+  #           
+  #           oldwd <- getwd()
+  #           setwd(dirOutput_Server)
+  #           files2zip <- list.files("./", recursive = TRUE)
+  #           zip(zipfile = file, files = files2zip, extra = "-r")
+  #           setwd(oldwd)
+  #           shinyjs::enable("report_phos")
+  #           js$pageDisable("all")
+  #         })
+  #       },
+  #       error = function(e) {
+  #         #Create error report and reactivate page
+  #         showNotification(paste0("ERROR: ", e), type = "error", duration = 30)
+  #         shinyjs::enable("report_phos")
+  #         js$pageDisable("all")
+  #         html_text<-str_replace(read_file("R/error.html"), 
+  #                                pattern = "The page you’re looking for doesn’t exist.</p>", 
+  #                                replacement = paste0("Description:", e, "</p>"))
+  #         write_file(html_text, file = paste0(tempdir(), "/error.html"))
+  #         zip(zipfile = file, files = paste0(tempdir(), "/error.html"), extra = "-j")
+  #       }
+  #     )
+  #   }
+  # )
+  
+  ##################################################
   # EXECUTE EXAMPLE CASE STUDY
-  output$case_study <- downloadHandler(
-    filename = "case_study_results.zip",
-    content = function(file) {
-      tryCatch(
-        {
-          withProgress(message = "Rendering, please wait!", {
-            shinyjs::disable("report")
-            shinyjs::disable("case_study")
-            js$pageDisable("none")
-            
-            dirOutput_2 <- tempdir()
-            currentTime <- gsub(".*?([0-9]+).*?", "\\1", Sys.time())
-            dirOutput_1 <- paste("/", currentTime, "/", sep = "")
-            dir.create(file.path(dirOutput_2, dirOutput_1), showWarnings = FALSE)
-            dirOutput_Server <- paste(dirOutput_2, dirOutput_1, sep = "")
-            message(dirOutput_Server)
-            #Create subfolder for the files
-            dir.create(file.path(dirOutput_Server, "figures"), showWarnings = FALSE)
-            dir.create(file.path(dirOutput_Server, "data"), showWarnings = FALSE)
-            dir.create(file.path(dirOutput_Server, "tables"), showWarnings = FALSE)
-            dir.create(file.path(paste0(dirOutput_Server, "figures"),"Expression"), showWarnings = FALSE)	
-            dir.create(file.path(paste0(dirOutput_Server, "figures"),"PCA_MDS"), showWarnings = FALSE)
-            
-            # Set up parameters to pass to Rmd document
-            params <- list(
-              doc_title = "Example case study MCF7 cells",
-              description = "Example case study on proteomics of MCF7 cells. (LC-MS/MS Orbitrap Fusion Tribrid). PRIDE: PXD009417. The software used to analyse the MS spectra was MaxQuant. (Clamer M, Tebaldi T, Lauria F, et al. Active Ribosome Profiling with RiboLace. Cell Rep. 2018;25(4):1097-1108.e5.)",
-              readPD_files = FALSE,
-              readMQ_files = TRUE,
-              file_input = "../Data/Input.xlsx",
-              file_prot = "../Data/proteinGroups.txt",
-              file_pep = "../Data/peptides.txt",
-              filt_absent_value = "0",
-              pval_fdr = FALSE,
-              signal_thr = "inf",
-              fc_thr = "0.75",
-              pval_thr = "0.05",
-              batch_corr_exe = FALSE,
-              contr_design = "../Data/design.xlsx",
-              prot_boxplot = "ABCF2, ACIN1",
-              run_enrich = TRUE,
-              run_enrich_universe = FALSE,
-              run_STRING = TRUE,
-              pval_fdr_enrich = TRUE,
-              pval_enrich_thr = "0.05",
-              overlap_size_enrich_thr = as.integer(5),
-              enrich_filter_term = NULL,
-              enrich_filter_DBs = c(
-                "GO_Molecular_Function_2021",
-                "GO_Cellular_Component_2021",
-                "GO_Biological_Process_2021",
-                "KEGG_2021_Human",
-                "BioPlanet_2019",
-                "MGI_Mammalian_Phenotype_Level_4_2019",
-                "MSigDB_Hallmark_2020",
-                "Jensen_COMPARTMENTS",
-                "DisGeNET"
-              ),
-              enrichR_DB = FALSE,
-              dirOutput = dirOutput_Server
-            )
-            
-            rmarkdown::render("R/pipeline_elaborate_PD_files.Rmd",
-                              output_file = "protn_case_study_report.html",
-                              output_dir = dirOutput_Server,
-                              params = params,
-                              envir = new.env(parent = globalenv())
-            )
-            
-            oldwd <- getwd()
-            setwd(dirOutput_Server)
-            files2zip <- list.files("./", recursive = TRUE)
-            zip(zipfile = file, files = files2zip, extra = "-r")
-            setwd(oldwd)
-            shinyjs::enable("report")
-            shinyjs::enable("case_study")
-            js$pageDisable("all")
-          })
-        },
-        error = function(e) {
-          showNotification(paste0("ERROR: ", e), type = "error", duration = 30)
-          shinyjs::enable("report")
-          shinyjs::enable("case_study")
-          js$pageDisable("all")
-          html_text<-str_replace(read_file("R/error.html"), 
-                                 pattern = "The page you’re looking for doesn’t exist.</p>", 
-                                 replacement = paste0("Description:", e, "</p>"))
-          write_file(html_text, file = paste0(tempdir(), "/error.html"))
-          zip(zipfile = file, files = paste0(tempdir(), "/error.html"), extra = "-j")
-        }
-      )
-    }
-  )
-  
+  # output$case_study <- downloadHandler(
+  #   filename = "case_study_results.zip",
+  #   content = function(file) {
+  #     tryCatch(
+  #       {
+  #         withProgress(message = "Rendering, please wait!", {
+  #           shinyjs::disable("report")
+  #           shinyjs::disable("case_study")
+  #           js$pageDisable("none")
+  #           
+  #           dirOutput_2 <- tempdir()
+  #           currentTime <- gsub(".*?([0-9]+).*?", "\\1", Sys.time())
+  #           dirOutput_1 <- paste("/", currentTime, "/", sep = "")
+  #           dir.create(file.path(dirOutput_2, dirOutput_1), showWarnings = FALSE)
+  #           dirOutput_Server <- paste(dirOutput_2, dirOutput_1, sep = "")
+  #           message(dirOutput_Server)
+  #           #Create subfolder for the files
+  #           dir.create(file.path(dirOutput_Server, "figures"), showWarnings = FALSE)
+  #           dir.create(file.path(dirOutput_Server, "data"), showWarnings = FALSE)
+  #           dir.create(file.path(dirOutput_Server, "tables"), showWarnings = FALSE)
+  #           dir.create(file.path(paste0(dirOutput_Server, "figures"),"Expression"), showWarnings = FALSE)	
+  #           dir.create(file.path(paste0(dirOutput_Server, "figures"),"PCA_MDS"), showWarnings = FALSE)
+  #           
+  #           # Set up parameters to pass to Rmd document
+  #           params <- list(
+  #             doc_title = "Example case study MCF7 cells",
+  #             description = "Example case study on proteomics of MCF7 cells. (LC-MS/MS Orbitrap Fusion Tribrid). PRIDE: PXD009417. The software used to analyse the MS spectra was MaxQuant. (Clamer M, Tebaldi T, Lauria F, et al. Active Ribosome Profiling with RiboLace. Cell Rep. 2018;25(4):1097-1108.e5.)",
+  #             readPD_files = FALSE,
+  #             readMQ_files = TRUE,
+  #             file_input = "../Data/Input.xlsx",
+  #             file_prot = "../Data/proteinGroups.txt",
+  #             file_pep = "../Data/peptides.txt",
+  #             filt_absent_value = "0",
+  #             pval_fdr = FALSE,
+  #             signal_thr = "inf",
+  #             fc_thr = "0.75",
+  #             pval_thr = "0.05",
+  #             batch_corr_exe = FALSE,
+  #             contr_design = "../Data/design.xlsx",
+  #             prot_boxplot = "ABCF2, ACIN1",
+  #             run_enrich = TRUE,
+  #             run_enrich_universe = FALSE,
+  #             run_STRING = TRUE,
+  #             pval_fdr_enrich = TRUE,
+  #             pval_enrich_thr = "0.05",
+  #             overlap_size_enrich_thr = as.integer(5),
+  #             enrich_filter_term = NULL,
+  #             enrich_filter_DBs = c(
+  #               "GO_Molecular_Function_2021",
+  #               "GO_Cellular_Component_2021",
+  #               "GO_Biological_Process_2021",
+  #               "KEGG_2021_Human",
+  #               "BioPlanet_2019",
+  #               "MGI_Mammalian_Phenotype_Level_4_2019",
+  #               "MSigDB_Hallmark_2020",
+  #               "Jensen_COMPARTMENTS",
+  #               "DisGeNET"
+  #             ),
+  #             enrichR_DB = FALSE,
+  #             dirOutput = dirOutput_Server
+  #           )
+  #           
+  #           rmarkdown::render("R/pipeline_elaborate_PD_files.Rmd",
+  #                             output_file = "protn_case_study_report.html",
+  #                             output_dir = dirOutput_Server,
+  #                             params = params,
+  #                             envir = new.env(parent = globalenv())
+  #           )
+  #           
+  #           oldwd <- getwd()
+  #           setwd(dirOutput_Server)
+  #           files2zip <- list.files("./", recursive = TRUE)
+  #           zip(zipfile = file, files = files2zip, extra = "-r")
+  #           setwd(oldwd)
+  #           shinyjs::enable("report")
+  #           shinyjs::enable("case_study")
+  #           js$pageDisable("all")
+  #         })
+  #       },
+  #       error = function(e) {
+  #         showNotification(paste0("ERROR: ", e), type = "error", duration = 30)
+  #         shinyjs::enable("report")
+  #         shinyjs::enable("case_study")
+  #         js$pageDisable("all")
+  #         html_text<-str_replace(read_file("R/error.html"), 
+  #                                pattern = "The page you’re looking for doesn’t exist.</p>", 
+  #                                replacement = paste0("Description:", e, "</p>"))
+  #         write_file(html_text, file = paste0(tempdir(), "/error.html"))
+  #         zip(zipfile = file, files = paste0(tempdir(), "/error.html"), extra = "-j")
+  #       }
+  #     )
+  #   }
+  # )
+  ##################################################
   # -- DELETE TEMP FILES WHEN SESSION ENDS -- #
   session$onSessionEnded(function() {
     if (dir.exists(tempdir())){unlink(list.files(tempdir(), full.names = T), recursive = T)}

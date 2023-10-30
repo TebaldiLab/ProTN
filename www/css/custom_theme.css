@@ -368,3 +368,70 @@ footer {
     width: 100%;
   }
 }
+
+#modal_preview_output_ProTN, #modal_preview_case_study_ProTN, #modal_preview_output_PhosProTN{
+  width: auto;
+  max-height: 90%;
+}
+
+#modal_preview_output_ProTN div.modal-dialog, 
+#modal_preview_case_study_ProTN div.modal-dialog, 
+#modal_preview_output_PhosProTN div.modal-dialog {
+  width: auto;
+  margin: 0px;
+}
+
+#modal_preview_output_ProTN div.modal-dialog div.modal-content div.modal-header,
+#modal_preview_case_study_ProTN div.modal-dialog div.modal-content div.modal-header,
+#modal_preview_output_PhosProTN div.modal-dialog div.modal-content div.modal-header{
+  padding-top: 0px;
+  padding-bottom: 0px;
+}
+
+#modal_preview_output_ProTN div.modal-dialog div.modal-content div.modal-body,
+#modal_preview_case_study_ProTN div.modal-dialog div.modal-content div.modal-body,
+#modal_preview_output_PhosProTN div.modal-dialog div.modal-content div.modal-body{
+  padding-right: 0px;
+  padding-left: 0px;
+}
+
+#modal_preview_output_ProTN div.modal-dialog div.modal-content ,
+#modal_preview_case_study_ProTN div.modal-dialog div.modal-content,
+#modal_preview_output_PhosProTN div.modal-dialog div.modal-content{
+  padding-right: 0px;
+  padding-left: 0px;
+}
+
+#preview_results #content,
+#preview_results_CS #content,
+#preview_results_phos #content{
+  max-width: max-content;
+}
+
+#preview_results,#preview_results_CS, #preview_results_phos {
+    height: 800px;
+    max-height: 1200px;
+}
+
+#preview_results img.image-thumb, #preview_results_CS img.image-thumb, #preview_results_phosimg.image-thumb {
+  width: 60%;
+}
+
+#download_report, #download_report_CS, #download_report_PhosProTN {
+  background-color: #9F2042;
+  width: max-content;
+  margin-right: 0%;
+  margin-left: 43%;
+  max-width: 15%;
+  margin-bottom: 15px;
+}
+
+div.modal-footer button.btn {
+    width: max-content;
+}
+
+#preview_output_ProTN, #case_study_ProTN, #report_phos{
+    background-color: rgb(0, 120, 174);
+    font-weight: bold;
+    min-height: 50px;
+}

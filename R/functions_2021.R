@@ -1202,6 +1202,9 @@ kinase_act_phosr <- function(dirOutput_kinase, formule_CORAL, comp, dat_pep, dep
   data("KinaseMotifs")
   data("PhosphoSitePlus")
   
+  library(SummarizedExperiment)
+  lapply(list.files("PhosR", full.names = T), function(c) {source(c)})
+  
   tmp_dat_pep <- dat_pep[rownames(psm_peptide_table[which(psm_peptide_table[, "GeneName"] 
                                                           %in% 
                                                             deps_pep_l_df[which(deps_pep_l_df$comp == comp 
