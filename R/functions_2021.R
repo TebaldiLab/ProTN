@@ -26,9 +26,6 @@ enrichment_test <- function(input_vec, # character vector, input genes
                             anno_class="a", # name for annotation class (groups of annotations, a by default)
                             id_separator=";" # character separating overlap ids in the resulting string (; by default)
 ){
-  
-  # library(tidyverse)
-  
   bg_vec <- background_vec %>% stringr::str_trim() %>% stringr::str_to_upper() %>% 
     unique() %>% stringr::str_sort() # clean background
   
@@ -127,8 +124,6 @@ enrichment_enrichr <- function(input_vec, # vector with gene names
                          "enrichr_ids"=toupper(input_vec))
   transient<- left_join(transient,match_df)
   
-  #any(is.na(transient$input_ids)) control, should be FALSE
-  
   transient <- transient %>% dplyr::mutate(overlap_ids = ifelse(is.na(input_ids),enrichr_ids,input_ids))
   transient <- transient %>% dplyr::group_by(anno_class,anno_name) %>% 
     dplyr::summarise("overlap_ids"=str_c(overlap_ids,collapse=";")) %>% dplyr::ungroup() 
@@ -175,12 +170,6 @@ enrichment_lollipop <- function(input_df, # input dataframe
                                 char_max = 50, # maximum number of chars in text
                                 sort_y = T # sort rows according to y?
 ){
-  
-  #library(tidyverse)
-  #library(ggthemes)
-  #library(extrafont)
-  #loadfonts()
-  
   # select and rename relevant columns for the plot   
   plot_df <- input_df %>% dplyr::select(x_col=all_of(x_col),
                                         y_col=all_of(y_col),
@@ -204,12 +193,6 @@ enrichment_lollipop <- function(input_df, # input dataframe
   
   plot_df<-plot_df[!duplicated(plot_df %>% dplyr::select(any_of(c("y_col","facet_col")))),]
   plot_df$y_col<-factor(plot_df$y_col,levels=rev(unique(plot_df$y_col))) # factorization (y_col)
-  
-  # define a unique color, if absent
-  #if(!("col_col" %in% colnames(plot_df))){
-  #   plot_df$col_col<-""
-  #col_vec=c("grey25")
-  #}
   
   lp <- ggplot(plot_df, aes(x_col, y_col)) +
     
@@ -472,7 +455,6 @@ deps_b2b_lollipop <- function(input_df, # input dataframe
     geom_text(data = plot_df[plot_df$bb_col==f_right,],
               aes(y = y_col, x = 0, label = y_col),
               inherit.aes = F,family=bf,size=4)+
-    # xlim(-max(break_vec)-shift, max(break_vec)+shift) +
     scale_x_continuous(limits =c((-shift-max(break_vec)),(shift+max(break_vec))),
                        breaks = c(rev(-break_vec)-shift, break_vec+shift),
                        labels = c(as.character(rev(break_vec)),as.character(break_vec)))+
@@ -507,9 +489,6 @@ deps_b2b_lollipop <- function(input_df, # input dataframe
       geom_text(data = plot_df[plot_df$bb_col==f_right,],
                 aes(x = (shift*13/10)+x_col, label=text_col, vjust=(-0.1)),
                 fontface="italic", size=4, show_guide = F)
-    # scale_x_continuous(limits =c((-shift-max(plot_df$x_col)),(shift+max(plot_df$x_col))),
-    #                    breaks = c(rev(-break_vec)-shift, break_vec+shift),
-    #                    labels = c(as.character(rev(break_vec)),as.character(break_vec)))
   }
   
   if("shape_col" %in% colnames(plot_df)){
@@ -524,8 +503,6 @@ deps_b2b_lollipop <- function(input_df, # input dataframe
     lp <- lp + aes(fill=fill_col) + scale_fill_manual(name=fill_col, values= fill_vec) # drop = FALSE
   }
   
-  # lp <- lp + ggforce::facet_col(vars(facet_col), scales = "free_y", space = "free") +
-  # theme(strip.text = element_text(margin = margin(1,1,1,1), face="bold"))
   if(nrow(plot_df)/2 == length(unique(plot_df$y_col))){
     lp <- lp + geom_text(aes(x=shift, label=c("Up-regulated", rep("",nrow(plot_df)-1)), hjust=(-0.05), vjust=(-2), fontface=2, color="black"),family=bf,size=4)
     lp <- lp + geom_text(aes(x=-shift, label=c("Down-regulated", rep("",nrow(plot_df)-1)), hjust=(1.1), vjust=(-2), fontface=2, color="black"),family=bf,size=4)
@@ -565,11 +542,6 @@ enrichment_dotmatrix <- function(input_df, # input dataframe
                                  sort_y = F, # sort x rows? (in development)
                                  sort_x = F # sort y rows? according to size_col (in development)
 ){
-  
-  #library(tidyverse)
-  #library(ggthemes)
-  #library(extrafont)
-  #loadfonts()
   input_df$color<-ifelse(input_df$Significant==TRUE, color_vec[input_df$input_name], "white")
   
   # select and rename relevant columns for the plot   
@@ -642,21 +614,13 @@ enrichment_dotmatrix <- function(input_df, # input dataframe
 
 enrichment_geneterm_network <- function(input_df){
   
-  #input_df <- read_tsv("CF_GOBP_networks.txt") # %>% dplyr::filter(input_name=="trAM_inter")
   gene_col <- "overlap_ids"
   term_col <- "anno_name"
-  
-  # iMon "#84A298"
-  # IM "#EAB364" 
-  # moAM "#889C4C" 
-  # trAM" #B2473E"
   
   col_vec<- c("#B2473E","black")
   
   plot_df <- input_df %>% dplyr::select(term_col=all_of(term_col),
                                         gene_col=all_of(gene_col))
-  
-  
   
   edges_df <- plot_df  %>% separate_rows(gene_col,sep=";")
   edges_df$gene_col <- str_to_title(edges_df$gene_col) %>% str_trim()
@@ -692,35 +656,6 @@ enrichment_geneterm_network <- function(input_df){
     theme(legend.position = "bottom") +
     guides(text=F)
   l
-  # ggsave("tmp_graph.pdf",l, device=cairo_pdf, width = 10, height = 6, units = c("in"))
-  #   
-  # 
-  # nt<-ggplot(data = net_net,aes(from_id = from_id, 
-  #                               to_id = to_id,
-  #                               label= from_id,
-  #                               colour=class,
-  #                               fill=class,
-  #                               size = class,
-  #                               shape= class,
-  #                               alpha= class
-  # )) +
-  #    scale_colour_manual(values=col_vec,guide="none")+
-  #    scale_fill_manual(values=col_vec,guide="none")+
-  #    scale_size_manual(values = c(3, 5),guide="none")+
-  #    scale_shape_manual(values=c(2,6),guide="none")+
-  #    scale_alpha_manual(values=c(0.9,0.9))+
-  #    theme_void(base_family = "Arial Narrow")+
-  #   geom_net(
-  #     layout.alg = "kamadakawai", # "kamadakawai" "fruchtermanreingold"
-  #     fontsize=3, repel=T, #labelcolour="black",
-  #     curvature = 0.05, ealpha = 0.3,
-  #     ecolour = "grey50", linewidth=0.7,
-  #     directed = F, arrowsize = 0.3, arrowgap = 0.01,
-  #     show.legend=F)
-  # nt
-  
-  #ggsave("trAM_Net_trial.pdf", nt, device=cairo_pdf, width = 8, height = 5, units = c("in"))
-  
 }
 
 ### enrichment_clusterprofiler ----
@@ -833,13 +768,11 @@ edgeRglmQLF<-function(mat=edge_f, # object of class DGEGLM
                       names=FALSE)
 { # include label in column names
   degs<-glmQLFTest(edge_f,contrast=contro)$table[,-3]
-  # degs<-glmTreat(edge_f,contrast=contro,lfc=log2(1.2))$table[,-3] # alternative with FC threshold
   colnames(degs)<-c("log2_FC","log2_CPM","p_val")
   a_levels<-rownames(contro)[which(contro!=0)]
   a_samples<-which(cpm_mat$samples$group%in%a_levels)
   cpm_sele<-cpm(cpm_mat,log=T)[,a_samples]
   degs$log2_CPM<-apply(cpm_sele,1,function(x) mean(x))
-  #degs<-exactTest(edge_c, pair=cond, dispersion=bcv^2)$table
   degs$p_adj<-p.adjust(degs$p_val, method ="BH")
   degs$CPM<-round(2^degs$log2_CPM,2)
   degs$class<-"="
@@ -1025,8 +958,6 @@ enrichRfnc<-function(in_df, pval_fdr_enrich, pval_enrich_thr, overlap_size_enric
       if(length(frg)>0){
         enrichment_enrichr(frg, input_name=a, dbs_vec = dbs)
       }
-      # clu_n <- enrichment_enrichr(frg, input_name=a, dbs_vec = dbs)
-      # enr_df<-rbind(enr_df,clu_n)
     }
     enr_df<-do.call(rbind, mclapply(names(DEGs_lists), enrfcn, mc.cores = ncores))
   } else {
@@ -1039,8 +970,6 @@ enrichRfnc<-function(in_df, pval_fdr_enrich, pval_enrich_thr, overlap_size_enric
       if(length(frg)>0){
         enrichment_enrichr(frg, input_name=a, dbs_vec = dbs)
       }
-      # clu_n <- enrichment_enrichr(frg, input_name=a, dbs_vec = dbs)
-      # enr_df<-rbind(enr_df,clu_n)
     }
     stopCluster(cluster_ext)
   }
@@ -1080,19 +1009,7 @@ enrichRfnc_universe<-function(in_df, pval_fdr_enrich, pval_enrich_thr, overlap_s
     DEGs_lists<-NULL
     DEGs_lists[["Universe_all"]]<-in_df
     
-    # enrfcn <- function(a) {
-    #   source("functions_2021.R")
-    #   frg<-DEGs_lists[[a]]
-    #   if(length(frg)>0){
-    #     enrichment_enrichr(frg, input_name=a, dbs_vec = dbs)
-    #   }
-    #   # clu_n <- enrichment_enrichr(frg, input_name=a, dbs_vec = dbs)
-    #   # enr_df<-rbind(enr_df,clu_n)
-    # }
-    # ncores <- 3
     enr_df<-enrichment_enrichr(DEGs_lists[["Universe_all"]], input_name="Universe_all", dbs_vec = dbs)
-    
-    # enr_df<-do.call(rbind, mclapply(names(DEGs_lists), enrfcn, mc.cores = ncores))
     
     enr_df$"Significant"<-ifelse(if(pval_fdr_enrich){(enr_df$fdr<pval_enrich_thr) & (enr_df$overlap_size>=overlap_size_enrich_thr)}else{(enr_df$p_value<pval_enrich_thr) & (enr_df$overlap_size>=overlap_size_enrich_thr)},"TRUE","FALSE") %>% factor(levels=c("TRUE","FALSE"))
     enr_df$log2_OR<-log2(enr_df$odds_ratio)

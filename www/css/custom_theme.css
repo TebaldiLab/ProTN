@@ -195,14 +195,14 @@ p {
 }
 
 #logo_UNITN {
-  width: 40%;
-  max-width: 400px;
+  width: 90%;
+  max-width: 350px;
   margin-right: 40px;
 }
 
 #logo_RDDS {
-  width: 15%;
-  max-width: 150px;
+  width: 90%;
+  max-width: 200px;
   margin-right: 40px;
 }
 
@@ -226,6 +226,13 @@ p {
   content: url("images/logo_scritta_black.png");
   max-height: -webkit-fill-available;
   vertical-align: bottom;
+}
+
+.content-wrapper{
+  background-image: url("images/background.svg");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
 }
 
 .btn_example{
@@ -353,7 +360,7 @@ footer {
 
 .footer-col{
   float: left;
-  width: 33.33%;
+  width: 50%;
 }
 
 /* Clear floats after the columns */
@@ -367,6 +374,22 @@ footer {
   .footer-col {
     width: 100%;
   }
+}
+
+.partner-col-1{
+  width: 35%;
+  display: flex;
+  align-items: center;
+}
+
+.partner-col-2{
+  width: 65%;
+}
+
+.partner-row{
+    display: flex;
+    align-items: center;
+    flex-direction: row;
 }
 
 #modal_preview_output_ProTN, #modal_preview_case_study_ProTN, #modal_preview_output_PhosProTN{
