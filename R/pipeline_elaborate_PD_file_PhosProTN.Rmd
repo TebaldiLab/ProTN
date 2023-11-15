@@ -379,6 +379,8 @@ cat(" \n")
 cat(paste0("- Statistical significance threshold: p.val < ",pval_thr," "))
 cat(" \n")
 if(signal_thr != -Inf){cat(paste0("- Signal log2 intesity threshold: signal > ",signal_thr," "))}
+cat(" \n")
+if(filt_absent_value != 0){cat(paste0("- Threshold of acceptable missing values for condition = ",filt_absent_value," "))}
 cat(" \n \n ")
 if(run_enrich){
   cat("**Enrichment analysis** \n ")
@@ -387,7 +389,7 @@ cat(" \n")
 cat(" \n")
   cat(paste0("- Overlap size threshold for enrichment analysis: OverlapSize > ",overlap_size_enrich_thr," "))
 cat(" \n")
-  if(run_enrich_universe){cat("- Execution of the enrichmentalso on all detected proteins.")}
+  if(run_enrich_universe){cat("- Execution of the enrichment also on all detected proteins.")}
   cat(" \n \n ")
 }
 cat(" \n \n ")

@@ -283,9 +283,9 @@ cat("  - ```enrichment_allproteins.RData```: RData object containing enrichment 
     - **Peptide_Tryptic**: peptide tryptic digestion status (fully tryptic, N-semi tryptic, C-semi tryptic, non tryptic)
     - Columns for each contrast:
     - **class**: defined according to the fold change, p-value and abundance thresholds specified in the input
-    - *+* up-regulated protein/peptide
-    - *-* down-regulated protein/peptide
-    - *=* invariant protein/peptide
+      - *+* up-regulated protein/peptide
+      - *-* down-regulated protein/peptide
+      - *=* invariant protein/peptide
     - **log2_FC**: protein/peptide log2 transformed fold change
     - **p_val**: protein/peptide contrast p-value
     - **p_adj**: protein/peptide adjusted p-value (FDR after BH correction)
@@ -366,6 +366,8 @@ cat(" \n")
 cat(paste0("- Statistical significance threshold: p.val < ",pval_thr," "))
 cat(" \n")
 if(signal_thr != -Inf){cat(paste0("- Signal log2 intesity threshold: signal > ",signal_thr," "))}
+cat(" \n")
+if(filt_absent_value != 0){cat(paste0("- Threshold of acceptable missing values for condition = ",filt_absent_value," "))}
 cat(" \n \n ")
 if(run_enrich){
   cat("**Enrichment analysis** \n ")
@@ -374,7 +376,7 @@ if(run_enrich){
   cat(" \n")
   cat(paste0("- Overlap size threshold for enrichment analysis: OverlapSize > ",overlap_size_enrich_thr," "))
   cat(" \n")
-  if(run_enrich_universe){cat("- Execution of the enrichmentalso on all detected proteins.")}
+  if(run_enrich_universe){cat("- Execution of the enrichment also on all detected proteins.")}
   cat(" \n \n ")
 }
 cat(" \n \n ")
