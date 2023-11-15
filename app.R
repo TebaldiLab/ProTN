@@ -737,6 +737,9 @@ server <- function(input, output, session) {
             dirOutput = dirOutput_Server
           )
           
+          if(is.null(params$file_input) | is.null(params$file_prot) | is.null(params$file_pep) | is.null(params$contr_design)){
+            stop("Error: No file provide")
+          }
           #Render the notebook for the analysis
           rmarkdown::render("R/pipeline_elaborate_PD_files.Rmd",
                             output_file = "protn_report.html",
@@ -771,7 +774,7 @@ server <- function(input, output, session) {
                                pattern = "The page you’re looking for doesn’t exist.</p>", 
                                replacement = paste0("Description:", e, "</p>"))
         write_file(html_text, file = paste0(tempdir(), "/error.html"))
-        includeHTML(paste0(tempdir(), "/error.html"))
+        tags$iframe(src = "basedir/error.html", height = "100%", width = "100%", scrolling = "yes")
       }
     )
   })
@@ -874,7 +877,9 @@ server <- function(input, output, session) {
             enrichR_DB = FALSE,
             dirOutput = dirOutput_Server
           )
-          
+          if(is.null(params$file_input) | is.null(params$file_prot) | is.null(params$file_pep) | is.null(params$contr_design)){
+            stop("Error: No file provide")
+          }
           #Render the notebook for the analysis
           rmarkdown::render("R/pipeline_elaborate_PD_files.Rmd",
                             output_file = "protn_report.html",
@@ -910,7 +915,7 @@ server <- function(input, output, session) {
                                replacement = paste0("Description:", e, "</p>"))
         write_file(html_text, file = paste0(tempdir(), "/error.html"))
         
-        includeHTML(paste0(tempdir(), "/error.html"))
+        tags$iframe(src = "basedir/error.html", height = "100%", width = "100%", scrolling = "yes")
       }
     )
   })
@@ -1015,7 +1020,9 @@ server <- function(input, output, session) {
             enrichR_DB = if(is.null(input$enrichR_phos)){FALSE}else{input$enrichR_DB_phos},
             dirOutput = dirOutput_Server
           )
-          
+          if(is.null(params$file_input) | is.null(params$file_prot) | is.null(params$file_pep) | is.null(params$contr_design)){
+            stop("Error: No file provide")
+          }
           #Render the notebook for the analysis
           rmarkdown::render("R/pipeline_elaborate_PD_file_PhosProTN.Rmd",
                             output_file = "phosprotn_report.html",
@@ -1049,7 +1056,8 @@ server <- function(input, output, session) {
                                replacement = paste0("Description:", e, "</p>"))
         write_file(html_text, file = paste0(tempdir(), "/error.html"))
         
-        includeHTML(paste0(tempdir(), "/error.html"))
+        
+        tags$iframe(src = "basedir/error.html", height = "100%", width = "100%", scrolling = "yes")
       }
     )
   })
