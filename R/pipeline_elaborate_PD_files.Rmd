@@ -528,7 +528,7 @@ names(input_files)<-c("dir","Input","PEP","PROT")
 message("Data acquired")
 
 #Clean files and merge
-colToKeep<-intersect(colnames(input_files$Input), c("Condition","Color","Sample"))
+colToKeep<-intersect(colnames(input_files$Input), c("Condition","Color","Sample","MS_batch"))
 input_files$Input <- input_files$Input[,colToKeep]
 if(!("Condition" %in% colnames(input_files$Input))){ stop("Error: \'Condition\' column missin in \'Input\' file.") }
 if(!("Sample" %in% colnames(input_files$Input))){ stop("Error: \'Sample\' column missin in \'Input\' file.") }

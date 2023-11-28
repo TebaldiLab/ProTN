@@ -761,7 +761,7 @@ read_input_files<-function(type, filenames){
   message("Data acquired")
   
   #Clean files and merge
-  colToKeep<-intersect(colnames(input_files$Input), c("Condition","Color","Sample","Filename"))
+  colToKeep<-intersect(colnames(input_files$Input), c("Condition","Color","Sample","Filename","MS_batch"))
   input_files$Input <- input_files$Input[,colToKeep]
   if(!("Condition" %in% colnames(input_files$Input))){ stop("Error: \'Condition\' column missin in \'Input\' file.") }
   if(!("Filename" %in% colnames(input_files$Input))){ 
