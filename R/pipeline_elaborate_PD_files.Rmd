@@ -14,6 +14,7 @@ params:
   description: NA
   readPD_files: NA
   readMQ_files: NA
+  readTMT_files: NA
   file_input: NA
   file_prot: NA
   file_pep: NA
@@ -22,6 +23,7 @@ params:
   signal_thr: "inf"
   fc_thr: "0.75"
   pval_thr: "0.05"
+  taxonomy: NA
   batch_corr_exe: NA
   contr_design: NA
   prot_boxplot: NA
@@ -142,6 +144,7 @@ description<-params$description
 #Read Platform of previuos quantification
 readPD_files <- params$readPD_files
 readMQ_files <- params$readMQ_files
+readTMT_files <- params$readTMT_files
 #Read input directory
 filenames<-list(params$file_input, params$file_pep, params$file_prot)
 filt_absent_value=suppressWarnings(parse_double(params$filt_absent_value))
@@ -190,6 +193,16 @@ if(ncol(contr_design) > 0){
   color_constrast<-cbind(color_constrast,color_constrast_dark)
 }else{
   stop("Error: At least one contrast design is required for the analysis.")
+}
+
+#Read Taxonomy
+taxonomy_NCBI <- params$taxonomy
+if(is.na(taxonomy_NCBI)){
+  message("Warning: parse error for Taxonomy ID. Set default paramenter to Homo Sapiens\n")
+  taxonomy_NCBI <- 9606
+} else{
+  codtax <- fread("NCBI_taxID/subset_tax.csv")
+  taxonomy_NCBI <- codtax[name == taxonomy_NCBI, taxid]  
 }
 
 #Read Proteins List for control boxplot
@@ -348,8 +361,11 @@ cat(" \n \n")
 if(readPD_files){
   cat("**Source files:** Proteome Discoverer")
   cat(" \n")
-} else{
+} else if(readMQ_files){
   cat("**Source files:** MaxQuant")
+  cat(" \n")
+} else if(readTMT_files){
+  cat("**Source files:** TMT with Protein Discoverer")
   cat(" \n")
 }
 cat(" \n \n")
@@ -441,8 +457,8 @@ if(is_empty(which(grepl("Keratin|keratin",input_files$PROT$Description) |
                                                ,c("Accession","Description")])
 }
 input_files$PROT$GeneName<-lapply(input_files$PROT$Description, function(x){gsub(".*GN=(.+) PE=.*", "\\1", x)}) %>% unlist()
-taxonomy_NCBI<-lapply(input_files$PROT$Description, function(x){gsub(".*OX=(.+) GN=.*", "\\1", x)}) %>% unlist()
-taxonomy_NCBI<-strtoi(names(sort(table(taxonomy_NCBI), decreasing = T))[1])
+# taxonomy_NCBI<-lapply(input_files$PROT$Description, function(x){gsub(".*OX=(.+) GN=.*", "\\1", x)}) %>% unlist()
+# taxonomy_NCBI<-strtoi(names(sort(table(taxonomy_NCBI), decreasing = T))[1])
 #Mantain only the first UNIPROT code
 input_files$PEP$`Master Protein Accessions`<-lapply(input_files$PEP$`Master Protein Accessions`,
                                                     function(x){unlist(str_split(x, ";"))[1]}) %>% unlist()
@@ -552,18 +568,18 @@ input_files$PROT <- input_files$PROT[-which(grepl("Keratin|keratin",input_files$
                                               grepl("CON_|Keratin|keratin",input_files$PROT$`Majority protein IDs`))
                                      ,c("Majority protein IDs","Fasta headers")]
 
-taxonomy_NCBI<-9606
+# taxonomy_NCBI<-9606
 if(any(grepl(".*GN=(.+) PE=.*", input_files$PROT$`Fasta headers`))){
   input_files$PROT$GeneName<-lapply(input_files$PROT$`Fasta headers`, function(x){gsub(".*GN=(.+) PE=.*", "\\1", x)}) %>% unlist()
   input_files$PROT$GeneName[which(str_detect(input_files$PROT$GeneName,";"))] <- lapply(
     input_files$PROT$GeneName[which(str_detect(input_files$PROT$GeneName,";"))],
     function(x){unlist(str_split(x, ";"))[1]}) %>% unlist()
   
-  taxonomy_NCBI2<-lapply(input_files$PROT$`Fasta headers`, function(x){gsub(".*OX=(.+) GN=.*", "\\1", x)}) %>% unlist()
-  taxonomy_NCBI2<-strtoi(names(sort(table(taxonomy_NCBI2), decreasing = T))[1])
-  if(!is.na(taxonomy_NCBI2)){
-    taxonomy_NCBI<-9606
-  }
+  # taxonomy_NCBI2<-lapply(input_files$PROT$`Fasta headers`, function(x){gsub(".*OX=(.+) GN=.*", "\\1", x)}) %>% unlist()
+  # taxonomy_NCBI2<-strtoi(names(sort(table(taxonomy_NCBI2), decreasing = T))[1])
+  # if(!is.na(taxonomy_NCBI2)){
+  #   taxonomy_NCBI<-9606
+  # }
 } else if(any(grepl("ENS\\w+\\||ENS\\w+\\.\\w+\\|", input_files$PROT$`Fasta headers`))){
   input_files$PROT$GeneName<-lapply(input_files$PROT$`Fasta headers`, 
                                     function(x){
@@ -573,11 +589,11 @@ if(any(grepl(".*GN=(.+) PE=.*", input_files$PROT$`Fasta headers`))){
                                           split = "\\|")[[1]], 
                                         n=2)[1]}) %>% unlist()
   
-  taxonomy_NCBI2<-unlist(stri_extract_all_regex(input_files$PROT$`Fasta headers`, "^\\w+P"))
-  taxonomy_NCBI2<-names(sort(table(taxonomy_NCBI2), decreasing = T))[1]
-  if(taxonomy_NCBI2 == "ENSMUSP|ENSMUS"){
-    taxonomy_NCBI<-10090
-  }
+  # taxonomy_NCBI2<-unlist(stri_extract_all_regex(input_files$PROT$`Fasta headers`, "^\\w+P"))
+  # taxonomy_NCBI2<-names(sort(table(taxonomy_NCBI2), decreasing = T))[1]
+  # if(taxonomy_NCBI2 == "ENSMUSP|ENSMUS"){
+  #   taxonomy_NCBI<-10090
+  # }
   
   input_files$PROT$`Majority protein IDs` <- lapply(input_files$PROT$`Majority protein IDs`, 
                                                     function(x){strsplit(x, ";")[[1]][1]}) %>% unlist()
@@ -629,6 +645,147 @@ remove(uniprot_to_take,input_files)
 
 shiny::setProgress(0.23, detail = "Files correctly read...")
 ```
+
+```{r load_data_from_TMT, eval=readTMT_files,echo=F, message=F, warning=F, results='asis'}
+message("Reading files from MS...")
+#Read all files in the input folder
+template_files=c("Input","pep","prot")
+filenames <- list("Input"=params$file_input,"prot"=params$file_prot,"pep"=params$file_pep)
+input_files<-list("FILES")
+for (f in template_files){
+  input_files[f] <- tryCatch({
+    read_excel_allsheets(filenames[f][[1]])
+  }, error=function(cond){
+    stop(paste0("Error: missing file. The file \'",f,"\' is missing or not have the pattern in the filename or there are duplicates files."))
+  })
+}
+names(input_files)<-c("dir","Input","PEP","PROT")
+message("Data acquired")
+
+
+#Clean files and merge
+colToKeep<-intersect(colnames(input_files$Input), c("File Name","Condition","Color","Sample","MS_batch"))
+input_files$Input <- input_files$Input[,colToKeep]
+if(!("Condition" %in% colnames(input_files$Input))){ stop("Error: \'Condition\' column missin in \'Input\' file.") }
+if(batch_corr_exe & !("MS_batch" %in% colnames(input_files$Input))){ stop("Error: \'MS_batch\' column missin in \'Input\' file with batch correction activated") }
+# if("Sample" %in% colnames(input_files$Input)){input_files$Input$`File Name` <- input_files$Input$Sample}
+# input_files$Input$`File Name`<- lapply(input_files$Input$`File Name`,
+#                                        function(x){tail(unlist(strsplit(x,"\\",fixed=T)),n=1)})
+
+# input_files$Input$`File Name`<-mf(unlist(input_files$Input$`File Name`),"_")
+if(any(str_starts(input_files$Input$Condition, "[0-9]"))){
+  name<-names(formule_contrast)
+  formule_contrast <- lapply(unique(input_files$Input$Condition[(str_starts(input_files$Input$Condition, "[0-9]"))]), 
+                             function(x){
+                               str_replace_all(formule_contrast,
+                                               x,
+                                               str_c("X.", x))
+                             })[[1]]
+  names(formule_contrast) <- name
+  input_files$Input$Condition[(str_starts(input_files$Input$Condition, "[0-9]"))] <- str_c("X.",
+                                                                                           input_files$Input$Condition[(str_starts(input_files$Input$Condition,
+                                                                                                                                   "[0-9]"))])
+}
+#Prepare PROT table with only column Accession and Dscription, extract fro Description the GeneName and remove contaminants
+if(is_empty(which(grepl("Keratin|keratin",input_files$PROT$Description) |
+                  grepl("CON_",input_files$PROT$Accession)))){
+  input_files$PROT <- na.omit(input_files$PROT[,c("Accession","Description")])
+}else{
+  input_files$PROT <- na.omit(input_files$PROT[-which(grepl("Keratin|keratin",input_files$PROT$Description) |
+                                                        grepl("CON_",input_files$PROT$Accession))
+                                               ,c("Accession","Description")])
+}
+input_files$PROT$GeneName<-lapply(input_files$PROT$Description, function(x){gsub(".*GN=(.+) PE=.*", "\\1", x)}) %>% unlist()
+# taxonomy_NCBI<-lapply(input_files$PROT$Description, function(x){gsub(".*OX=(.+) GN=.*", "\\1", x)}) %>% unlist()
+# taxonomy_NCBI<-strtoi(names(sort(table(taxonomy_NCBI), decreasing = T))[1])
+#Mantain only the first UNIPROT code
+input_files$PEP$`Master Protein Accessions`<-lapply(input_files$PEP$`Master Protein Accessions`,
+                                                    function(x){unlist(str_split(x, ";"))[1]}) %>% unlist()
+#Verify if the Abundance start in 5 column in PEP table, if not remove extra column
+# if(!grepl("Abundance",colnames(input_files$PEP)[5])){
+input_files$PEP<-input_files$PEP[,c("Annotated Sequence",
+                                    if("Modifications" %in% colnames(input_files$PEP)){"Modifications"}else{"Modifications in Master Proteins"},
+                                    "Master Protein Accessions",
+                                    "Positions in Master Proteins",
+                                    colnames(input_files$PEP)[which(grepl("Abundances",
+                                                                          colnames(input_files$PEP)))])]
+# }
+
+#merge by uniprot the prot description and the pep table
+uniprot_to_take<-merge(input_files$PROT, input_files$PEP, by.x = "Accession", by.y = "Master Protein Accessions")
+input_files$PD_PEP_matrix<-merge(input_files$PROT[which(input_files$PROT$Accession %in%
+                                                          uniprot_to_take$Accession),],
+                                 input_files$PEP, 
+                                 by.x = "Accession", 
+                                 by.y = "Master Protein Accessions")
+input_files$PD_PEP_matrix<-input_files$PD_PEP_matrix[,c(c("Accession",
+                                                          "Description",
+                                                          "GeneName",
+                                                          "Annotated Sequence",
+                                                          if("Modifications" %in% colnames(input_files$PEP)){"Modifications"}else{"Modifications in Master Proteins"},
+                                                          "Positions in Master Proteins"),
+                                                        lapply(input_files$Input$`File Name`, function(x){
+                                                          colnames(input_files$PD_PEP_matrix)[grepl(paste0(": ",x),
+                                                                                                    colnames(input_files$PD_PEP_matrix))]
+                                                          }) %>% unlist())]
+
+if("TRUE" %in% grepl("\\.", colnames(input_files$PD_PEP_matrix))){
+  input_files$PD_PEP_matrix<-input_files$PD_PEP_matrix[,-which(colnames(input_files$PD_PEP_matrix) %in%
+                                                                 c(colnames(input_files$PD_PEP_matrix)[grepl("\\.",
+                                                                                                             colnames(input_files$PD_PEP_matrix))]))]
+}
+
+#Save the different TMT from the colnames
+# TMT_colnames <- data.table("columns"=grep("Abundance", colnames(input_files[["PD_PEP_matrix"]]), value = T))
+# TMT_colnames[, split_col := tstrsplit(columns, "\\,", keep = 1)]
+# TMT_colnames[, filename := tstrsplit(as.character(split_col), split="\\: ", keep = 2)
+#              ][, TMT := tstrsplit(as.character(split_col), split="\\: ", keep = 3)]
+# input_files[["Input"]] <- merge(input_files[["Input"]], 
+#                                 TMT_colnames[,c("filename","TMT")], 
+#                                 by.x = "File ID", by.y = "filename")
+# input_files[["Input"]]$Sample <- paste(input_files[["Input"]]$Sample, input_files[["Input"]]$TMT, sep = "_")
+# 
+# colnames(input_files$PD_PEP_matrix)<-c(c("Accession","Description","GeneName","Annotated Sequence","Modifications","Position in Master Proteins"),
+#                                        unlist(lapply(grep("Abundance:", colnames(input_files$PD_PEP_matrix), value = T), function(x){
+#                                          tmp<-tstrsplit(x, "\\,", keep = 1)[[1]];
+#                                          input_files$Input[which(input_files$Input$`File ID` %in% tstrsplit(as.character(tmp), 
+#                                                                                                             split="\\: ", 
+#                                                                                                             keep = 2)[[1]] &
+#                                                                  input_files$Input$TMT %in% tstrsplit(as.character(tmp), 
+#                                                                                                             split="\\: ", 
+#                                                                                                             keep = 3)[[1]]), "Sample"]
+#                                        })))
+
+colnames(input_files$PD_PEP_matrix)<-c(c("Accession","Description","GeneName","Annotated Sequence","Modifications","Position in Master Proteins"), unlist(lapply(grep("Abundances", colnames(input_files$PD_PEP_matrix), value = T), function(x){
+  col<- as.character(tstrsplit(x, "\\: ", keep = 2));
+  input_files[["Input"]][which(input_files[["Input"]]$`File Name` == col), "Sample"]
+})))
+
+# input_files$PD_PEP_matrix$GeneName<-str_split_fixed(str_split_fixed(input_files$PD_PEP_matrix$GeneName,"-",n=2)[,1],"[.]",n=2)[,1] %>% toupper()
+input_files$PD_PEP_matrix$GeneName<-str_split_fixed(str_split_fixed(input_files$PD_PEP_matrix$GeneName,"-",n=2)[,1],"[.]",n=2)[,1]
+#Maintain only the new complete matrix of abundance
+psm_sig_raw<-input_files$PD_PEP_matrix
+c_anno<-input_files$Input
+if(!("Sample" %in% colnames(c_anno))){
+  colnames(c_anno)[2]<-"sample"
+}
+colnames(c_anno)<-tolower(colnames(c_anno))
+
+rownames(c_anno)<-c_anno$sample
+if("color" %in% colnames(c_anno)){
+  colour_vec<-na.omit(c_anno[colnames(psm_sig_raw),]$color)
+  names(colour_vec)<-na.omit(c_anno[colnames(psm_sig_raw),]$sample)
+}else{
+  c_anno<-left_join(c_anno,
+                    data.frame("color"=colour_vec[match(sort(c_anno$condition),unique(sort(c_anno$condition)))],
+                               "sample"=c_anno[order(c_anno$condition), "sample"]))
+}
+rownames(c_anno)<-c_anno$sample
+
+remove(uniprot_to_take,input_files)
+shiny::setProgress(0.23, detail = "Files correctly read...")
+```
+
 
 ```{r peptide_annotation, message=F, warning=F, echo=F, eval=T}
 psm_sig_raw$`Position in Master Proteins`<-gsub(" ", "_", psm_sig_raw$`Position in Master Proteins`)

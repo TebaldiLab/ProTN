@@ -103,7 +103,8 @@ ui <- tagList(
                   uiOutput("help2")
                 ),
                 fluidRow(
-                  radioButtons("sw_analyzer", "Software Analyzer", c("ProteomeDiscoverer", "MaxQuant"), inline = TRUE),
+                  radioButtons("sw_analyzer", "Software Analyzer", 
+                               c("ProteomeDiscoverer", "MaxQuant", "TMT_PD"), inline = TRUE),
                   uiOutput("help3")
                 )
               ),
@@ -305,6 +306,12 @@ server <- function(input, output, session) {
           column(
             width = 4,
             fluidRow(
+              selectizeInput("taxonomy", "NCBI Taxonomy ID", 
+                             choice = data.table::fread("R/NCBI_taxID/subset_tax.csv", select = "name"), 
+                             selected = "Homo sapiens", multiple = F),
+              # uiOut.put("help10")
+            ),
+            fluidRow(
               radioButtons("batch_corr", "Batch effect correction", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
               uiOutput("help10")
             ),
@@ -406,6 +413,12 @@ server <- function(input, output, session) {
           ),
           column(
             width = 4,
+            fluidRow(
+              selectizeInput("taxonomy_phos", "NCBI Taxonomy ID", 
+                             choice = data.table::fread("R/NCBI_taxID/subset_tax.csv", select = "name"), 
+                             selected = "Homo sapiens", multiple = F),
+              # uiOut.put("help10")
+            ),
             fluidRow(
               radioButtons("batch_corr_phos", "Batch effect correction", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
               uiOutput("help10_P")
@@ -545,7 +558,7 @@ server <- function(input, output, session) {
       switch(x,
              "help_btn1" = "Title of the experiment. It will be the title of the web page report.",
              "help_btn2" = "Description of the current experiment. It is the first paragraph of the report.",
-             "help_btn3" = "Determine with software was use to identify peptides and proteins. PD: Protein Discoverer; MQ: MaxQuant.",
+             "help_btn3" = "Determine with software was use to identify peptides and proteins. Choice: Protein Discoverer; MaxQuant; TMT with Protein Discoverer.",
              "help_btn4" = "File with the information about the samples and the correlation between replicate ID and condition  (WARNING: Condition name MUST contain at least 1 character!). [FURTHER DETAILS IN THE INFO TAB]",
              "help_btn5" = "Raw file of peptides obtained from PD or MQ (file peptides.txt).",
              "help_btn6" = "Raw file of protein groups obtained from PD or MQ (file proteinGroups.txt).",
@@ -714,9 +727,15 @@ server <- function(input, output, session) {
             } else {
               FALSE
             },
+            readTMT_files = if (input$sw_analyzer == "TMT_PD") {
+              TRUE
+            } else {
+              FALSE
+            },
             file_input = input$input_file$datapath,
             file_prot = input$prot_file$datapath,
             file_pep = input$pep_file$datapath,
+            taxonomy = input$taxonomy,
             filt_absent_value = if(is.null(input$filt_absent_value)){"0"}else{input$filt_absent_value},
             pval_fdr = if(is.null(input$pval_fdr)){FALSE}else{input$pval_fdr},
             signal_thr = if(is.null(input$signal_DEPs)){"inf"}else{input$signal_DEPs},
@@ -845,9 +864,11 @@ server <- function(input, output, session) {
             description = "Example case study: Phosphoproteomics reveals that Parkinson’s disease kinase LRRK2 regulates a subset of Rab GTPases. PRIDE: PXD003071. \n \n DOI: 10.7554/eLife.12813, PubMed: 26824392, Des: Steger M, Tonelli F, Ito G, Davies P, Trost M, Vetter M, Wachter S, Lorentzen E, Duddy G, Wilson S, Baptista MA, Fiske BK, Fell MJ, Morrow JA, Reith AD, Alessi DR, Mann M. Phosphoproteomics reveals that Parkinson's disease kinase LRRK2 regulates a subset of Rab GTPases. Elife. 2016 Jan 29;5. pii: e12813",
             readPD_files = FALSE,
             readMQ_files = TRUE,
+            readTMT_files = FALSE,
             file_input = "../Data/proteome/Input.xlsx",
             file_prot = "../Data/proteome/proteinGroups.txt",
             file_pep = "../Data/proteome/peptides.txt",
+            taxonomy = "Homo sapiens",
             filt_absent_value = "0",
             pval_fdr = FALSE,
             signal_thr = "inf",
@@ -999,6 +1020,7 @@ server <- function(input, output, session) {
             file_prot_phos = if(input$sw_analyzer_phos == "ProteomeDiscoverer"){input$prot_file_phos$datapath}else{NA},
             file_pep_phos = input$pep_file_phos$datapath,
             file_psm_phos = if(input$sw_analyzer_phos == "ProteomeDiscoverer"){input$psm_file_phos$datapath}else{NA},
+            taxonomy = input$taxonomy_phos,
             filt_absent_value = if(is.null(input$filt_absent_value_phos)){"0"}else{input$filt_absent_value_phos},
             pval_fdr = if(is.null(input$pval_fdr_phos)){FALSE}else{input$pval_fdr_phos},
             phospho_thr = if(is.null(input$phospho_phos)){"75"}else{input$phospho_phos},

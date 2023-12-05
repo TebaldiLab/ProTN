@@ -21,6 +21,7 @@ params:
   file_prot_phos: NA
   file_pep_phos: NA
   file_psm_phos: NA
+  taxonomy: NA
   filt_absent_value: "0"
   pval_fdr: NA
   phospho_thr: "75"
@@ -202,6 +203,16 @@ if(ncol(contr_design) > 0){
 }
 
 formule_CORAL <- formule_contrast
+
+#Read Taxonomy
+taxonomy_NCBI <- params$taxonomy
+if(is.na(taxonomy_NCBI)){
+  message("Warning: parse error for Taxonomy ID. Set default paramenter to Homo Sapiens\n")
+  taxonomy_NCBI <- 9606
+} else{
+  codtax <- fread("NCBI_taxID/subset_tax.csv")
+  taxonomy_NCBI <- codtax[name == taxonomy_NCBI, taxid]  
+}
 
 #Read Proteins List for control boxplot
 prot_boxplot<-na.omit(strsplit(params$prot_boxplot, split = "\\;|\\,|\\ |\\; |\\, ")[[1]])
@@ -463,8 +474,8 @@ read_input_files<-function(type, filenames){
                                                  ,c("Accession","Description")])
   }
   input_files$PROT$GeneName<-lapply(input_files$PROT$Description, function(x){gsub(".*GN=(.+) PE=.*", "\\1", x)}) %>% unlist()
-  taxonomy_NCBI<-lapply(input_files$PROT$Description, function(x){gsub(".*OX=(.+) GN=.*", "\\1", x)}) %>% unlist()
-  taxonomy_NCBI<-strtoi(names(sort(table(taxonomy_NCBI), decreasing = T))[1])
+  # taxonomy_NCBI<-lapply(input_files$PROT$Description, function(x){gsub(".*OX=(.+) GN=.*", "\\1", x)}) %>% unlist()
+  # taxonomy_NCBI<-strtoi(names(sort(table(taxonomy_NCBI), decreasing = T))[1])
   #Mantain only the first UNIPROT code
   input_files$PEP$`Master Protein Accessions`<-lapply(input_files$PEP$`Master Protein Accessions`,
                                                       function(x){unlist(str_split(x, ";"))[1]}) %>% unlist()
@@ -701,8 +712,7 @@ read_input_files<-function(type, filenames){
   psm_peptide_table<-input_files$PEP_info
   
   remove(uniprot_to_take,input_files)
-  return(list("taxonomy_NCBI" = taxonomy_NCBI,
-              "psm_sig_raw" = psm_sig_raw,
+  return(list("psm_sig_raw" = psm_sig_raw,
               "psm_peptide_table" = psm_peptide_table,
               "c_anno" = c_anno,
               "colour_vec" = colour_vec,
@@ -711,7 +721,6 @@ read_input_files<-function(type, filenames){
 
 filenames <- list("Input"=params$file_input_prot,"prot"=params$file_prot_prot,"pep"=params$file_pep_prot)
 res <- read_input_files("PROT", filenames)
-taxonomy_NCBI<-res$taxonomy_NCBI
 psm_sig_raw_prot<-res$psm_sig_raw
 psm_peptide_table_prot <- res$psm_peptide_table
 c_anno_prot<-res$c_anno
@@ -761,7 +770,7 @@ read_input_files<-function(type, filenames){
   message("Data acquired")
   
   #Clean files and merge
-  colToKeep<-intersect(colnames(input_files$Input), c("Condition","Color","Sample","Filename","MS_batch"))
+  colToKeep<-intersect(colnames(input_files$Input), c("Condition","Color","Sample","Filename"))
   input_files$Input <- input_files$Input[,colToKeep]
   if(!("Condition" %in% colnames(input_files$Input))){ stop("Error: \'Condition\' column missin in \'Input\' file.") }
   if(!("Filename" %in% colnames(input_files$Input))){ 
@@ -790,18 +799,18 @@ read_input_files<-function(type, filenames){
                                                                                                                                      "[0-9]"))])
   }
   #Prepare PROT table with only column Accession and Dscription, extract fro Description the GeneName and remove contaminants
-  taxonomy_NCBI<-lapply(input_files$PEP$`Protein names`, function(x){gsub(".*OX=(.+) GN=.*", "\\1", x)}) %>% unlist()
-  taxonomy_NCBI<-strtoi(names(sort(table(taxonomy_NCBI), decreasing = T))[1])
-  if(is.na(taxonomy_NCBI)){
-    taxonomy_NCBI<-9606
-  }
-  
-  #Cast genename to all upper for human and as title for mouse
-  if(taxonomy_NCBI == 9606){
-    input_files$PEP$`Gene names` <- str_to_upper(input_files$PEP$`Gene names`)
-  } else {
-    input_files$PEP$`Gene names` <- str_to_title(input_files$PEP$`Gene names`)
-  }
+  # taxonomy_NCBI<-lapply(input_files$PEP$`Protein names`, function(x){gsub(".*OX=(.+) GN=.*", "\\1", x)}) %>% unlist()
+  # taxonomy_NCBI<-strtoi(names(sort(table(taxonomy_NCBI), decreasing = T))[1])
+  # if(is.na(taxonomy_NCBI)){
+  #   taxonomy_NCBI<-9606
+  # }
+  # 
+  # #Cast genename to all upper for human and as title for mouse
+  # if(taxonomy_NCBI == 9606){
+  #   input_files$PEP$`Gene names` <- str_to_upper(input_files$PEP$`Gene names`)
+  # } else {
+  #   input_files$PEP$`Gene names` <- str_to_title(input_files$PEP$`Gene names`)
+  # }
   
   input_files$PEP <- input_files$PEP[-which(grepl("Keratin|keratin",input_files$PEP$`Protein names`) |
                                               grepl("CON_",input_files$PEP$`Leading razor protein`) |
@@ -901,8 +910,7 @@ read_input_files<-function(type, filenames){
   }
   
   remove(input_files)
-  return(list("taxonomy_NCBI" = taxonomy_NCBI,
-              "psm_sig_raw" = psm_sig_raw,
+  return(list("psm_sig_raw" = psm_sig_raw,
               "psm_peptide_table" = psm_peptide_table,
               "c_anno" = c_anno,
               "colour_vec" = colour_vec,
@@ -911,7 +919,6 @@ read_input_files<-function(type, filenames){
 
 filenames <- list("Input"=params$file_input_prot,"pep"=params$file_pep_prot)
 res <- read_input_files("PROT", filenames)
-taxonomy_NCBI<-res$taxonomy_NCBI
 psm_sig_raw_prot<-res$psm_sig_raw
 psm_peptide_table_prot <- res$psm_peptide_table
 c_anno_prot<-res$c_anno
