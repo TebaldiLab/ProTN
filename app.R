@@ -566,7 +566,7 @@ server <- function(input, output, session) {
   output$prot_df <- DT::renderDataTable({
     prot_file <- data.table::fread("Data/proteome/proteinGroups.txt", nrows = 100)
     DT::datatable(prot_file, escape = FALSE)
-  })
+  }, options=list(scrollX=T, autoWidth = TRUE))
   
   #PHOSPROTN: Show modals with example files phospho
   output$input_df_phos <- DT::renderDataTable({
