@@ -85,7 +85,17 @@ ui <- tagList(
                   "Input file Example", 
                   "preview_input",
                   size = "large",
-                  DT::dataTableOutput("input_df"))
+                  DT::dataTableOutput("input_df")),
+          bsModal("modal_peptide_Example", 
+                  "Peptide file Example", 
+                  "preview_peptide",
+                  size = "large",
+                  DT::dataTableOutput("pep_df")),
+          bsModal("modal_protein_Example", 
+                  "Protein file Example", 
+                  "preview_protein",
+                  size = "large",
+                  DT::dataTableOutput("prot_df"))
         ),
         #Execution tab of ProTN
         tabItem(
@@ -162,7 +172,17 @@ ui <- tagList(
                   "Input file Example", 
                   "preview_input_phos",
                   size = "large",
-                  DT::dataTableOutput("input_df_phos"))
+                  DT::dataTableOutput("input_df_phos")),
+          bsModal("modal_peptide_Example_phos", 
+                  "Peptide file Example", 
+                  "preview_peptide_phos",
+                  size = "large",
+                  DT::dataTableOutput("pep_df_phos")),
+          bsModal("modal_protein_Example_phos", 
+                  "Protein file Example", 
+                  "preview_protein_phos",
+                  size = "large",
+                  DT::dataTableOutput("prot_df_phos"))
         ),
         #Execution tab PhosProTN
         tabItem(
@@ -527,26 +547,48 @@ server <- function(input, output, session) {
   
   #PROTN: Show modals with example files
   output$input_df <- DT::renderDataTable({
-    input_file <- readxl::read_xlsx("Data/Input.xlsx")
+    input_file <- readxl::read_xlsx("Data/proteome/Input.xlsx")
     DT::datatable(input_file, escape = FALSE)
     
   })
   
   output$design_df <- DT::renderDataTable({
-    design_file <- readxl::read_xlsx("Data/design.xlsx")
+    design_file <- readxl::read_xlsx("Data/proteome/design.xlsx")
     DT::datatable(design_file, escape = FALSE)
+  })
+  
+  output$pep_df <- DT::renderDataTable({
+    pep_file <- data.table::fread("Data/proteome/peptides.txt", nrows = 100)
+    DT::datatable(pep_file, escape = FALSE)
+    
+  })
+  
+  output$prot_df <- DT::renderDataTable({
+    prot_file <- data.table::fread("Data/proteome/proteinGroups.txt", nrows = 100)
+    DT::datatable(prot_file, escape = FALSE)
   })
   
   #PHOSPROTN: Show modals with example files phospho
   output$input_df_phos <- DT::renderDataTable({
-    input_file_phos <- readxl::read_xlsx("Data/Input.xlsx")
+    input_file_phos <- readxl::read_xlsx("Data/proteome/Input.xlsx")
     DT::datatable(input_file_phos, escape = FALSE)
     
   })
   
   output$design_df_phos <- DT::renderDataTable({
-    design_file_phos <- readxl::read_xlsx("Data/design.xlsx")
+    design_file_phos <- readxl::read_xlsx("Data/proteome/design.xlsx")
     DT::datatable(design_file_phos, escape = FALSE)
+  })
+  
+  output$pep_df_phos <- DT::renderDataTable({
+    pep_file_phos <- data.table::fread("Data/proteome/peptides.txt", nrows = 100)
+    DT::datatable(pep_file_phos, escape = FALSE)
+    
+  })
+  
+  output$prot_df_phos <- DT::renderDataTable({
+    prot_file_phos <- data.table::fread("Data/proteome/proteinGroups.txt", nrows = 100)
+    DT::datatable(prot_file_phos, escape = FALSE)
   })
   
   
