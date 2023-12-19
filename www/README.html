@@ -10,14 +10,12 @@
 -->
 <img src="images/logo_scritta.svg" width="25%" style="display:block;margin-left:auto;margin-right:auto">
 
-<h4>ProTN is an integrative pipeline that analyze DDA proteomics data
-	obtained from MS. It perform a complete analysis of the raw files from
+<h4>ProTN is an integrative pipeline for flexible analysis and informative visualization of proteomics data from Mass
+Spectrometry. ProTN currently works on peptide abundances obtained with
 	<a
 		href="https://www.thermofisher.com/it/en/home/industrial/mass-spectrometry/liquid-chromatography-mass-spectrometry-lc-ms/lc-ms-software/multi-omics-data-analysis/proteome-discoverer-software.html">Proteome
 		Discoverer</a> (PD) or <a href="https://maxquant.org/">MaxQuant</a>
-	(MQ), with their biological interpretation with enrichement and network
-	analysis. ProTN executes a dual level analysis, at protein and peptide
-	level.
+	(MQ), two of the most widely used platforms analyzing raw MS spectra.
 </h4>
 <div id="workflow-of-protn" class="section level2">
 	<ul id="collapse_ul" class="collapsible">
@@ -31,39 +29,37 @@
 			</div>
 			<div class="collapsible-body">
 
-				<p>Later in this section we describes in details the workflow of the
-					pipeline. In the first phases it imputes and normalizes the data
-					obtaining the normalized matrix. On that is perfomed the enrichment, the PPI network
-					analysis and the kinase tree analysis. During the enrichment steps, the only protein analyzed are
-					the
-					up- or down-regulated, discriminated by the parameters set.
+				<p>The ProTN workflow is divided into preprocessing, differential analysis and biological interpretation. During
+				preprocessing, input data are filtered, imputed, normalized, and optionally batch-corrected. Next, differential analysis
+				is performed in parallel at peptide and protein resolution, based on users’ defined comparisons and considering compled
+				designs. Finally, biological interpretation of differentially expressed proteins is performed, including functional
+				enrichment analysis, and detection of communities in protein-protein interaction networks, and kinome tree perturbation
+				analysis.
 				</p>
 				<img src="images/Workflow_ProTN.svg" width="100%" alt="">
 				<div id="set-settings-for-the-execution-and-read-the-raw-data-from-loaded-files" class="section level3">
-					<h3>01. Set settings for the execution and read the raw data from
-						loaded files
+					<h3>01. Define analysis settings and load input data files
 					</h3>
-					<p>ProTN analyse the results of Proteome Discoverer and MaxQuant. The essential parameters and files
-						to run ProTN are:
+					<p>ProTN analyses the results of Proteome Discoverer and MaxQuant. The essential parameters and files to run ProTN are
+					summarized here
 						(additional details on the input can be found in section <a
 							href="#parameters-required-before-the-execution">2. Details on the input parameters and
 							files</a>)</p>
 					<ul>
 						<li>
-							<p><code>Title of Analysis</code>: title of the experiment. It will
+							<p><code>Analysis title</code>: title of the experiment. It will
 								be the title of the web page report.
 							</p>
 						</li>
 						<li>
-							<p><code>Software Analyzer</code>: determine with software was use
+							<p><code>Identification software</code>: determine with software was use
 								to identify peptides and proteins. <strong>PD</strong> for Protein
 								Discoverer, <strong>MQ</strong> for MaxQuant.
 							</p>
 						</li>
 						<li>
-							<p><code>Sample Annotation file</code>: file with the information about the
-								samples and the correlation between replicate ID and condition. (WARNING: Condition name
-								MUST contain at least 1 character!)
+							<p><code>Sample Annotation file</code>: Excel file with the information about samples and the association between replicates and conditions. (WARNING: Condition
+							name MUST contain at least 1 character!)
 								<button id="preview_input" type="button" class="btn_example" data-toggle="modal"
 									data-target="#modal_Input_Example">[Example of an Sample_Annotation file
 									HERE...]</button>
@@ -80,7 +76,7 @@
 							</p>
 						</li>
 						<li>
-							<p><code>Design for the comparison file</code>: Excel file
+							<p><code>Design and comparison file</code>: Excel file
 								containing the formulas of the contrast comparison you want to analyse. <button
 									id="preview_design" type="button" class="btn_example" data-toggle="modal"
 									data-target="#modal_Design_Example">[Example of Design file HERE...]</button>
@@ -89,51 +85,40 @@
 					</ul>
 				</div>
 				<div id="normalization-of-the-intensities" class="section level3">
-					<h3>02. Normalization and imputation of the intensities</h3>
-					<p>The intensities are log2 transformed and normalized with DEqMS <span class="citation">(Zhu
-							2022)</span>. Two methods are applied because a
-						double normalization is required, one for peptides and one for proteins.
-						At the peptide level, the normalization is done by the function
-						equalMedianNormalization, which normalizes intensity distributions in
-						samples so that they have median equal to 0.
+					<h3>02. Normalization and imputation of raw intensities</h3>
+					<p>Intensities are log2 transformed and normalized with DEqMS <span class="citation">(Zhu
+							2022)</span>. At the peptide level, the normalization is performed with the function equalMedianNormalization, which normalizes
+							intensity distributions in samples so that they have median equal to 0.
 					</p>
-					<p>At the protein level, this operation is executed by the function
-						medianSweeping. It applies the same median normalization used for
-						peptides, but also it summarizes the peptide intensities into protein
-						relative abundance by the median sweeping method.
+					<p>At the protein level, this operation is executed by the function medianSweeping, that applies the same median normalization
+					used for peptides, but also summarizes peptide intensities into protein relative abundances by the median sweeping
+					method.
 					</p>
-					<p>After the normalization the intensities from Mass Spectrometer need
-						to be imputed. The principal method is based on the PhosR package <span class="citation">(Kim et
-							al. 2021)</span> that performs a complex and
-						well-balanced imputation of the data based on the conditions of the
-						samples. As a backup method in case of problems with PhosR imputations,
-						ProTN uses a Gaussian round imputation.
+					<p>The principal method is based on the PhosR package <span class="citation">(Kim et
+							al. 2021)</span> that performs a complex and well-balanced imputation of the data based on the association between replicates and
+							conditions. As a backup method, ProTN uses a Gaussian round imputation, for condition with only 1 replicate.
 					</p>
 					<p>In this step, two MDSs and two PCAs (proteins and peptides) are
-						generated.
+						generated for data exploration.
 					</p>
 					<img src="images/figures/pca_proteins.png" width="49%" style="margin-left:auto;margin-right:auto" />
 					<img src="images/figures/mds_proteins.png" width="49%" style="margin-left:auto;margin-right:auto" />
 
 				</div>
 				<div id="statistical-differential-analysis" class="section level3">
-					<h3>03. Statistical differential analysis</h3>
-					<p>The workflow continue with the differential analysis. This phase is
-						applied to proteins and peptides, to obtain the significant proteins and
-						peptides. Two slightly different methodologies are applyed since for
-						proteins is used the DEqMS package <span class="citation">(Zhu
-							2022)</span>, instead, for peptides is used the usual Limma package
-						<span class="citation">(Ritchie et al. 2015)</span>. DEqMS is developed
-						on top of Limma, but the method estimates different prior variances for
-						proteins quantified by different numbers of PSMs/peptides per protein,
-						therefore achieving better accuracy.
+					<h3>03. Differential analysis</h3>
+					<p>Differential analysis is applied to both proteins and peptides, to identify significant differences. Two slightly
+					different methodologies are applied: the DEqMS package <span class="citation">(Zhu
+							2022)</span>,is used for proteins. DEqMS is developed on top of Limma, but the method estimates different prior variances for
+							proteins quantified by different numbers of PSMs/peptides per protein, therefore achieving better accuracy.For single
+							peptides, the Limma package is used
+						<span class="citation">(Ritchie et al. 2015)</span>. 
 					</p>
-					<p>Limma and DEqMS calculate DEPs for each comparison in the
-						<em>design</em> file parameter. Each peptide or protein has different
-						parameters: the log2 Fold Change, the P.Value, the adjusted P.Value and
-						the log2 expression. In this pipeline, a protein/peptide is significant
-						if passing 3 thresholds. A protein/peptide for each comparison can be
-						Up-regulated or Down-regulated. It is Up-regulated if:
+					<p>Limma and DEqMS calculate differentially expressed peptides and proteins (DEPs) for each comparison specified in the
+					design file parameter. Each peptide or protein can be selected as differential based on different parameters: the log2
+					Fold Change, the P.Value, the adjusted P.Value and the log2 expression. In ProTN, a protein/peptide is significant if
+					passing thresholds on these parameters, set by the user. A protein/peptide for each comparison can be Up-regulated or
+					Down-regulated. It is Up-regulated if:
 					</p>
 					<ul>
 						<li>
@@ -142,7 +127,7 @@
 							</p>
 						</li>
 						<li>
-							<p>the P.Value is lower than the threshold (P.Value &lt; P.Value
+							<p>the Adj.P.Value or P.Value is lower than the threshold (P.Value &lt; P.Value
 								thr),
 							</p>
 						</li>
@@ -160,7 +145,7 @@
 							</p>
 						</li>
 						<li>
-							<p>the P.Value is lower than the threshold (P.Value &lt; P.Value
+							<p>the Adj.P.Value or P.Value is lower than the threshold (P.Value &lt; P.Value
 								thr),
 							</p>
 						</li>
@@ -184,9 +169,8 @@
 				</div>
 				<div id="report-creation-and-download-of-the-results" class="section level3">
 					<h3>04. Report creation and download of the results</h3>
-					<p>The results are summarized in a web-page HTML report. Other than
-						this, the experiment is described by a large number of files, a
-						description of each file generated can be found in section <a
+					<p>Results are summarized in a web-page HTML report. Other than this, ProTN generates a large number of useful files: a
+					description of each output file can be found in section <a
 							href="#details-on-the-output-files">4. Details on the output files</a>.
 						All the files are group in a <em>zip</em> file and downloaded.
 					</p>
@@ -200,7 +184,7 @@
 					<p>If required by the experiment, a batch correction step can be applyed
 						using <a href="https://www.bioconductor.org/packages/release/bioc/html/proBatch.html"
 							style="font-size: 11pt;">proBatch</a> <span class="citation">(Cuklina et
-							al. 2018)</span>. The batches need to be defined in the
+							al. 2018)</span>. Batches need to be defined in the
 						<strong>Sample_Annotation</strong> file where column <strong>MS_batch</strong> is
 						required.
 					</p>
@@ -213,36 +197,26 @@
 						<p>The biological interpretation of the Differentially Expressed
 							Proteins starts with the enrichment step. To execute this analysis,
 							ProTN uses <a href="https://maayanlab.cloud/Enrichr/">EnrichR</a> <span
-								class="citation">(Jawaid 2022)</span>, a widely used tool that search on
-							a large number of data sets to obtain information about many categories.
-							EnrichR organises its hundreds of data sets in 8 sections:
-							Transcription, Pathways, Ontologies, Diseases/Drugs, Cell Types, Misc,
-							Legacy, and Crowd.
+								class="citation">(Jawaid 2022)</span>, a popular tool that searches on a large number of data sets to obtain information about many functional categories.
+								EnrichR organises its hundreds of data sources in 8 sections: Transcription, Pathways, Ontologies, Diseases/Drugs, Cell
+								Types, Misc, Legacy, and Crowd.
 						</p>
 
 						<p><a href="https://maayanlab.cloud/Enrichr/"><img src="images/enrichr_logo.png" width="200px"
 									alt="" /></a></p>
 					</div>
-					<p>Since the analysis that a user wants to perform can be different,
-						each comparison has 3 sets of proteins: the Up-regulated (called Up),
-						the Down-regulated (called Down), and the set (called all) obtained by
-						the merge of Up- and Down-regulated proteins. EnrichR provides for each
-						term much information. It returns the statistical parameters, like
-						P.Value, fdr, odds ratio and combined score. At the same time, it gives
-						the overlap size, the number of genes in the term and the genes of the
-						input list find in the term.
+					<p>Each comparison defined in the differential analysis stage can result in 3 sets of proteins: the Up-regulated (called
+					Up), the Down-regulated (called Down), and the merge of the two (called all). ProTN provides for each term statistical
+					parameters like P.Value, fdr, odds ratio, overlap size.
 					</p>
-					<p>The tons of data downloaded from EnrichR are exported in two
-						modalities. The tool creates an <em>RData</em> of the complete data
-						frame, in this way the user can easily import in R to perform further
-						analysis and plots. But also, it generates an <em>Excel</em> file with
-						only the significant terms. The process uses the filters define in the
-						options file to differentiate the relevant terms from the globality.
+					<p>ProTN creates an RData of the complete enrichment data frame, allowing the user an easy import in R to perform further
+					analysis. ProTN also generates an Excel file, containing only the significantly enriched terms, as defined by user
+					settings.
 					</p>
 					<p>A term to be significative need to have:</p>
 					<ul>
 						<li>
-							<p>a P.Value lower of P.Value thr for enrichment (P.Value &lt;
+							<p>a Fdr or P.Value lower of P.Value thr for enrichment (P.Value &lt;
 								P.Value thr for enrichment),
 							</p>
 						</li>
@@ -252,12 +226,7 @@
 							</p>
 						</li>
 					</ul>
-					<p>Besides that, the pipeline plots the enrichment results in different
-						figures. The 4 plots can be split into 2 categories. The first two are
-						filtered on the data-sets, they illustrate only the data-sets written in
-						the column DB to analyse of the options file. The other 2 are filtered
-						on words to search on the term description, it uses the list of words in
-						column Terms to search.
+					<p>ProTN displays top significant enrichments based on specific annotation datasets or keywords selected by the user.
 					</p>
 					<img src="images/figures/enrichment.png" width="50%"
 						style="display:block;margin-left:auto;margin-right:auto" />
@@ -279,9 +248,8 @@
 						Expressed Proteins
 					</h3>
 					<div style="display: flex;">
-						<p>Last analitical step is the Protein-Protein Interaction (PPI) network
-							analysis, since PPIs are essential in almost all processes of the cell,
-							and it is crucial for understanding cell physiology in different states.
+						<p>ProTN performs Protein-Protein Interaction (PPI) network analysis on differentially expressed proteins. PPIs are
+						essential in almost all processes of the cell, and crucial for understanding cell physiology in different states.
 							For each comparison, ProTN analyses the interaction between the DEPs
 							using <a href="https://string-db.org/">STRING</a> <span class="citation">(Szklarczyk et al.
 								2021)</span>.
@@ -289,15 +257,11 @@
 						<p><a href="https://string-db.org/"><img src="images/string_logo_2015.png" width="200"
 									alt=""></a></p>
 					</div>
-					<p>The species-specific database is retrieved from STRING server, an
-						accurate analysis discover all the interactions and an iGraph <span class="citation">(Csardi and
-							Nepusz 2006)</span> network is generated.
-						Later, the proteins are clustered via iGraph function which identify
-						dense subgraph by optimizing modularity score.
+					<p>The species-specific database is retrieved from the STRING server, and all the interactions above a threshold are used
+					to generate a network with iGraph <span class="citation">(Csardi and
+							Nepusz 2006)</span> Proteins are also clustered in communities via iGraph which identifies dense subgraph by optimizing modularity score.
 					</p>
-					<p>Since the network can vary a lot on composition, two ggplot layout
-						are used: Fruchterman-Reingold algorithm and the Kamada-Kawai
-						algorithm.
+					<p>Two force-directed layouts are used to display networks: Fruchterman-Reingold algorithm and the Kamada-Kawai algorithm.
 					</p>
 					<img src="images/figures/stringdb.png" width="75%"
 						style="display:block;margin-left:auto;margin-right:auto" />
