@@ -392,14 +392,16 @@ footer {
     flex-direction: row;
 }
 
-#modal_preview_output_ProTN, #modal_preview_case_study_ProTN, #modal_preview_output_PhosProTN{
+#modal_preview_output_ProTN, #modal_preview_case_study_ProTN, #modal_preview_output_PhosProTN, #modal_peptide_Example, #modal_protein_Example{
   width: auto;
   max-height: 90%;
 }
 
 #modal_preview_output_ProTN div.modal-dialog, 
 #modal_preview_case_study_ProTN div.modal-dialog, 
-#modal_preview_output_PhosProTN div.modal-dialog {
+#modal_preview_output_PhosProTN div.modal-dialog, 
+#modal_peptide_Example div.modal-dialog,
+#modal_protein_Example div.modal-dialog {
   width: auto;
   margin: 0px;
 }
@@ -431,7 +433,7 @@ footer {
   max-width: max-content;
 }
 
-#preview_results,#preview_results_CS, #preview_results_phos {
+#preview_results,#preview_results_CS, #preview_results_phos, #modal_peptide_Example, #modal_protein_Example {
     height: 800px;
     max-height: 1200px;
 }
@@ -457,4 +459,11 @@ div.modal-footer button.btn {
     background-color: rgb(0, 120, 174);
     font-weight: bold;
     min-height: 50px;
+}
+
+.dataTables_scrollBody {
+    transform:rotateX(180deg);
+}
+.dataTables_scrollBody table {
+    transform:rotateX(180deg);
 }

@@ -559,15 +559,15 @@ server <- function(input, output, session) {
   
   output$pep_df <- DT::renderDataTable({
     pep_file <- data.table::fread("Data/proteome/peptides.txt", nrows = 100)
-    DT::datatable(pep_file, escape = FALSE)
+    DT::datatable(data.table::as.data.table(lapply(pep_file, function(x){substring(x, 1, 20)})), escape = FALSE, options=list(scrollX = T))
     
   })
   
   output$prot_df <- DT::renderDataTable({
     prot_file <- data.table::fread("Data/proteome/proteinGroups.txt", nrows = 100)
-    DT::datatable(prot_file, escape = FALSE)
-  }, options=list(scrollX=T, autoWidth = TRUE))
-  
+    DT::datatable(data.table::as.data.table(lapply(prot_file, function(x){substring(x, 1, 20)})), escape = FALSE, options=list(scrollX = T))
+  })
+
   #PHOSPROTN: Show modals with example files phospho
   output$input_df_phos <- DT::renderDataTable({
     input_file_phos <- readxl::read_xlsx("Data/proteome/Input.xlsx")
@@ -582,13 +582,12 @@ server <- function(input, output, session) {
   
   output$pep_df_phos <- DT::renderDataTable({
     pep_file_phos <- data.table::fread("Data/proteome/peptides.txt", nrows = 100)
-    DT::datatable(pep_file_phos, escape = FALSE)
-    
+    DT::datatable(data.table::as.data.table(lapply(pep_file_phos, function(x){substring(x, 1, 20)})), escape = FALSE, options=list(scrollX = T))
   })
   
   output$prot_df_phos <- DT::renderDataTable({
     prot_file_phos <- data.table::fread("Data/proteome/proteinGroups.txt", nrows = 100)
-    DT::datatable(prot_file_phos, escape = FALSE)
+    DT::datatable(data.table::as.data.table(lapply(prot_file_phos, function(x){substring(x, 1, 20)})), escape = FALSE, options=list(scrollX = T))
   })
   
   
