@@ -168,21 +168,36 @@ ui <- tagList(
                   "preview_design_phos",
                   size = "large",
                   DT::dataTableOutput("design_df_phos")),
-          bsModal("modal_Input_Example_phos", 
+          bsModal("modal_Input_Example_phos_PD", 
                   "Input file Example", 
-                  "preview_input_phos",
+                  "preview_input_phos_PD",
                   size = "large",
-                  DT::dataTableOutput("input_df_phos")),
-          bsModal("modal_peptide_Example_phos", 
+                  DT::dataTableOutput("input_df_phos_PD")),
+          bsModal("modal_pep_Example_phos_PD", 
                   "Peptide file Example", 
-                  "preview_peptide_phos",
+                  "preview_pep_phos_PD",
                   size = "large",
-                  DT::dataTableOutput("pep_df_phos")),
-          bsModal("modal_protein_Example_phos", 
+                  DT::dataTableOutput("pep_df_phos_PD")),
+          bsModal("modal_prot_Example_phos_PD", 
                   "Protein file Example", 
-                  "preview_protein_phos",
+                  "preview_prot_phos_PD",
                   size = "large",
-                  DT::dataTableOutput("prot_df_phos"))
+                  DT::dataTableOutput("prot_df_phos_PD")),
+          bsModal("modal_Input_Example_phos_PD_2", 
+                  "Input file Example", 
+                  "preview_input_phos_PD_2",
+                  size = "large",
+                  DT::dataTableOutput("input_df_phos_PD_2")),
+          bsModal("modal_pep_Example_phos_PD_2", 
+                  "Peptide file Example", 
+                  "preview_pep_phos_PD_2",
+                  size = "large",
+                  DT::dataTableOutput("pep_df_phos_PD_2")),
+          bsModal("modal_prot_Example_phos_PD_2", 
+                  "Protein file Example", 
+                  "preview_prot_phos_PD_2",
+                  size = "large",
+                  DT::dataTableOutput("prot_df_phos_PD_2"))
         ),
         #Execution tab PhosProTN
         tabItem(
@@ -569,27 +584,42 @@ server <- function(input, output, session) {
   })
 
   #PHOSPROTN: Show modals with example files phospho
-  output$input_df_phos <- DT::renderDataTable({
-    input_file_phos <- readxl::read_xlsx("Data/proteome/Input.xlsx")
-    DT::datatable(input_file_phos, escape = FALSE)
+  output$input_df_phos_PD <- DT::renderDataTable({
+    input_file_phos <- readxl::read_xlsx("Data/phospho/20140820_QEp4_MaSt_SA_MEFs_PROTEOME_OT_INPUT.xlsx")
+    DT::datatable(input_file_phos, escape = FALSE, options=list(scrollX = T))
     
   })
   
   output$design_df_phos <- DT::renderDataTable({
-    design_file_phos <- readxl::read_xlsx("Data/proteome/design.xlsx")
+    design_file_phos <- readxl::read_xlsx("Data/phospho/design.xlsx")
     DT::datatable(design_file_phos, escape = FALSE)
   })
   
-  output$pep_df_phos <- DT::renderDataTable({
-    pep_file_phos <- data.table::fread("Data/proteome/peptides.txt", nrows = 100)
-    DT::datatable(data.table::as.data.table(lapply(pep_file_phos, function(x){substring(x, 1, 20)})), escape = FALSE, options=list(scrollX = T))
+  output$pep_df_phos_PD <- DT::renderDataTable({
+    pep_file_phos <- readxl::read_xlsx("Data/phospho/20140820_QEp4_MaSt_SA_MEFs_PROTEOME_OT_PEP.xlsx", n_max = 100)
+    DT::datatable(pep_file_phos, escape = FALSE, options=list(scrollX = T))
   })
   
-  output$prot_df_phos <- DT::renderDataTable({
-    prot_file_phos <- data.table::fread("Data/proteome/proteinGroups.txt", nrows = 100)
-    DT::datatable(data.table::as.data.table(lapply(prot_file_phos, function(x){substring(x, 1, 20)})), escape = FALSE, options=list(scrollX = T))
+  output$prot_df_phos_PD <- DT::renderDataTable({
+    prot_file_phos <- readxl::read_xlsx("Data/phospho/20140820_QEp4_MaSt_SA_MEFs_PROTEOME_OT_PROT.xlsx", n_max = 100)
+    DT::datatable(prot_file_phos, escape = FALSE, options=list(scrollX = T))
   })
   
+  output$input_df_phos_PD_2 <- DT::renderDataTable({
+    input_file_phos <- readxl::read_xlsx("Data/phospho/20140820_QEp4_MaSt_SA_MEFs_PHOSPHO_OT_INPUT.xlsx")
+    DT::datatable(input_file_phos, escape = FALSE, options=list(scrollX = T))
+    
+  })
+  
+  output$pep_df_phos_PD_2 <- DT::renderDataTable({
+    pep_file_phos <- readxl::read_xlsx("Data/phospho/20140820_QEp4_MaSt_SA_MEFs_PHOSPHO_OT_PEP.xlsx", n_max = 100)
+    DT::datatable(pep_file_phos, escape = FALSE, options=list(scrollX = T))
+  })
+  
+  output$prot_df_phos_PD_2 <- DT::renderDataTable({
+    prot_file_phos <- readxl::read_xlsx("Data/phospho/20140820_QEp4_MaSt_SA_MEFs_PHOSPHO_OT_PROT.xlsx", n_max = 100)
+    DT::datatable(prot_file_phos, escape = FALSE, options=list(scrollX = T))
+  })
   
   #Define HELP button in execution pages
   setHelp <- function(x) {
