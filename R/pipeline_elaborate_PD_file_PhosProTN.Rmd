@@ -3056,7 +3056,7 @@ shiny::setProgress(0.90, detail = "Network figures generated...")
 ```
 
 
-```{r kinase_tree_CORAL, echo=F, message=T, warning=F, eval=run_kinaseTree, results='asis'}
+```{r kinase_tree_CORAL, echo=F, message=F, warning=F, eval=run_kinaseTree, results='asis'}
 shiny::setProgress(0.90, detail = "Kinase identification and Kinase draw in progress... \n Can require several minutes...")
 cat(" \n \n")
 cat("## 5. Kinase Trees  {.tabset}  \n")

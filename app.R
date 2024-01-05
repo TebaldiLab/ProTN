@@ -197,7 +197,34 @@ ui <- tagList(
                   "Protein file Example", 
                   "preview_prot_phos_PD_2",
                   size = "large",
-                  DT::dataTableOutput("prot_df_phos_PD_2"))
+                  DT::dataTableOutput("prot_df_phos_PD_2")),
+          bsModal("modal_PSM_Example_phos_PD_2", 
+                  "Protein file Example", 
+                  "preview_PSM_phos_PD_2",
+                  size = "large",
+                  DT::dataTableOutput("PSM_df_phos_PD_2")),
+          #Maxquant
+          bsModal("modal_Input_Example_phos_MQ", 
+                  "Input file Example", 
+                  "preview_input_phos_MQ",
+                  size = "large",
+                  DT::dataTableOutput("input_df_phos_MQ")),
+          bsModal("modal_evidence_Example_phos_MQ", 
+                  "Peptide file Example", 
+                  "preview_evidence_phos_MQ",
+                  size = "large",
+                  DT::dataTableOutput("evidence_df_phos_MQ")),
+          bsModal("modal_Input_Example_phos_MQ_2", 
+                  "Input file Example", 
+                  "preview_input_phos_MQ_2",
+                  size = "large",
+                  DT::dataTableOutput("input_df_phos_MQ_2")),
+          bsModal("modal_evidence_Example_phos_MQ_2", 
+                  "Peptide file Example", 
+                  "preview_evidence_phos_MQ_2",
+                  size = "large",
+                  DT::dataTableOutput("evidence_df_phos_MQ_2"))
+          
         ),
         #Execution tab PhosProTN
         tabItem(
@@ -215,7 +242,7 @@ ui <- tagList(
                   uiOutput("help2_P")
                 ),
                 fluidRow(
-                  radioButtons("sw_analyzer_phos", "Software Analyzer", c("ProteomeDiscoverer", "MaxQuant"), inline = TRUE),
+                  radioButtons("sw_analyzer_phos", "Software Analyzer", c("ProteomeDiscoverer", "MaxQuant"), inline = TRUE, selected = "MaxQuant"),
                   uiOutput("help3_P")
                 ),
                 fluidRow(
@@ -230,10 +257,18 @@ ui <- tagList(
               column(
                 width = 4,
                 uiOutput("input_filePHOS_phos"),
-                actionButton("report_phos", "Generate report")
+                fillRow(
+                  actionButton("report_phos", "Generate report"),
+                  actionButton("case_study_phos", "Case Study Example")
+                )
               )
             ),
             uiOutput("input_params_phos"),
+            bsModal("modal_preview_case_study_PhosProTN", 
+                    "Example case study", 
+                    "case_study_phos",
+                    size = "large",
+                    downloadButton('download_report_PhosProTN_CS', 'Download complete results (ZIP)'), uiOutput("preview_results_phos_CS")),
             bsModal("modal_preview_output_PhosProTN", 
                     "Preview report of PhosProTN", 
                     "report_phos",
@@ -585,40 +620,68 @@ server <- function(input, output, session) {
 
   #PHOSPROTN: Show modals with example files phospho
   output$input_df_phos_PD <- DT::renderDataTable({
-    input_file_phos <- readxl::read_xlsx("Data/phospho/20140820_QEp4_MaSt_SA_MEFs_PROTEOME_OT_INPUT.xlsx")
+    input_file_phos <- readxl::read_xlsx("Data/phospho_PD/20140820_QEp4_MaSt_SA_MEFs_PROTEOME_OT_INPUT.xlsx")
     DT::datatable(input_file_phos, escape = FALSE, options=list(scrollX = T))
     
   })
   
   output$design_df_phos <- DT::renderDataTable({
-    design_file_phos <- readxl::read_xlsx("Data/phospho/design.xlsx")
+    design_file_phos <- readxl::read_xlsx("Data/phospho_PD/design.xlsx")
     DT::datatable(design_file_phos, escape = FALSE)
   })
   
   output$pep_df_phos_PD <- DT::renderDataTable({
-    pep_file_phos <- readxl::read_xlsx("Data/phospho/20140820_QEp4_MaSt_SA_MEFs_PROTEOME_OT_PEP.xlsx", n_max = 100)
+    pep_file_phos <- readxl::read_xlsx("Data/phospho_PD/20140820_QEp4_MaSt_SA_MEFs_PROTEOME_OT_PEP.xlsx", n_max = 100)
     DT::datatable(pep_file_phos, escape = FALSE, options=list(scrollX = T))
   })
   
   output$prot_df_phos_PD <- DT::renderDataTable({
-    prot_file_phos <- readxl::read_xlsx("Data/phospho/20140820_QEp4_MaSt_SA_MEFs_PROTEOME_OT_PROT.xlsx", n_max = 100)
+    prot_file_phos <- readxl::read_xlsx("Data/phospho_PD/20140820_QEp4_MaSt_SA_MEFs_PROTEOME_OT_PROT.xlsx", n_max = 100)
     DT::datatable(prot_file_phos, escape = FALSE, options=list(scrollX = T))
   })
   
   output$input_df_phos_PD_2 <- DT::renderDataTable({
-    input_file_phos <- readxl::read_xlsx("Data/phospho/20140820_QEp4_MaSt_SA_MEFs_PHOSPHO_OT_INPUT.xlsx")
+    input_file_phos <- readxl::read_xlsx("Data/phospho_PD/20140820_QEp4_MaSt_SA_MEFs_PHOSPHO_OT_INPUT.xlsx")
     DT::datatable(input_file_phos, escape = FALSE, options=list(scrollX = T))
     
   })
   
   output$pep_df_phos_PD_2 <- DT::renderDataTable({
-    pep_file_phos <- readxl::read_xlsx("Data/phospho/20140820_QEp4_MaSt_SA_MEFs_PHOSPHO_OT_PEP.xlsx", n_max = 100)
+    pep_file_phos <- readxl::read_xlsx("Data/phospho_PD/20140820_QEp4_MaSt_SA_MEFs_PHOSPHO_OT_PEP.xlsx", n_max = 100)
     DT::datatable(pep_file_phos, escape = FALSE, options=list(scrollX = T))
   })
   
   output$prot_df_phos_PD_2 <- DT::renderDataTable({
-    prot_file_phos <- readxl::read_xlsx("Data/phospho/20140820_QEp4_MaSt_SA_MEFs_PHOSPHO_OT_PROT.xlsx", n_max = 100)
+    prot_file_phos <- readxl::read_xlsx("Data/phospho_PD/20140820_QEp4_MaSt_SA_MEFs_PHOSPHO_OT_PROT.xlsx", n_max = 100)
     DT::datatable(prot_file_phos, escape = FALSE, options=list(scrollX = T))
+  })
+  
+  output$PSM_df_phos_PD_2 <- DT::renderDataTable({
+    PSM_file_phos <- readxl::read_xlsx("Data/phospho_PD/20140820_QEp4_MaSt_SA_MEFs_PHOSPHO_OT_PSM.xlsx", n_max = 100)
+    DT::datatable(PSM_file_phos, escape = FALSE, options=list(scrollX = T))
+  })
+  
+  #Phosprotn MAxquant
+  output$input_df_phos_MQ <- DT::renderDataTable({
+    input_file_phos <- readxl::read_xlsx("Data/txt_PROTEOME/Input.xlsx")
+    DT::datatable(input_file_phos, escape = FALSE, options=list(scrollX = T))
+    
+  })
+  
+  output$evidence_df_phos_MQ <- DT::renderDataTable({
+    pep_file <- data.table::fread("Data/txt_PROTEOME/evidence.txt", nrows = 100)
+    DT::datatable(data.table::as.data.table(lapply(pep_file, function(x){substring(x, 1, 20)})), escape = FALSE, options=list(scrollX = T))
+  })
+  
+  output$input_df_phos_MQ_2 <- DT::renderDataTable({
+    input_file_phos <- readxl::read_xlsx("Data/txt_Phospho/Input.xlsx")
+    DT::datatable(input_file_phos, escape = FALSE, options=list(scrollX = T))
+    
+  })
+  
+  output$evidence_df_phos_MQ_2 <- DT::renderDataTable({
+    pep_file <- data.table::fread("Data/txt_Phospho/evidence.txt", nrows = 100)
+    DT::datatable(data.table::as.data.table(lapply(pep_file, function(x){substring(x, 1, 20)})), escape = FALSE, options=list(scrollX = T))
   })
   
   #Define HELP button in execution pages
@@ -1142,7 +1205,7 @@ server <- function(input, output, session) {
         showNotification(paste0("ERROR: ", e), type = "error", duration = 30)
         shinyjs::enable("report_phos")
         shinyjs::show("modal_preview_output_PhosProTN")
-        shinyjs::hide("download_report_phos")
+        shinyjs::hide("download_report_PhosProTN")
         js$pageDisable("all")
         html_text<-str_replace(read_file("R/error.html"), 
                                pattern = "The page you’re looking for doesn’t exist.</p>", 
@@ -1155,9 +1218,152 @@ server <- function(input, output, session) {
     )
   })
   
-  # EXECUTE ProTN
   output$download_report_PhosProTN <- downloadHandler(
     filename = "results_PhosProTN.zip",
+    content = function(file) {
+      tryCatch(
+        {
+          withProgress(message = "Prepraring files to download, please wait!", {
+            #Zip the dir resutls
+            message(session$token)
+            #Save folder for the download
+            logs<-readr::read_csv(file = paste0(tempdir(),"/outdir_log_PhosProTN.log"),col_names = F)
+            dirOutput_Server_2<-as.list(logs[which(logs$X1==session$token),"X2"])
+            oldwd <- getwd()
+            setwd(dirOutput_Server_2[[length(dirOutput_Server_2)]])
+            files2zip <- list.files("./", recursive = TRUE)
+            zip(zipfile = file, files = files2zip, extra = "-r")
+            setwd(oldwd)
+            
+          })
+        },
+        error = function(e) {
+          #Create error report and reactivate the click in the page
+          showNotification(paste0("ERROR: ", e), type = "error", duration = 30)
+          html_text<-str_replace(read_file("R/error.html"), 
+                                 pattern = "The page you’re looking for doesn’t exist.</p>", 
+                                 replacement = paste0("Description:", e, "</p>"))
+          write_file(html_text, file = paste0(tempdir(), "/error.html"))
+          zip(zipfile = file, files = paste0(tempdir(), "/error.html"), extra = "-j")
+        }
+      )
+    }
+  )
+  
+  # EXECUTE PhosProTN case study
+  output$preview_results_phos_CS <- renderUI({
+    tryCatch(
+      {
+        withProgress(message = "Rendering, please wait!", {
+          shinyjs::hide("modal_preview_case_study_PhosProTN")
+          message(session$token)
+          #Disable click page
+          shinyjs::disable("report_phos")
+          shinyjs::disable("case_study_phos")
+          js$pageDisable("none")
+          
+          #Creation directory for the results
+          dirOutput_2 <- tempdir()
+          currentTime <- gsub(".*?([0-9]+).*?", "\\1", Sys.time())
+          dirOutput_1 <- paste("/", currentTime, "/", sep = "")
+          dir.create(file.path(dirOutput_2, dirOutput_1), showWarnings = FALSE)
+          dirOutput_Server <- paste(dirOutput_2, dirOutput_1, sep = "")
+          dirOutput_Server_2<-dirOutput_Server
+          message(dirOutput_Server)
+          #Create subfolder for the files
+          dir.create(file.path(dirOutput_Server, "figures"), showWarnings = FALSE)
+          dir.create(file.path(dirOutput_Server, "data"), showWarnings = FALSE)
+          dir.create(file.path(dirOutput_Server, "tables"), showWarnings = FALSE)
+          dir.create(file.path(paste0(dirOutput_Server, "figures"),"Expression"), showWarnings = FALSE)
+          dir.create(file.path(paste0(dirOutput_Server, "figures"),"PCA_MDS"), showWarnings = FALSE)
+          # Set up parameters to pass to Rmd document
+          params <- list(
+            doc_title = "Example case study",
+            description = "Example case study: Phosphoproteomics reveals that Parkinson’s disease kinase LRRK2 regulates a subset of Rab GTPases. PRIDE: PXD003071. \n \n DOI: 10.7554/eLife.12813, PubMed: 26824392, Des: Steger M, Tonelli F, Ito G, Davies P, Trost M, Vetter M, Wachter S, Lorentzen E, Duddy G, Wilson S, Baptista MA, Fiske BK, Fell MJ, Morrow JA, Reith AD, Alessi DR, Mann M. Phosphoproteomics reveals that Parkinson's disease kinase LRRK2 regulates a subset of Rab GTPases. Elife. 2016 Jan 29;5. pii: e12813",
+            readPD_files = FALSE,
+            readMQ_files = TRUE,
+            file_input_prot = "../Data/txt_PROTEOME/Input.xlsx",
+            file_prot_prot = NA,
+            file_pep_prot = "../Data/txt_PROTEOME/evidence.txt",
+            file_input_phos = "../Data/txt_Phospho/Input.xlsx",
+            file_prot_phos = NA,
+            file_pep_phos = "../Data/txt_Phospho/evidence.txt",
+            file_psm_phos = NA,
+            taxonomy = "Homo sapiens",
+            filt_absent_value = "0",
+            pval_fdr = FALSE,
+            phospho_thr = "75",
+            signal_thr = "inf",
+            fc_thr = "0.75",
+            pval_thr = "0.05",
+            batch_corr_exe = FALSE,
+            contr_design = "../Data/txt_PROTEOME/design.xlsx",
+            prot_boxplot = "Park8, Rab7L1, Rab29, Park16, Rab8A, Rab8, Rab10, Rab12",
+            run_enrich = FALSE,
+            run_enrich_universe = FALSE,
+            run_STRING = TRUE,
+            run_kinaseTree = TRUE,
+            pval_fdr_enrich = TRUE,
+            pval_enrich_thr = "0.05",
+            overlap_size_enrich_thr = as.integer(5),
+            enrich_filter_term = NULL,
+            enrich_filter_DBs = c(
+              "GO_Molecular_Function_2023",
+              "GO_Cellular_Component_2023",
+              "GO_Biological_Process_2023",
+              "KEGG_2021_Human",
+              "BioPlanet_2019",
+              "MGI_Mammalian_Phenotype_Level_4_2019",
+              "MSigDB_Hallmark_2020",
+              "Jensen_COMPARTMENTS",
+              "DisGeNET"
+            ),
+            enrichR_DB = FALSE,
+            dirOutput = dirOutput_Server
+          )
+          #Render the notebook for the analysis
+          rmarkdown::render("R/pipeline_elaborate_PD_file_PhosProTN.Rmd",
+                            output_file = "phosprotn_report.html",
+                            output_dir = dirOutput_Server,
+                            params = params,
+                            envir = new.env(parent = globalenv())
+          )
+          
+          #Reactivate click
+          shinyjs::enable("report_phos")
+          shinyjs::enable("case_study_phos")
+          js$pageDisable("all")
+          shinyjs::show("modal_preview_case_study_PhosProTN")
+          
+          #Save folder for the download
+          readr::write_csv(data.frame("session"=session$token,
+                                      "outdir"=dirOutput_Server),
+                           file = paste0(tempdir(),"/outdir_log_PhosProTN.log"), append = T)
+          
+          tags$iframe(src = paste0("basedir", dirOutput_1,"/phosprotn_report.html"), height = "100%", width = "100%", scrolling = "yes")
+        })
+      },
+      error = function(e) {
+        #Create error report and reactivate the click in the page
+        showNotification(paste0("ERROR: ", e), type = "error", duration = 30)
+        shinyjs::enable("report_phos")
+        shinyjs::enable("case_study_phos")
+        shinyjs::show("modal_preview_case_study_PhosProTN")
+        shinyjs::hide("download_report_PhosProTN_CS")
+        js$pageDisable("all")
+        html_text<-str_replace(read_file("R/error.html"), 
+                               pattern = "The page you’re looking for doesn’t exist.</p>", 
+                               replacement = paste0("Description:", e, "</p>"))
+        write_file(html_text, file = paste0(tempdir(), "/error.html"))
+        
+        
+        tags$iframe(src = "basedir/error.html", height = "100%", width = "100%", scrolling = "yes")
+      }
+    )
+  })
+  
+  output$download_report_PhosProTN_CS <- downloadHandler(
+    filename = "results_case_study_PhosProTN.zip",
     content = function(file) {
       tryCatch(
         {
