@@ -165,7 +165,10 @@ Spectrometry. It perform a complete analysis of the raw files from
 										</li>
 										<li>
 											<p><code>PSM file</code>: raw file of the PSM obtained from PD. It is
-												required to overcome the uncertain phosphorilation site identification.
+												required to overcome the uncertain phosphorilation site identification.<button id="preview_PSM_phos_PD_2"
+									type="button" class="btn_example" data-toggle="modal"
+									data-target="#modal_PSM_Example_phos_PD_2">[Example of PSM file
+									HERE...]</button>
 											</p>
 										</li>
 									</ul>
@@ -181,7 +184,10 @@ Spectrometry. It perform a complete analysis of the raw files from
 												samples and the correlation between replicate ID and condition of the
 												proteomic (WARNING: Condition name MUST contain at least 1 character!).
 												The <strong>Sample_Annotation</strong> file is an Excel file with the
-												following column:</p>
+												following column: <button id="preview_input_phos_MQ"
+									type="button" class="btn_example" data-toggle="modal"
+									data-target="#modal_input_Example_phos_MQ">[Example of Sample Annotation file
+									HERE...]</button></p>
 											<ul>
 												<li><strong>Condition</strong> column (<code>REQUIRED</code>): define
 													the condition of each sample that divide the samples in groups. The
@@ -201,7 +207,10 @@ Spectrometry. It perform a complete analysis of the raw files from
 										</li>
 										<li>
 											<p><code>Evidence file</code>: raw file of peptides. The file required is
-												the <strong>evidence.txt</strong> file.</p>
+												the <strong>evidence.txt</strong> file. <button id="preview_evidence_phos_MQ"
+									type="button" class="btn_example" data-toggle="modal"
+									data-target="#modal_evidence_Example_phos_MQ">[Example of Evidence file
+									HERE...]</button></p>
 										</li>
 									</ul>
 								</li>
@@ -213,7 +222,10 @@ Spectrometry. It perform a complete analysis of the raw files from
 												samples and the correlation between replicate ID and condition of the
 												phospho-proteomics (WARNING: Condition name MUST contain at least 1
 												character!). The <strong>Sample_Annotation</strong> file is an Excel
-												file with the following column:</p>
+												file with the following column: <button id="preview_input_phos_MQ_2"
+									type="button" class="btn_example" data-toggle="modal"
+									data-target="#modal_input_Example_phos_MQ_2">[Example of Sample Annotation file
+									HERE...]</button></p>
 											<ul>
 												<li><strong>Condition</strong> column (<code>REQUIRED</code>): define
 													the condition of each sample that divide the samples in groups. The
@@ -233,7 +245,10 @@ Spectrometry. It perform a complete analysis of the raw files from
 										</li>
 										<li>
 											<p><code>Evidence file</code>: raw file of peptides. The file required is
-												the <strong>evidence.txt</strong> file</p>
+												the <strong>evidence.txt</strong> file. <button id="preview_evidence_phos_MQ_2"
+									type="button" class="btn_example" data-toggle="modal"
+									data-target="#modal_evidence_Example_phos_MQ_2">[Example of Evidence file
+									HERE...]</button></p>
 										</li>
 									</ul>
 								</li>
@@ -826,33 +841,51 @@ Spectrometry. It perform a complete analysis of the raw files from
 		</li>
 	</ul>
 </div>
-<!--
 <div id="example-case-study---proteomics-of-mcf7-cells" class="section level2">
-  <ul id="collapse_ul"  class="collapsible">
-    <li id="collapse_li">
-    	<div class="collapsible-header">
-    	  <div style="width: 95%;">
-        	<h2>3. Example case study</h2>
-        	<hr id="linesubtitle">
-    	  </div>
-    	  <i id="plus_elem" class="fa fa-plus"></i>
-    	</div>
-      <div class="collapsible-body">
-	      <p><code>Proteomics of MCF7 cells (LC-MS/MS Orbitrap Fusion Tribrid)</code></p> 
-	      <p>PRIDE:	<a href="http://proteomecentral.proteomexchange.org/cgi/GetDataset?ID=PXD009417">PXD009417</a>.
-      	<p>Clamer M, Tebaldi T, Lauria F, et al. Active Ribosome Profiling with RiboLace. Cell Rep. 2018;25(4):1097-1108.e5.</p>
-      	<p>Its execution is performed clicking the button <strong>Case Study Example</strong>.</p>
-      </div>
-    </li>
-  </ul>
+	<ul id="collapse_ul" class="collapsible">
+		<li id="collapse_li">
+			<div class="collapsible-header">
+				<div style="width: 95%;">
+					<h2>3. Example case study - Phosphoproteomics from Steger et al. (2016)</h2>
+					<hr id="linesubtitle">
+				</div>
+				<i id="plus_elem" class="fa fa-plus"></i>
+			</div>
+			<div class="collapsible-body">
+				<p><code>Phosphoproteomics reveals that Parkinson's disease kinase LRRK2 regulates a subset of Rab GTPases</code></p>
+				<p>PRIDE: <a
+						href="https://www.ebi.ac.uk/pride/archive/projects/PXD003071">PXD003071</a>.
+				<p>Des: Steger M, Tonelli F, Ito G, Davies P, Trost M, Vetter M, Wachter S, Lorentzen E, Duddy G, Wilson S, Baptista MA, Fiske BK, Fell MJ, Morrow JA, Reith AD, Alessi DR, Mann M. Phosphoproteomics reveals that Parkinson's disease kinase LRRK2 regulates a subset of Rab GTPases. Elife. 2016 Jan 29;5.</p>
+				<p>Its execution is performed clicking the button <strong>Case Study Example</strong>.</p>
+				<div class="flexfill-container flexfill-container-row" style="display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-flex-direction:row;-ms-flex-direction:row;flex-direction:row;width:100%;height:100%;">
+                    <div class="flexfill-item" style="position:relative;-webkit-flex:1;-ms-flex:1;flex:1;width:100%;height:40px;">
+                      <div class="flexfill-item-inner" style="position:absolute;top:0;left:0;right:0;bottom:0;">
+				<a id="phospho_case_Study_MQ" class="btn btn-default shiny-download-link shiny-bound-output" href="CS/phospho.zip" target="_blank" download="CS/phospho.zip" aria-live="polite">
+                        <i class="fas fa-download" role="presentation" aria-label="download icon" aria-hidden="true"></i>
+                        Download Case Study MaxQuant...
+                      </a>
+                      </div>
+                    </div>
+                    <div class="flexfill-item" style="position:relative;-webkit-flex:1;-ms-flex:1;flex:1;width:100%;height:100%;">
+                      <div class="flexfill-item-inner" style="position:absolute;top:0;left:0;right:0;bottom:0;">
+        <a id="phospho_case_Study_PD" class="btn btn-default shiny-download-link shiny-bound-output" href="CS/phospho_PD.zip" target="_blank" download="CS/phospho_PD.zip" aria-live="polite">
+                        <i class="fas fa-download" role="presentation" aria-label="download icon" aria-hidden="true"></i>
+                        Download Case Study Proteome Discoverer...
+                      </a>
+                      </div>
+                    </div>
+                  </div>
+			</div>
+		</li>
+	</ul>
 </div>
--->
+
 <div id="details-on-the-output-files-phos" class="section level2">
 	<ul id="collapse_ul" class="collapsible">
 		<li id="collapse_li">
 			<div class="collapsible-header">
 				<div style="width: 95%;">
-					<h2>3. Details on the output files</h2>
+					<h2>4. Details on the output files</h2>
 					<hr id="linesubtitle">
 				</div>
 				<i id="plus_elem" class="fa fa-plus"></i>

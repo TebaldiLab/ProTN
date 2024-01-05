@@ -392,57 +392,65 @@ footer {
     flex-direction: row;
 }
 
-#modal_preview_output_ProTN, #modal_preview_case_study_ProTN, #modal_preview_output_PhosProTN, #modal_peptide_Example, #modal_protein_Example{
+#modal_preview_output_ProTN, #modal_preview_case_study_ProTN, #modal_preview_output_PhosProTN, #modal_preview_case_study_PhosProTN, #modal_peptide_Example, #modal_protein_Example, 
+#modal_pep_Example_phos_PD, #modal_prot_Example_phos_PD, #modal_pep_Example_phos_PD_2, #modal_prot_Example_phos_PD_2, #modal_PSM_Example_phos_PD_2, #modal_evidence_Example_phos_MQ, #modal_evidence_Example_phos_MQ_2{
   width: auto;
   max-height: 90%;
 }
 
 #modal_preview_output_ProTN div.modal-dialog, 
 #modal_preview_case_study_ProTN div.modal-dialog, 
-#modal_preview_output_PhosProTN div.modal-dialog, 
+#modal_preview_output_PhosProTN div.modal-dialog,
+#modal_preview_case_study_PhosProTN  div.modal-dialog,
 #modal_peptide_Example div.modal-dialog,
-#modal_protein_Example div.modal-dialog {
+#modal_protein_Example div.modal-dialog, 
+#modal_pep_Example_phos_PD div.modal-dialog, #modal_prot_Example_phos_PD div.modal-dialog, #modal_pep_Example_phos_PD_2 div.modal-dialog, #modal_prot_Example_phos_PD_2 div.modal-dialog, #modal_PSM_Example_phos_PD_2 div.modal-dialog, #modal_evidence_Example_phos_MQ div.modal-dialog, #modal_evidence_Example_phos_MQ_2 div.modal-dialog {
   width: auto;
   margin: 0px;
 }
 
 #modal_preview_output_ProTN div.modal-dialog div.modal-content div.modal-header,
 #modal_preview_case_study_ProTN div.modal-dialog div.modal-content div.modal-header,
-#modal_preview_output_PhosProTN div.modal-dialog div.modal-content div.modal-header{
+#modal_preview_output_PhosProTN div.modal-dialog div.modal-content div.modal-header,
+#modal_preview_case_study_PhosProTN  div.modal-dialog div.modal-content div.modal-header{
   padding-top: 0px;
   padding-bottom: 0px;
 }
 
 #modal_preview_output_ProTN div.modal-dialog div.modal-content div.modal-body,
 #modal_preview_case_study_ProTN div.modal-dialog div.modal-content div.modal-body,
-#modal_preview_output_PhosProTN div.modal-dialog div.modal-content div.modal-body{
+#modal_preview_output_PhosProTN div.modal-dialog div.modal-content div.modal-body,
+#modal_preview_case_study_PhosProTN div.modal-dialog div.modal-content div.modal-body{
   padding-right: 0px;
   padding-left: 0px;
 }
 
 #modal_preview_output_ProTN div.modal-dialog div.modal-content ,
 #modal_preview_case_study_ProTN div.modal-dialog div.modal-content,
-#modal_preview_output_PhosProTN div.modal-dialog div.modal-content{
+#modal_preview_output_PhosProTN div.modal-dialog div.modal-content,
+#modal_preview_case_study_PhosProTN div.modal-dialog div.modal-content{
   padding-right: 0px;
   padding-left: 0px;
 }
 
 #preview_results #content,
 #preview_results_CS #content,
-#preview_results_phos #content{
+#preview_results_phos #content,
+#preview_results_phos_CS #content{
   max-width: max-content;
 }
 
-#preview_results,#preview_results_CS, #preview_results_phos, #modal_peptide_Example, #modal_protein_Example {
+#preview_results,#preview_results_CS, #preview_results_phos, #preview_results_phos_CS, #modal_peptide_Example, #modal_protein_Example, 
+#modal_pep_Example_phos_PD, #modal_prot_Example_phos_PD, #modal_pep_Example_phos_PD_2, #modal_prot_Example_phos_PD_2, #modal_PSM_Example_phos_PD_2, #modal_evidence_Example_phos_MQ, #modal_evidence_Example_phos_MQ_2 {
     height: 800px;
     max-height: 1200px;
 }
 
-#preview_results img.image-thumb, #preview_results_CS img.image-thumb, #preview_results_phosimg.image-thumb {
+#preview_results img.image-thumb, #preview_results_CS img.image-thumb, #preview_results_phos img.image-thumb, #preview_results_phos_CS img.image-thumb {
   width: 60%;
 }
 
-#download_report, #download_report_CS, #download_report_PhosProTN {
+#download_report, #download_report_CS, #download_report_PhosProTN, #download_report_PhosProTN_CS {
   background-color: #9F2042;
   width: max-content;
   margin-right: 0%;
@@ -455,7 +463,7 @@ div.modal-footer button.btn {
     width: max-content;
 }
 
-#preview_output_ProTN, #case_study_ProTN, #report_phos{
+#preview_output_ProTN, #case_study_ProTN, #report_phos, #case_study_phos{
     background-color: rgb(0, 120, 174);
     font-weight: bold;
     min-height: 50px;
