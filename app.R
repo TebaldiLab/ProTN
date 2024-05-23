@@ -914,6 +914,7 @@ server <- function(input, output, session) {
           shinyjs::enable("report")
           shinyjs::enable("case_study")
           shinyjs::show("modal_preview_output_ProTN")
+          shinyjs::show("download_report")
           js$pageDisable("all")
           
           #Save folder for the download
@@ -1056,6 +1057,7 @@ server <- function(input, output, session) {
           shinyjs::enable("report")
           shinyjs::enable("case_study")
           shinyjs::show("modal_preview_case_study_ProTN")
+          shinyjs::show("download_report")
           js$pageDisable("all")
           
           #Save folder for the download
@@ -1142,7 +1144,7 @@ server <- function(input, output, session) {
           dir.create(file.path(dirOutput_Server, "tables"), showWarnings = FALSE)
           dir.create(file.path(paste0(dirOutput_Server, "figures"),"Expression"), showWarnings = FALSE)
           dir.create(file.path(paste0(dirOutput_Server, "figures"),"PCA_MDS"), showWarnings = FALSE)
-          # Set up parameters to pass to Rmd document
+          # Set up parameters to pass to Rmd documen
           params <- list(
             doc_title = input$title_exp_phos,
             description = input$description_exp_phos,
@@ -1185,7 +1187,8 @@ server <- function(input, output, session) {
             enrichR_DB = if(is.null(input$enrichR_phos)){FALSE}else{input$enrichR_DB_phos},
             dirOutput = dirOutput_Server
           )
-          if(is.null(params$file_input) | is.null(params$file_prot) | is.null(params$file_pep) | is.null(params$contr_design)){
+          
+          if(is.null(params$file_input_prot) | is.null(params$file_pep_prot) | is.null(params$file_input_phos)  | is.null(params$file_pep_phos) | is.null(params$contr_design)){
             stop("Error: No file provide")
           }
           #Render the notebook for the analysis
@@ -1200,6 +1203,7 @@ server <- function(input, output, session) {
           shinyjs::enable("report_phos")
           js$pageDisable("all")
           shinyjs::show("modal_preview_output_PhosProTN")
+          shinyjs::show("download_report_PhosProTN")
           
           #Save folder for the download
           readr::write_csv(data.frame("session"=session$token,
@@ -1343,6 +1347,7 @@ server <- function(input, output, session) {
           shinyjs::enable("case_study_phos")
           js$pageDisable("all")
           shinyjs::show("modal_preview_case_study_PhosProTN")
+          shinyjs::show("download_report_PhosProTN")
           
           #Save folder for the download
           readr::write_csv(data.frame("session"=session$token,
