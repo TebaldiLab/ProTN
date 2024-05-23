@@ -26,6 +26,9 @@ library(dplyr)
 library(stringr)
 library(shinyBS)
 
+if (!dir.exists("/tmp/ProTN")){
+  dir.create(file.path("/tmp", "ProTN"), showWarnings = FALSE)
+}
 #Javascript code to disable click when is running the app
 jsCode <- "shinyjs.pageDisable = function(params){
               $('body').css('pointer-events', params);
@@ -138,6 +141,12 @@ ui <- tagList(
                 fluidRow(
                   fileInput("design", "Select a file with the design for the comparisons..."),
                   uiOutput("help12")
+                ),
+                fluidRow(
+                  selectizeInput("taxonomy", "NCBI Taxonomy ID", 
+                                 choice = data.table::fread("R/NCBI_taxID/subset_tax.csv", select = "name"), 
+                                 selected = "Homo sapiens", multiple = F),
+                  # uiOut.put("help10")
                 ),
                 radioButtons("custom_param", "Use custom parameter", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
                 fillRow(
@@ -367,20 +376,14 @@ server <- function(input, output, session) {
             fluidRow(
               textInput("pvalue_DEPs", "P.Value thr", value = "0.05"),
               uiOutput("help9")
-            ),
-            fluidRow(
-              textInput("signal_DEPs", "Signal log2 expr thr", value = "-inf"),
-              uiOutput("help7")
+            # ),
+            # fluidRow(
+            #   textInput("signal_DEPs", "Signal log2 expr thr", value = "-inf"),
+            #   uiOutput("help7")
             )
           ),
           column(
             width = 4,
-            fluidRow(
-              selectizeInput("taxonomy", "NCBI Taxonomy ID", 
-                             choice = data.table::fread("R/NCBI_taxID/subset_tax.csv", select = "name"), 
-                             selected = "Homo sapiens", multiple = F),
-              # uiOut.put("help10")
-            ),
             fluidRow(
               radioButtons("batch_corr", "Batch effect correction", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
               uiOutput("help10")
@@ -467,10 +470,10 @@ server <- function(input, output, session) {
             fluidRow(
               textInput("phospho_phos", "Phosphorilation accuracy percentage thr (%)", value = "75"),
               uiOutput("help24_P")
-            ),
-            fluidRow(
-              textInput("signal_DEPs_phos", "Signal log2 expr thr", value = "-inf"),
-              uiOutput("help7_P")
+            # ),
+            # fluidRow(
+            #   textInput("signal_DEPs_phos", "Signal log2 expr thr", value = "-inf"),
+            #   uiOutput("help7_P")
             ),
             fluidRow(
               textInput("FC_DEPs_phos", "Log2 FC thr", value = "0.75"),
@@ -483,12 +486,6 @@ server <- function(input, output, session) {
           ),
           column(
             width = 4,
-            fluidRow(
-              selectizeInput("taxonomy_phos", "NCBI Taxonomy ID", 
-                             choice = data.table::fread("R/NCBI_taxID/subset_tax.csv", select = "name"), 
-                             selected = "Homo sapiens", multiple = F),
-              # uiOut.put("help10")
-            ),
             fluidRow(
               radioButtons("batch_corr_phos", "Batch effect correction", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
               uiOutput("help10_P")
@@ -574,6 +571,12 @@ server <- function(input, output, session) {
           fileInput("psm_file_phos", "Select the PSM file of the PHOSPHOproteomics..."),
           uiOutput("help30_P")
         ),
+        fluidRow(
+          selectizeInput("taxonomy_phos", "NCBI Taxonomy ID", 
+                         choice = data.table::fread("R/NCBI_taxID/subset_tax.csv", select = "name"), 
+                         selected = "Homo sapiens", multiple = F),
+          # uiOut.put("help10")
+        ),
         radioButtons("custom_param_phos", "Use custom parameter", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
       )
     } else if(input$sw_analyzer_phos == "MaxQuant"){
@@ -585,6 +588,12 @@ server <- function(input, output, session) {
         fluidRow(
           fileInput("pep_file_phos", "Select the EVIDENCE file of the PHOSPHOproteomics..."),
           uiOutput("help31_P")
+        ),
+        fluidRow(
+          selectizeInput("taxonomy_phos", "NCBI Taxonomy ID", 
+                         choice = data.table::fread("R/NCBI_taxID/subset_tax.csv", select = "name"), 
+                         selected = "Homo sapiens", multiple = F),
+          # uiOut.put("help10")
         ),
         radioButtons("custom_param_phos", "Use custom parameter", c("TRUE", "FALSE"), inline = TRUE, selected = FALSE),
       )
@@ -822,7 +831,7 @@ server <- function(input, output, session) {
   
   
   #####################################################
-  addResourcePath("basedir", tempdir())
+  addResourcePath("basedir", "/tmp/ProTN")
   output$preview_results <- renderUI({
     tryCatch(
       {
@@ -835,7 +844,7 @@ server <- function(input, output, session) {
           js$pageDisable("none")
           
           #Creation directory for the results
-          dirOutput_2 <- tempdir()
+          dirOutput_2 <- "/tmp/ProTN"
           currentTime <- gsub(".*?([0-9]+).*?", "\\1", Sys.time())
           dirOutput_1 <- paste("/", currentTime, "/", sep = "")
           dir.create(file.path(dirOutput_2, dirOutput_1), showWarnings = FALSE)
@@ -910,7 +919,7 @@ server <- function(input, output, session) {
           #Save folder for the download
           readr::write_csv(data.frame("session"=session$token,
                                       "outdir"=dirOutput_Server),
-                           file = paste0(tempdir(),"/outdir_log_ProTN.log"), append = T)
+                           file = paste0("/tmp/ProTN","/outdir_log_ProTN.log"), append = T)
           
           tags$iframe(src = paste0("basedir", dirOutput_1,"/protn_report.html"), height = "100%", width = "100%", scrolling = "yes")
         })
@@ -926,7 +935,7 @@ server <- function(input, output, session) {
         html_text<-str_replace(read_file("R/error.html"), 
                                pattern = "The page you’re looking for doesn’t exist.</p>", 
                                replacement = paste0("Description:", e, "</p>"))
-        write_file(html_text, file = paste0(tempdir(), "/error.html"))
+        write_file(html_text, file = paste0("/tmp/ProTN", "/error.html"))
         tags$iframe(src = "basedir/error.html", height = "100%", width = "100%", scrolling = "yes")
       }
     )
@@ -942,10 +951,10 @@ server <- function(input, output, session) {
             #Zip the dir resutls
             message(session$token)
             #Save folder for the download
-            logs<-readr::read_csv(file = paste0(tempdir(),"/outdir_log_ProTN.log"),col_names = F)
+            logs<-readr::read_csv(file = paste0("/tmp/ProTN","/outdir_log_ProTN.log"),col_names = F)
             dirOutput_Server_2<-as.list(logs[which(logs$X1==session$token),"X2"])
             oldwd <- getwd()
-            setwd(dirOutput_Server_2[[length(dirOutput_Server_2)]])
+            setwd(dirOutput_Server_2[[1]][length(dirOutput_Server_2[[1]])])
             files2zip <- list.files("./", recursive = TRUE)
             zip(zipfile = file, files = files2zip, extra = "-r")
             setwd(oldwd)
@@ -958,8 +967,8 @@ server <- function(input, output, session) {
           html_text<-str_replace(read_file("R/error.html"), 
                                  pattern = "The page you’re looking for doesn’t exist.</p>", 
                                  replacement = paste0("Description:", e, "</p>"))
-          write_file(html_text, file = paste0(tempdir(), "/error.html"))
-          zip(zipfile = file, files = paste0(tempdir(), "/error.html"), extra = "-j")
+          write_file(html_text, file = paste0("/tmp/ProTN", "/error.html"))
+          zip(zipfile = file, files = paste0("/tmp/ProTN", "/error.html"), extra = "-j")
         }
       )
     }
@@ -979,7 +988,7 @@ server <- function(input, output, session) {
           js$pageDisable("none")
           
           #Creation directory for the results
-          dirOutput_2 <- tempdir()
+          dirOutput_2 <- "/tmp/ProTN"
           currentTime <- gsub(".*?([0-9]+).*?", "\\1", Sys.time())
           dirOutput_1 <- paste("/", currentTime, "/", sep = "")
           dir.create(file.path(dirOutput_2, dirOutput_1), showWarnings = FALSE)
@@ -1052,7 +1061,7 @@ server <- function(input, output, session) {
           #Save folder for the download
           readr::write_csv(data.frame("session"=session$token,
                                       "outdir"=dirOutput_Server),
-                           file = paste0(tempdir(),"/outdir_log_ProTN.log"), append = T)
+                           file = paste0("/tmp/ProTN","/outdir_log_ProTN.log"), append = T)
           
           tags$iframe(src = paste0("basedir", dirOutput_1,"/protn_report.html"), height = "100%", width = "100%", scrolling = "yes")
         })
@@ -1068,7 +1077,7 @@ server <- function(input, output, session) {
         html_text<-str_replace(read_file("R/error.html"), 
                                pattern = "The page you’re looking for doesn’t exist.</p>", 
                                replacement = paste0("Description:", e, "</p>"))
-        write_file(html_text, file = paste0(tempdir(), "/error.html"))
+        write_file(html_text, file = paste0("/tmp/ProTN", "/error.html"))
         
         tags$iframe(src = "basedir/error.html", height = "100%", width = "100%", scrolling = "yes")
       }
@@ -1085,10 +1094,10 @@ server <- function(input, output, session) {
             #Zip the dir resutls
             message(session$token)
             #Save folder for the download
-            logs<-readr::read_csv(file = paste0(tempdir(),"/outdir_log_ProTN.log"),col_names = F)
+            logs<-readr::read_csv(file = paste0("/tmp/ProTN","/outdir_log_ProTN.log"),col_names = F)
             dirOutput_Server_2<-as.list(logs[which(logs$X1==session$token),"X2"])
             oldwd <- getwd()
-            setwd(dirOutput_Server_2[[length(dirOutput_Server_2)]])
+            setwd(dirOutput_Server_2[[1]][length(dirOutput_Server_2)[[1]]])
             files2zip <- list.files("./", recursive = TRUE)
             zip(zipfile = file, files = files2zip, extra = "-r")
             setwd(oldwd)
@@ -1101,8 +1110,8 @@ server <- function(input, output, session) {
           html_text<-str_replace(read_file("R/error.html"), 
                                  pattern = "The page you’re looking for doesn’t exist.</p>", 
                                  replacement = paste0("Description:", e, "</p>"))
-          write_file(html_text, file = paste0(tempdir(), "/error.html"))
-          zip(zipfile = file, files = paste0(tempdir(), "/error.html"), extra = "-j")
+          write_file(html_text, file = paste0("/tmp/ProTN", "/error.html"))
+          zip(zipfile = file, files = paste0("/tmp/ProTN", "/error.html"), extra = "-j")
         }
       )
     }
@@ -1120,7 +1129,7 @@ server <- function(input, output, session) {
           js$pageDisable("none")
           
           #Creation directory for the results
-          dirOutput_2 <- tempdir()
+          dirOutput_2 <- "/tmp/ProTN"
           currentTime <- gsub(".*?([0-9]+).*?", "\\1", Sys.time())
           dirOutput_1 <- paste("/", currentTime, "/", sep = "")
           dir.create(file.path(dirOutput_2, dirOutput_1), showWarnings = FALSE)
@@ -1195,7 +1204,7 @@ server <- function(input, output, session) {
           #Save folder for the download
           readr::write_csv(data.frame("session"=session$token,
                                       "outdir"=dirOutput_Server),
-                           file = paste0(tempdir(),"/outdir_log_PhosProTN.log"), append = T)
+                           file = paste0("/tmp/ProTN","/outdir_log_PhosProTN.log"), append = T)
           
           tags$iframe(src = paste0("basedir", dirOutput_1,"/phosprotn_report.html"), height = "100%", width = "100%", scrolling = "yes")
         })
@@ -1210,7 +1219,7 @@ server <- function(input, output, session) {
         html_text<-str_replace(read_file("R/error.html"), 
                                pattern = "The page you’re looking for doesn’t exist.</p>", 
                                replacement = paste0("Description:", e, "</p>"))
-        write_file(html_text, file = paste0(tempdir(), "/error.html"))
+        write_file(html_text, file = paste0("/tmp/ProTN", "/error.html"))
         
         
         tags$iframe(src = "basedir/error.html", height = "100%", width = "100%", scrolling = "yes")
@@ -1227,10 +1236,10 @@ server <- function(input, output, session) {
             #Zip the dir resutls
             message(session$token)
             #Save folder for the download
-            logs<-readr::read_csv(file = paste0(tempdir(),"/outdir_log_PhosProTN.log"),col_names = F)
+            logs<-readr::read_csv(file = paste0("/tmp/ProTN","/outdir_log_PhosProTN.log"),col_names = F)
             dirOutput_Server_2<-as.list(logs[which(logs$X1==session$token),"X2"])
             oldwd <- getwd()
-            setwd(dirOutput_Server_2[[length(dirOutput_Server_2)]])
+            setwd(dirOutput_Server_2[[1]][length(dirOutput_Server_2)[[1]]])
             files2zip <- list.files("./", recursive = TRUE)
             zip(zipfile = file, files = files2zip, extra = "-r")
             setwd(oldwd)
@@ -1243,8 +1252,8 @@ server <- function(input, output, session) {
           html_text<-str_replace(read_file("R/error.html"), 
                                  pattern = "The page you’re looking for doesn’t exist.</p>", 
                                  replacement = paste0("Description:", e, "</p>"))
-          write_file(html_text, file = paste0(tempdir(), "/error.html"))
-          zip(zipfile = file, files = paste0(tempdir(), "/error.html"), extra = "-j")
+          write_file(html_text, file = paste0("/tmp/ProTN", "/error.html"))
+          zip(zipfile = file, files = paste0("/tmp/ProTN", "/error.html"), extra = "-j")
         }
       )
     }
@@ -1263,7 +1272,7 @@ server <- function(input, output, session) {
           js$pageDisable("none")
           
           #Creation directory for the results
-          dirOutput_2 <- tempdir()
+          dirOutput_2 <- "/tmp/ProTN"
           currentTime <- gsub(".*?([0-9]+).*?", "\\1", Sys.time())
           dirOutput_1 <- paste("/", currentTime, "/", sep = "")
           dir.create(file.path(dirOutput_2, dirOutput_1), showWarnings = FALSE)
@@ -1338,7 +1347,7 @@ server <- function(input, output, session) {
           #Save folder for the download
           readr::write_csv(data.frame("session"=session$token,
                                       "outdir"=dirOutput_Server),
-                           file = paste0(tempdir(),"/outdir_log_PhosProTN.log"), append = T)
+                           file = paste0("/tmp/ProTN","/outdir_log_PhosProTN.log"), append = T)
           
           tags$iframe(src = paste0("basedir", dirOutput_1,"/phosprotn_report.html"), height = "100%", width = "100%", scrolling = "yes")
         })
@@ -1354,7 +1363,7 @@ server <- function(input, output, session) {
         html_text<-str_replace(read_file("R/error.html"), 
                                pattern = "The page you’re looking for doesn’t exist.</p>", 
                                replacement = paste0("Description:", e, "</p>"))
-        write_file(html_text, file = paste0(tempdir(), "/error.html"))
+        write_file(html_text, file = paste0("/tmp/ProTN", "/error.html"))
         
         
         tags$iframe(src = "basedir/error.html", height = "100%", width = "100%", scrolling = "yes")
@@ -1371,10 +1380,10 @@ server <- function(input, output, session) {
             #Zip the dir resutls
             message(session$token)
             #Save folder for the download
-            logs<-readr::read_csv(file = paste0(tempdir(),"/outdir_log_PhosProTN.log"),col_names = F)
+            logs<-readr::read_csv(file = paste0("/tmp/ProTN","/outdir_log_PhosProTN.log"),col_names = F)
             dirOutput_Server_2<-as.list(logs[which(logs$X1==session$token),"X2"])
             oldwd <- getwd()
-            setwd(dirOutput_Server_2[[length(dirOutput_Server_2)]])
+            setwd(dirOutput_Server_2[[1]][length(dirOutput_Server_2)[[1]]])
             files2zip <- list.files("./", recursive = TRUE)
             zip(zipfile = file, files = files2zip, extra = "-r")
             setwd(oldwd)
@@ -1387,17 +1396,17 @@ server <- function(input, output, session) {
           html_text<-str_replace(read_file("R/error.html"), 
                                  pattern = "The page you’re looking for doesn’t exist.</p>", 
                                  replacement = paste0("Description:", e, "</p>"))
-          write_file(html_text, file = paste0(tempdir(), "/error.html"))
-          zip(zipfile = file, files = paste0(tempdir(), "/error.html"), extra = "-j")
+          write_file(html_text, file = paste0("/tmp/ProTN", "/error.html"))
+          zip(zipfile = file, files = paste0("/tmp/ProTN", "/error.html"), extra = "-j")
         }
       )
     }
   )
   
   # -- DELETE TEMP FILES WHEN SESSION ENDS -- #
-  session$onSessionEnded(function() {
-    if (dir.exists(tempdir())){unlink(list.files(tempdir(), full.names = T), recursive = T)}
-  })
+  # session$onSessionEnded(function() {
+  #   if (dir.exists("/tmp/ProTN")){unlink(list.files("/tmp/ProTN", full.names = T), recursive = T)}
+  # })
 }
 
 # Run the application
