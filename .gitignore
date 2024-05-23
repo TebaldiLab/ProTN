@@ -62,4 +62,9 @@ R/enrich_plot.html
 Data/Data/*
 Data/GB/
 Data/redatinasa/
-
+R/app.R
+Data/txt_PROTEOME/evidence.txt
+Data/proteinGroups.txt
+Data/peptides.txt
+Data/Input.xlsx
+Data/design.xlsx
