@@ -1273,7 +1273,9 @@ psm_log_prot_df<-tryCatch(
     ppe <- PhosphoExperiment(assays = list(Quantification = as.matrix(psm_log_prot_df)))
     #Mantieni ordine
     grps <- as.factor(c_anno_prot[colnames(psm_log_prot_df), "condition"])
+    set.seed(42)
     ppe <- scImpute(ppe, 0.6, grps)
+    set.seed(42)
     ppe <- tImpute(ppe, assay = "imputed")
     psm_log_prot_df[is.na(psm_log_prot_df)]<-ppe@assays@data@listData$imputed[is.na(psm_log_prot_df)]
     psm_log_prot_df
@@ -1302,7 +1304,9 @@ psm_log_pet_df<-tryCatch(
     #Imputation with Phospho
     ppe <- PhosphoExperiment(assays = list(Quantification = as.matrix(psm_log_pet_df)))
     grps <- as.factor(c_anno_phos[colnames(psm_log_prot_df), "condition"])
+    set.seed(42)
     ppe <- scImpute(ppe, 0.6, grps)
+    set.seed(42)
     ppe <- tImpute(ppe, assay = "imputed")
     psm_log_pet_df[is.na(psm_log_pet_df)]<-ppe@assays@data@listData$imputed[is.na(psm_log_pet_df)]
     psm_log_pet_df
@@ -2894,72 +2898,115 @@ if(length(doComp)==0 | all(doComp==F)){
 shiny::setProgress(0.93, detail = "Network analysis done... \n Can require several minutes...")
 ```
 
-```{r network_string_communities, echo=F, message=F, warning=F, eval = doNextChunk_STRING, results='hide'}
+```{r cleaner, echo=F, message=F, warning=F, eval = doNextChunk_STRING, results='hide'}
 message("Build PPI network with STRING in progress... \n Can require several minutes...")
 
 rm(cluster_ext, cmd, comm, dat_psm,df_to_save,dt_links,edge_list,el,enr_sele_df,enr_sele_names, matches, mds_cmdscale, psm_anno_df, 
-       sample_data, annos, colToKeep, comp, currentTime, dirOutput_1,dirOutput_2, doNextChunk,
-       f, filenames, filt_genes, g_sel, genes, l, links, lookup_words, name_list, net_genes, now, res, sample_distances, word,
-       batch_annotation,comBat_df_gene, comBat_df_pep, dat_gene_long,dat_pep_long,
-       gene_name, input_df, pos, prot_intensity_long, deps_vec_all, i, labels, labels_down, labels_up, list.of.packages,
-       list.of.packages.bio, new.packages, prot_find, template_files)
-gc()
+   sample_data, annos, colToKeep, comp, currentTime, dirOutput_1,dirOutput_2, doNextChunk,
+   f, filenames, filt_genes, g_sel, genes, l, links, lookup_words, name_list, net_genes, now, res, sample_distances, word,
+   batch_annotation,comBat_df_gene, comBat_df_pep, dat_gene_long,dat_pep_long,
+   gene_name, input_df, pos, prot_intensity_long, deps_vec_all, i, labels, labels_down, labels_up, list.of.packages,
+   list.of.packages.bio, new.packages, prot_find, template_files)
+suppressMessages(suppressWarnings(gc()))
+
+```
+```{r network_string_communities, echo=F, message=F, warning=F, eval = doNextChunk_STRING, results='asis'}
 #Read STRINGdb edges for human
 #Human id --> 9606
 #Mouse id --> 10090
-string_db <- STRINGdb$new(version="11.5", species=taxonomy_NCBI, score_threshold=500, input_directory="STRINGdb/")
-gene_name<-unlist(g_sel_comp) %>% unique() %>% as.data.frame()
-colnames(gene_name)<-c("gene_id")
-string_mapped <- string_db$map(gene_name, "gene_id", removeUnmappedRows = TRUE)
-links_string <- string_db$get_interactions(string_mapped$STRING_id)
-links_string$from <- string_mapped$gene_id[match(links_string$from,string_mapped$STRING_id)]
-links_string$to <- string_mapped$gene_id[match(links_string$to,string_mapped$STRING_id)]
-string_gene_df<-data_frame("gene1"=links_string$from,"gene2"=links_string$to,"weigth"=links_string$combined_score)
+  cat(" \n \n")
+  cat("#### 4.2. Network plots  {.tabset}  \n")
+  cat(" \n \n")
+string_db <- STRINGdb$new(version="12", species=taxonomy_NCBI, score_threshold=500, input_directory="STRINGdb/")
+for(comp in names(g_sel_comp)){
+  
+  # suppressWarnings(suppressMessages({
+    gene_name<-g_sel_comp[[comp]] %>% unique() %>% as.data.frame()
+    colnames(gene_name)<-c("gene_id")
+    string_mapped <- string_db$map(gene_name, "gene_id", removeUnmappedRows = TRUE)
+    links_string <- string_db$get_interactions(string_mapped$STRING_id)
+    links_string$from <- string_mapped$gene_id[match(links_string$from,string_mapped$STRING_id)]
+    links_string$to <- string_mapped$gene_id[match(links_string$to,string_mapped$STRING_id)]
+    string_gene_df<-data_frame("gene1"=links_string$from,"gene2"=links_string$to,"weigth"=links_string$combined_score)
+    if(nrow(string_gene_df) > 0){
+    write_tsv(unique(string_gene_df), 
+                file = paste0(dirOutput_net,gsub(comp, pattern = "\\/", replacement="vs"),"_connection.txt"))
+    
+    # string_db$plot_network(string_mapped)
+    # string_db$get_link(string_ids = string_mapped$STRING_id, required_score = 500)
+    
+    link <- paste0("https://string-db.org/cgi/network?identifiers=",str_c(unique(string_mapped$STRING_id), collapse = "%0d"),"&species=",taxonomy_NCBI,"&required_score=500")
+  # }))
 
-if(nrow(string_gene_df) > 0){
-  data_comms_df<-list()
-  data_comms_list<-list()
-  data_dt_links<-list()
-  colour_vector<-list()
-  #Cycle for each contrast
-  for (comp in names(doComp)){
-    # params ----
-    thr_score <- 150 # define max strength of interaction
-
-    #Select genes that are up or down regulated
-    g_sel <- g_sel_comp[[comp]]
-    if(all(unique(!grepl("[[:lower:]]",string_gene_df$gene1)))){
-      g_sel<-toupper(g_sel)
-    }else{
-      g_sel<-str_to_title(g_sel)
-    }
-    #Find communities in STRING db
-    comm <- suppressMessages(find_communities(g_sel, thr_score,string_gene_df))
-    i_comms_df <- comm[["i_comms_df"]]
-    data_comms_df[[comp]]<-i_comms_df
-    i_comms_list <- comm[["i_comms_list"]]
-    data_comms_list[[comp]]<-i_comms_list
-    dt_links <- comm[["dt_links"]]
-    data_dt_links[[comp]]<-dt_links
-
-    colour_vector[[comp]] <- c(c(brewer.pal(n = 8, name = "Dark2")), color_base)
-    colour_vector[[comp]] <- colour_vector[[comp]][1:length(i_comms_list)]
+  cat(" \n \n")
+  cat("##### ",comp," \n")
+  cat(paste0("To better visualize the network go to String-DB website --> [STRING-DB network](",link,") \n \n"))
+  print((string_db$plot_network(string_mapped, required_score = 500)))
+  cat(" \n \n")
+  
+  pdf(file = paste0(dirOutput_net,comp,"_network.pdf"), width = 150, height = 150)
+    string_db$plot_network(string_mapped)
+  dev.off()
+  cat(" \n \n")
+  } else{
+    print("WARNING: No strong interaction detected beetween the proteins. Usually too few proteins.")
+    doNextChunk_STRING <- FALSE
+    message("Network incomplete.")
   }
-
-  i_comms_df<-data_comms_df
-  i_comms_list<-data_comms_list
-  dt_links<-data_dt_links
-
-  message("Network DONE.")
-}else{
-  print("WARNING: No strong interaction detected beetween the proteins. Usually too few proteins.")
-  doNextChunk_STRING <- FALSE
-  message("Network incomplete.")
 }
+# gene_name<-unlist(g_sel_comp) %>% unique() %>% as.data.frame()
+# colnames(gene_name)<-c("gene_id")
+# string_mapped <- string_db$map(gene_name, "gene_id", removeUnmappedRows = TRUE)
+# links_string <- string_db$get_interactions(string_mapped$STRING_id)
+# links_string$from <- string_mapped$gene_id[match(links_string$from,string_mapped$STRING_id)]
+# links_string$to <- string_mapped$gene_id[match(links_string$to,string_mapped$STRING_id)]
+# string_gene_df<-data_frame("gene1"=links_string$from,"gene2"=links_string$to,"weigth"=links_string$combined_score)
+# string_db$plot_network(string_mapped)
+# string_db$get_link(string_ids = string_mapped$STRING_id, required_score = 500)
+
+# if(nrow(string_gene_df) > 0){
+#   data_comms_df<-list()
+#   data_comms_list<-list()
+#   data_dt_links<-list()
+#   colour_vector<-list()
+#   #Cycle for each contrast
+#   for (comp in names(doComp)){
+#     # params ----
+#     thr_score <- 150 # define max strength of interaction
+#     #Select genes that are up or down regulated
+#     g_sel <- g_sel_comp[[comp]]
+#     if(all(unique(!grepl("[[:lower:]]",string_gene_df$gene1)))){
+#       g_sel<-toupper(g_sel)
+#     }else{
+#       g_sel<-str_to_title(g_sel)
+#     }
+#     #Find communities in STRING db
+#     comm <- suppressMessages(find_communities(g_sel, thr_score,string_gene_df))
+#     i_comms_df <- comm[["i_comms_df"]]
+#     data_comms_df[[comp]]<-i_comms_df
+#     i_comms_list <- comm[["i_comms_list"]]
+#     data_comms_list[[comp]]<-i_comms_list
+#     dt_links <- comm[["dt_links"]]
+#     data_dt_links[[comp]]<-dt_links
+#     
+#     colour_vector[[comp]] <- c(c(brewer.pal(n = 8, name = "Dark2")), color_base)
+#     colour_vector[[comp]] <- colour_vector[[comp]][1:length(i_comms_list)]
+#   }
+#   
+#   i_comms_df<-data_comms_df
+#   i_comms_list<-data_comms_list
+#   dt_links<-data_dt_links
+#   message("Network DONE.")
+# }else{
+#   print("WARNING: No strong interaction detected beetween the proteins. Usually too few proteins.")
+#   doNextChunk_STRING <- FALSE
+#   message("Network incomplete.")
+# }
+
 shiny::setProgress(0.93, detail = "Generating network figures... \n Can require several minutes...")
 ```
 
-```{r network_string, echo=F, message=F, warning=F, eval = doNextChunk_STRING, fig.width=12, results='asis'}
+```{r network_string, echo=F, message=F, warning=F, eval = F, fig.width=12, results='asis'}
 message("Plotting STRING network in progress...")
 cat("#### 4.1. Size of protein communities within PPI networks  {.tabset}  \n")
 cat(" \n \n")
