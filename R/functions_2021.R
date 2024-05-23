@@ -484,10 +484,10 @@ deps_b2b_lollipop <- function(input_df, # input dataframe
   
   if("text_col" %in% colnames(plot_df)){
     lp <- lp + geom_text(data = plot_df[plot_df$bb_col==f_left,],
-                         aes(x = -(shift*13/10)-x_col, label=text_col, vjust=(1.1)),
+                         aes(x = -(shift*13/10)-x_col, label=text_col, vjust=0),
                          fontface="italic", size=4, show_guide = F) +
       geom_text(data = plot_df[plot_df$bb_col==f_right,],
-                aes(x = (shift*13/10)+x_col, label=text_col, vjust=(-0.1)),
+                aes(x = (shift*13/10)+x_col, label=text_col, vjust=0),
                 fontface="italic", size=4, show_guide = F)
   }
   
@@ -898,26 +898,26 @@ limmafnc<-function(type = "PROT",c_anno,dat_gene,psm_count_table,contro_list,exp
                       "p_val"="P.Value",
                       "p_adj"="adj.P.Val") %>% dplyr::mutate("id"=rownames(topTable(fit3, coef = comp, number = Inf))) %>% dplyr::select(-c(t,B))
     }
+    degs_u$log2_expr <- 2^degs_u$log2_FC
+    degs_u <- degs_u %>% dplyr::rename("FC"="log2_expr")
     rownames(degs_u)<-degs_u$id
     #Recalculate the log2_expr
-    name_log2_expr<-paste0(names(contrast[which(contrast[,comp] != 0),comp]),"_avg")
-    mean_exprAvg_column<-rowMeans(x=expr_avgse_df[name_log2_expr], na.rm = TRUE)
-    degs_u$log2_expr<-mean_exprAvg_column
+    # name_log2_expr<-paste0(names(contrast[which(contrast[,comp] != 0),comp]),"_avg")
+    # mean_exprAvg_column<-rowMeans(x=expr_avgse_df[name_log2_expr], na.rm = TRUE)
+    # degs_u$log2_expr<-mean_exprAvg_column
     
     degs_u$comp<-comp
     degs_u$class<-"="
-    degs_u[which(degs_u[,signal_col]>=signal_thr & 
-                   degs_u[,fc_col]>=fc_thr & 
+    degs_u[which(degs_u[,fc_col]>=fc_thr & 
                    degs_u[,pval_col]<=pval_thr),"class"]<-"+"
     
-    degs_u[which(degs_u[,signal_col]>=signal_thr & 
-                   degs_u[,fc_col]<=(-fc_thr) & 
+    degs_u[which(degs_u[,fc_col]<=(-fc_thr) & 
                    degs_u[,pval_col]<=pval_thr),"class"]<-"-"
     
     
-    degs_l_df<-bind_rows(degs_l_df,degs_u %>% dplyr::select("id","comp","class","log2_FC","p_val","p_adj","log2_expr"))
+    degs_l_df<-bind_rows(degs_l_df,degs_u %>% dplyr::select("id","comp","class","log2_FC","FC","p_val","p_adj"))
     
-    degs_add<- degs_u %>% dplyr::select("class","log2_FC","p_val","p_adj","log2_expr")
+    degs_add<- degs_u %>% dplyr::select("class","log2_FC","FC","p_val","p_adj")
     colnames(degs_add)<-paste(comp,colnames(degs_add),sep="_")
     degs_w_df<-merge(degs_w_df,degs_add,by="row.names",all=TRUE)
     rownames(degs_w_df)<-degs_w_df$Row.names
